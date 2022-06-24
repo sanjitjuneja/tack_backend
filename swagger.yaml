@@ -1,0 +1,300 @@
+openapi: 3.0.0
+info:
+  title: Tack App Backend API
+  description: Tack App Backend API
+  version: 0.0.1
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev server
+
+paths:
+  /api/v1/health-check:
+    get:
+      tags:
+        - health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '418':
+          $ref: '#/components/responses/HealthErrors'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+  /api/v1/login:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/signup/by-phone:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/verify-phone:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/social-signup/google:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/social-signup/apple:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/social-signup/facebook:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  # Runs cognito in background
+  /api/v1/signup/profile-info:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/check-username-suggestions:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/CheckUsername'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+  /api/v1/upload-avatar:
+    post:
+      tags:
+      - auth
+      requestBody:
+        $ref: '#/components/requestBodies/Login'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          $ref: '#/components/responses/OtherErrors'
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    Health:
+      type: object
+      properties:
+        db_status:
+          type: string
+          example: OK
+        redis_status:
+          type: string
+          example: OK
+        elasticsearch_status:
+          type: string
+          example: OK
+    HealthError:
+      type: object
+      properties:
+        db_status:
+          type: string
+          example: OK
+        redis_status:
+          type: string
+          example: Connection failure
+        elasticsearch_status:
+          type: string
+          example: Service unavailable
+    Login:
+      type: object
+      properties:
+        username_or_phone:
+          type: string
+          format: phone
+        password:
+          type: string
+          format: password
+    Tokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    CheckUsername:
+      type: object
+      properties:
+        username:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+          format: int64
+        errorMessage:
+          type: string
+          example: "This is a default error message. All goes down!"
+
+  requestBodies:
+    Login:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Login'
+    CheckUsername:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CheckUsername'
+
+  responses:
+    Tokens:
+      description: Access and refresh tokens
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Tokens'
+    OtherErrors:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    HealthErrors:
+      description: Health-check errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HealthError'
