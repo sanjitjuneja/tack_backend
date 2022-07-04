@@ -32,7 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get code from cache
-        id: ${{ runner.os }}-build-cache-code
         uses: actions/cache@v2
         with:
           path: ./
