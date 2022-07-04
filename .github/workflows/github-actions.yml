@@ -24,12 +24,14 @@ jobs:
           ls -la ${{ github.workspace }}
 
   build-docker-image:
+    needs: check-out-repo
     runs-on: ubuntu-latest
     steps:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag tack-backend:latest
 
   static-analysis-check:
+    needs: build-docker-image
     runs-on: ubuntu-latest
     steps:
       - name: List Docker images
