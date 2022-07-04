@@ -5,45 +5,21 @@ on:
     branches:
       - "develop"
 jobs:
-  preparation:
+  check-code:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-  check-out-repo:
-    runs-on: ubuntu-latest
-    steps:
+
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: List files in the repository
         run: ls -la ${{ github.workspace }}
-      - name: Cache code
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-code
-        with:
-          path: ./
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
-  build-docker-image:
-    needs: check-out-repo
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get code from cache
-        uses: actions/cache@v2
-        with:
-          path: ./
-          key: ${{ runner.os }}-build-cache-code
 
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag tack-backend:latest
-
-  static-analysis-check:
-    needs: build-docker-image
-    runs-on: ubuntu-latest
-    steps:
       - name: List Docker images
         run: docker images
       - run: echo "🍏 This job's status is ${{ job.status }}."
