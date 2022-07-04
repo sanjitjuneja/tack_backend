@@ -54,8 +54,8 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-      # - name: Build the Docker image
-      #   run: docker build . --file Dockerfile --tag tack-backend:latest
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag tack-backend:latest
       - name: List Docker images
         run: docker images
       - run: echo "🍏 This job's status is ${{ job.status }}."
