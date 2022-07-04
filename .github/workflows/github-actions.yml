@@ -1,12 +1,20 @@
 name: GitHub Actions for Tack app
-on: [push]
+
+on:
+  push:
+    branches:
+      - "develop"
 jobs:
-  static-analysis-check:
+  preparation:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+  check-out-repo:
+    runs-on: ubuntu-latest
+    steps:
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
@@ -15,9 +23,15 @@ jobs:
         run: |
           ls -la ${{ github.workspace }}
 
+  build-docker-image:
+    runs-on: ubuntu-latest
+    steps:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag tack-backend:latest
+
+  static-analysis-check:
+    runs-on: ubuntu-latest
+    steps:
       - name: List Docker images
         run: docker images
-
       - run: echo "🍏 This job's status is ${{ job.status }}."
