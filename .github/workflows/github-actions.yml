@@ -22,11 +22,25 @@ jobs:
       - name: List files in the repository
         run: |
           ls -la ${{ github.workspace }}
+    - name: Cache code
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-code
+      with:
+        path: ./
+        key: ${{ runner.os }}-build-${{ env.cache-name }}
 
   build-docker-image:
     needs: check-out-repo
     runs-on: ubuntu-latest
     steps:
+      - name: Get code from cache
+        id: ${{ runner.os }}-build-cache-code
+        uses: actions/cache@v2
+        with:
+          path: ./
+          key: ${{ runner.os }}-build-cache-code
+
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag tack-backend:latest
 
