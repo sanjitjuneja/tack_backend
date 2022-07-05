@@ -6,7 +6,9 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
-    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app/
+    command: python3 manage.py runsslserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     depends_on:
@@ -17,9 +19,10 @@ services:
     container_name: 'postgres'
     restart: always
     env_file:
-      - .env
+      - tackapp/.env
     ports:
-      - "8001:5432"
+      - "5432:5432"
+
   swagger:
     image: swaggerapi/swagger-editor
     working_dir: /api

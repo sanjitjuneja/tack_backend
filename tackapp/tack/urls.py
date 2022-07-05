@@ -7,5 +7,5 @@ from rest_framework import routers
 # router.register(r'health-check', HealthCheckView.as_view(), basename="HealthCheckView")
 
 urlpatterns = [
-    path(r'health-check', HealthCheckView.as_view()),
+    path(r"health-check/", HealthCheckView.as_view()),
 ]
