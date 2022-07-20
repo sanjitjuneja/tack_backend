@@ -8,7 +8,10 @@ def get_profile_image(backend, user, response, is_new=False, *args, **kwargs):
         return
 
     if backend.name == "facebook":
-        avatar_url = f"https://graph.facebook.com/{response['id']}/picture?type=large"
+        avatar_url = (
+            f"https://graph.facebook.com/{response.get('id')}"
+            f"/picture/?type=normal&access_token={response.get('access_token')}"
+        )
     elif backend.name == "google-oauth2":
         avatar_url = response.get("picture")
     else:

@@ -33,7 +33,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1"]
+ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "*"]
 
 
 # Application definition
@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "social_django",
     "sslserver",
     "phonenumber_field",
+    "django_filters",
 ]
 
 
@@ -88,8 +89,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "social_django.context_processors.backends",
-                "social_django.context_processors.login_redirect",
+                # "social_django.context_processors.backends",
+                # "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -98,8 +99,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "tackapp.wsgi.application"
 
 AUTHENTICATION_BACKENDS = (
-    "social_core.backends.google.GoogleOAuth2",
-    "social_core.backends.facebook.FacebookOAuth2",
+    # "social_core.backends.google.GoogleOAuth2",
+    # "social_core.backends.facebook.FacebookOAuth2",
     "django.contrib.auth.backends.ModelBackend",
 )
 
@@ -134,6 +135,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        "NAME": "core.validators.CustomPasswordValidator"
+    }
 ]
 
 
@@ -153,6 +157,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = "static/"
+# MEDIA_ROOT = os.path.join(BASE_DIR, '')
+# MEDIA_URL = ''  # 'http://myhost:port/media/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -169,15 +176,15 @@ LOGOUT_URL = "api/v1/accounts/logout/"
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.auth_allowed",
     "social_core.pipeline.social_auth.social_user",
     "social_core.pipeline.user.get_username",
+    # 'social_core.pipeline.social_auth.associate_by_email',
     "social_core.pipeline.user.create_user",
-    "social_core.pipeline.social_auth.associate_by_email",
     "social_core.pipeline.social_auth.associate_user",
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
-    "user.pipeline.get_profile_image"
-    # 'user.pipeline.update_user_social_data',
+    "user.pipeline.get_profile_image",
 )
 
 
@@ -202,13 +209,13 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-    ),
-    'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',
-    ),
-    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework.renderers.JSONRenderer',
+    # ),
+    # 'DEFAULT_PARSER_CLASSES': (
+    #     'rest_framework.parsers.JSONParser',
+    # ),
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
 # Twilio
@@ -221,3 +228,15 @@ MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
 # SWAGGER_SETTINGS = {
 #     "USE_SESSION_AUTH": False
 # }
+
+
+def show_toolbar(request):
+    return True
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+    "INTERCEPT_REDIRECTS": False,
+}
+
+CELERY_BROKER_URL = env("CELERY_BROKER")

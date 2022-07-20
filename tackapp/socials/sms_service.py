@@ -7,10 +7,14 @@ class TwilioClient:
         self.account_sid = settings.TWILIO_ACCOUNT_SID
         self.auth_token = settings.TWILIO_AUTH_TOKEN
         self.client = Client(self.account_sid, self.auth_token)
-        self.text_signup = ("Your phone number verify Code is: {sms_code}. "
-                            "If you did not make this recovery attempt, contact us immediately.")
-        self.text_recovery = ("Your Tack recovery code is: {sms_code}. If you did not "
-                              "make this recovery attempt, contact us immediately.")
+        self.text_signup = (
+            "Your phone number verify Code is: {sms_code}. "
+            "If you did not make this recovery attempt, contact us immediately."
+        )
+        self.text_recovery = (
+            "Your Tack recovery code is: {sms_code}. If you did not "
+            "make this recovery attempt, contact us immediately."
+        )
 
     def send_signup_message(self, phone_number: str, sms_code: str):
         """Function to sending SMS for subsequent verifying"""

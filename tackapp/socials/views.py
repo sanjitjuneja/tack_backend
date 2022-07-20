@@ -5,46 +5,43 @@ from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
+from twilio.base.exceptions import TwilioRestException
 
 from user.models import User
 from .sms_service import twilio_client
 from .serializers import *
 from .services import generate_sms_code
 from .models import PhoneVerification
+from core.choices import SMSType
 
 
 class TwilioSendMessage(views.APIView):
     """View for sending SMS to user for subsequent verification"""
 
-    @swagger_auto_schema(request_body=SMSSendSerializer)
+    @swagger_auto_schema(request_body=SMSSendSerializer, responses={200: "uuid", 400: "error_message"})
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
-        if serializer.is_valid():
-            uuid = uuid4()
-            phone_number = serializer.validated_data["phone_number"]
-            sms_code = generate_sms_code()
+        serializer.is_valid(raise_exception=True)
+        uuid = uuid4()
+        phone_number = serializer.validated_data["phone_number"]
+        sms_code = generate_sms_code()
 
+        try:
             message_sid = twilio_client.send_signup_message(phone_number, sms_code)
-            # message_sid = "Testmessage_SID"
+        except TwilioRestException:
+            return Response({"error": "Twilio service temporarily unavailable"}, status=503)
 
-            sms_type = "S"
-            PhoneVerification(
-                uuid=uuid,
-                user=None,
-                phone_number=phone_number,
-                sms_code=sms_code,
-                message_sid=message_sid,
-                sms_type=sms_type
-            ).save()
+        sms_type = SMSType.signup
+        PhoneVerification(
+            uuid=uuid,
+            user=None,
+            phone_number=phone_number,
+            sms_code=sms_code,
+            message_sid=message_sid,
+            sms_type=sms_type,
+        ).save()
 
-            return Response(
-                {
-                    "uuid": uuid,
-                    # "sms code": sms_code
-                },
-                status=200,
-            )
-        return Response(status=400)
+        return Response({"uuid": uuid}, status=200)
 
 
 class TwilioUserRegistration(views.APIView):
@@ -60,7 +57,9 @@ class TwilioUserRegistration(views.APIView):
             # and updating user_id in PhoneVerification model
             phv = PhoneVerification.objects.get(uuid=serializer.validated_data["uuid"])
             if not phv.is_verified:
-                return Response({"message": "SMS code wasn't verified in previous step"}, status=400)
+                return Response(
+                    {"message": "SMS code wasn't verified in previous step"}, status=400
+                )
 
             user_serializer = UserSerializer(data=serializer.validated_data["user"])
             user_serializer.is_valid(raise_exception=True)
@@ -78,9 +77,9 @@ class Login(views.APIView):
 
     @swagger_auto_schema(request_body=LoginSerializer)
     def post(self, request):
-        username = request.data.get("username")
+        phone_number = request.data.get("phone_number")
         password = request.data.get("password")
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, phone_number=phone_number, password=password)
         if user is not None:
             login(request, user)
             return Response({"message": "Successfully authorized"})
@@ -108,7 +107,7 @@ class AccountProfileView(views.APIView):
                 {
                     "is_authenticated": f"{request.user.is_authenticated}",
                     "user": f"{request.user}",
-                    "email": f"{request.user.email}",
+                    "phone_number": f"{request.user.phone_number}",
                 }
             )
         return Response({"is_authenticated": f"{request.user.is_authenticated}"})
@@ -124,7 +123,7 @@ class PasswordRecoverySendMessage(views.APIView):
         uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
         sms_code = generate_sms_code()
-        sms_type = "R"
+        sms_type = SMSType.recovery
 
         try:
             user = User.objects.get(phone_number=phone_number)
@@ -135,13 +134,19 @@ class PasswordRecoverySendMessage(views.APIView):
                 phone_number=phone_number,
                 sms_code=sms_code,
                 message_sid=message_sid,
-                sms_type=sms_type
+                sms_type=sms_type,
             ).save()
 
-            return Response({"uuid": uuid, "phone_number": phone_number.as_e164}, status=200)
+            return Response(
+                {"uuid": uuid, "phone_number": phone_number.as_e164}, status=200
+            )
 
         except ObjectDoesNotExist:
-            return Response({"message": "User with given phone number is not found"}, status=400)
+            return Response(
+                {"message": "User with given phone number is not found"}, status=400
+            )
+        except TwilioRestException:
+            return Response({"error": "Twilio service temporarily unavailable"}, status=503)
 
 
 class PasswordRecoveryChange(views.APIView):
@@ -153,18 +158,24 @@ class PasswordRecoveryChange(views.APIView):
             return Response({"message": "Can not recover password when authorized"})
         serializer = PasswordRecoveryChangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        uuid = serializer.validated_data['uuid']
+        uuid = serializer.validated_data["uuid"]
 
         phv = PhoneVerification.objects.get(uuid=uuid)
         user = phv.user
-        user.set_password(serializer.validated_data['new_password'])
+        user.set_password(serializer.validated_data["new_password"])
         user.save()
 
         # Login after password change
-        user = authenticate(request, username=user.username, password=serializer.validated_data['new_password'])
+        user = authenticate(
+            request,
+            phone_number=user.phone_number,
+            password=serializer.validated_data["new_password"],
+        )
         login(request, user)
 
-        return Response({"message": "Password successfully changed and logged in"}, status=200)
+        return Response(
+            {"message": "Password successfully changed and logged in"}, status=200
+        )
 
 
 class PasswordChange(views.APIView):
@@ -178,8 +189,8 @@ class PasswordChange(views.APIView):
         serializer = PasswordChangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        old_password = serializer.validated_data['old_password']
-        new_password = serializer.validated_data['new_password']
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
 
         if not request.user.check_password(old_password):
             return Response({"message": "Incorrect password"})
@@ -190,10 +201,14 @@ class PasswordChange(views.APIView):
         request.user.save()
 
         # Login after password change
-        user = authenticate(request, username=request.user.username, password=new_password)
+        user = authenticate(
+            request, phone_number=request.user.phone_number, password=new_password
+        )
         login(request, user)
 
-        return Response({"message": "Password successfully changed and logged in"}, status=200)
+        return Response(
+            {"message": "Password successfully changed and logged in"}, status=200
+        )
 
 
 class VerifySMSCode(views.APIView):
@@ -204,8 +219,8 @@ class VerifySMSCode(views.APIView):
         serializer = VerifySMSCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        uuid = serializer.validated_data['uuid']
-        sms_code = serializer.validated_data['sms_code']
+        uuid = serializer.validated_data["uuid"]
+        sms_code = serializer.validated_data["sms_code"]
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
             if sms_code != phv.sms_code:
