@@ -1,3 +1,8 @@
-from django.shortcuts import render
+from rest_framework import viewsets, parsers
+from .serializers import *
 
-# Create your views here.
+
+class GroupViewset(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
