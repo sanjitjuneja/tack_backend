@@ -32,6 +32,7 @@ class UserListSerializer(serializers.ModelSerializer):
             "pk",
             "first_name",
             "last_name",
-            # tack_rating
-            # num_tacks
+            "tacks_rating",
+            "tacks_amount"
         )
+

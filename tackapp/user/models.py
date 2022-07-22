@@ -2,6 +2,9 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
+from django.db.models import Avg
+from core.validators import password_validator
+from review.models import Review
 
 
 class CustomUserManager(BaseUserManager):
@@ -36,7 +39,7 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = models.CharField(max_length=150, null=True, blank=True)
-    password = models.CharField(max_length=128)
+    password = models.CharField(max_length=128)  # , validators=(password_validator,))
     profile_picture = models.ImageField(
         null=True, blank=True, upload_to="static/media/profile_pictures/"
     )
@@ -45,6 +48,7 @@ class User(AbstractUser):
     phone_number = PhoneNumberField(unique=True)
     birthday = models.DateField(null=True)
     balance = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, default=None)
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     tacks_amount = models.PositiveIntegerField(default=0)
 
