@@ -24,6 +24,7 @@ urlpatterns = [
     re_path(r"api/v1/", include("tack.urls")),
     re_path(r"api/v1/", include("socials.urls")),
     re_path(r"api/v1/", include("group.urls")),
+    re_path(r"api/v1/", include("review.urls")),
     re_path(r"api/v1/", include("user.urls")),
     re_path(
         r"^(?P<format>\.json|\.yaml)$",
