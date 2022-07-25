@@ -14,14 +14,15 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "pk",
+            "id",
             "first_name",
             "last_name",
             "phone_number",
             "password",
-            # "active_group"
+            "active_group",
+            "balance"
         )
-        # read_only_fields = ("active_group",)
+        read_only_fields = ("active_group",)
         extra_kwargs = {"password": {"write_only": True}}
 
 
@@ -29,10 +30,9 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "pk",
+            "id",
             "first_name",
             "last_name",
             "tacks_rating",
-            "tacks_amount"
+            "tacks_amount",
         )
-

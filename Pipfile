@@ -25,6 +25,8 @@ django = "*"
 django-filter = "*"
 celery = "*"
 flower = "*"
+django-money = "*"
+drf-spectacular = "*"
 
 [dev-packages]
 

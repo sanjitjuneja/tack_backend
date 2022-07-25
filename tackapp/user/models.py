@@ -2,8 +2,8 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-from django.db.models import Avg
-from core.validators import password_validator
+from djmoney.models.fields import MoneyField
+from djmoney.models.validators import MaxMoneyValidator, MinMoneyValidator
 from review.models import Review
 
 
@@ -39,26 +39,28 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = models.CharField(max_length=150, null=True, blank=True)
-    password = models.CharField(max_length=128)  # , validators=(password_validator,))
+    password = models.CharField(max_length=128)
     profile_picture = models.ImageField(
         null=True, blank=True, upload_to="static/media/profile_pictures/"
     )
     first_name = models.CharField(max_length=150, default="")
     last_name = models.CharField(max_length=150, default="")
     phone_number = PhoneNumberField(unique=True)
-    birthday = models.DateField(null=True)
-    balance = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    birthday = models.DateField(null=True, blank=True)
+    balance = MoneyField(
+        max_digits=8,
+        decimal_places=2,
+        default_currency="USD",
+        default=0,
+        validators=[
+            MinMoneyValidator(0),
+            MaxMoneyValidator(999_999),
+        ])
     active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, default=None)
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     tacks_amount = models.PositiveIntegerField(default=0)
 
     objects = CustomUserManager()
-
-    # @property
-    # def tacks_rating(self):
-    #     return Review.objects.filter(tacker=self.pk).aggregate(Avg("rating"))[
-    #         "rating__avg"
-    #     ]
 
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = []

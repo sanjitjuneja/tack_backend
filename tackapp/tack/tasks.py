@@ -12,12 +12,3 @@ def change_tack_status(tack_id: int):
     tack.status = TackStatus.finished
     tack.save()
     return True
-
-
-@shared_task
-@transaction.atomic
-def change_tack_status(tack_id: int):
-    tack = Tack.objects.get(pk=tack_id)
-    tack.status = TackStatus.finished
-    tack.save()
-    return True

@@ -24,7 +24,11 @@ class CustomUserCreationForm(UserCreationForm):
 
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
-    list_display = ("username", "email", "first_name", "last_name", "is_staff", "phone_number", "balance")
+    list_display = (
+        "username", "email", "first_name", "last_name",
+        "is_staff", "phone_number", "balance",
+    )
+    list_display_links = "phone_number",
     fieldsets = (
         (None, {"fields": ("phone_number", "password")}),
         (_("Personal info"), {"fields": (

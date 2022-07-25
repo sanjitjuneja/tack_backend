@@ -34,7 +34,9 @@ class CustomPasswordValidator:
     def get_help_text(self):
         return ""
 
-# def price_validator(value) -> bool:
-#     print(value)
-#     print(type(value))
-#     return True
+
+def supported_currency(currency):
+    supported_currencies = ("USD",)
+    if currency in supported_currencies:
+        return True
+    raise ValidationError(f"Currency must be in one of those: {supported_currencies}")

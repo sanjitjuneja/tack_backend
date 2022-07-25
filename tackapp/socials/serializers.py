@@ -5,7 +5,8 @@ from core.validators import password_validator
 
 
 class SMSSendSerializer(serializers.Serializer):
-    phone_number = PhoneNumberField()
+    phone_number = PhoneNumberField(write_only=True)
+    uuid = serializers.CharField(read_only=True)
 
 
 class TwilioUserRegistrationSerializer(serializers.Serializer):
@@ -14,8 +15,9 @@ class TwilioUserRegistrationSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    phone_number = PhoneNumberField()
-    password = serializers.CharField()
+    phone_number = PhoneNumberField(write_only=True)
+    password = serializers.CharField(write_only=True)
+    message = serializers.CharField(read_only=True)
 
 
 class PasswordChangeSerializer(serializers.Serializer):
@@ -35,5 +37,6 @@ class PasswordRecoveryChangeSerializer(serializers.Serializer):
 
 
 class VerifySMSCodeSerializer(serializers.Serializer):
-    sms_code = serializers.CharField(max_length=6)
-    uuid = serializers.CharField(max_length=36)
+    sms_code = serializers.CharField(max_length=6, write_only=True)
+    uuid = serializers.CharField(max_length=36, write_only=True)
+    message = serializers.CharField(read_only=True)

@@ -22,3 +22,33 @@ services:
       - tackapp/.env
     ports:
       - "5432:5432"
+
+  celery:
+    build: .
+    container_name: 'celery'
+    command: celery -A tackapp worker --loglevel=info --logfile=celery.log
+    volumes:
+      - .:/app/
+    env_file:
+      - tackapp/.env
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    container_name: 'redis'
+    image: redis:7-alpine
+
+  flower:
+    build: .
+    container_name: "flower"
+    command: celery -A tackapp --broker=redis://redis:6379/0 flower --port=443
+    ports:
+      - "443:443"
+    env_file:
+      - tackapp/.env
+    depends_on:
+      - web
+      - redis
+      - celery
+      - postgres

@@ -33,7 +33,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "*"]
+ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "35.175.118.114", "*"]
 
 
 # Application definition
@@ -50,13 +50,15 @@ INSTALLED_APPS = [
     "review.apps.ReviewConfig",
     "group.apps.GroupConfig",
     "socials.apps.SocialsConfig",
-    "drf_yasg",
+    "payment.apps.PaymentConfig",
+    "drf_spectacular",
     "rest_framework",
     "debug_toolbar",
     "social_django",
     "sslserver",
     "phonenumber_field",
     "django_filters",
+    "djmoney",
 ]
 
 
@@ -209,6 +211,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # 'DEFAULT_RENDERER_CLASSES': (
     #     'rest_framework.renderers.JSONRenderer',
     # ),
@@ -216,6 +219,15 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.JSONParser',
     # ),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+}
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Your Project API',
+    'DESCRIPTION': 'Your project description',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': "/api/v1",
+    # 'SCHEMA_PATH_PREFIX_TRIM': True,
+    'COMPONENT_SPLIT_REQUEST': True
 }
 
 # Twilio

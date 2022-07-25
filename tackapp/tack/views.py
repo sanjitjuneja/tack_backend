@@ -6,8 +6,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg.utils import swagger_auto_schema, no_body
-
 from core.permissions import *
 from core.choices import TackStatus, OfferType
 from group.models import GroupTacks
@@ -52,10 +50,9 @@ class TackViewset(
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Runner"""
 
-        qs = Tack.objects.filter(runner=request.user).prefetch_related("tacker")
+        qs = Tack.objects.filter(runner=request.user)
         qs = self.filter_queryset(qs)
-        serializer = TackDetailSerializer(qs, many=True)
-        # serializer = self.serializer_class(qs, many=True)
+        serializer = self.serializer_class(qs, many=True)
         return Response(serializer.data)
 
     @action(
@@ -81,7 +78,7 @@ class TackViewset(
         methods=["POST"],
         detail=True,
         serializer_class=serializers.Serializer,
-        permission_classes=TackFromRunnerPermission
+        permission_classes=(TackFromRunnerPermission,)
     )
     def start_tack(self, request, *args, **kwargs):
         """Endpoint for Runner to start doing the Tack"""
@@ -90,6 +87,7 @@ class TackViewset(
         tack.change_status(TackStatus.in_progress)
         return Response(self.get_serializer(tack).data)
 
+    # TODO: deprecated?
     # @action(methods=["POST"], detail=True, serializer_class=serializers.Serializer)
     # def confirm_complete(self, request, *args, **kwargs):
     #     """Endpoint for Tacker to confirm completion of a Tack"""
@@ -173,7 +171,14 @@ class OfferViewset(
     def accept(self, request, *args, **kwargs):
         """Endpoint for Tacker to accept Runner's offer"""
 
+        # TODO: check Tacker balance
+        # user.balance < tack.price - redirect on payment
+
         offer = self.get_object()
+        price = offer.price if offer.price else offer.tack.price
+        if request.user.balance < price:
+            return Response({"message": "Not enough money"}, status=400)
+
         accept_offer(offer)
         serializer = OfferSerializer(offer)
         return Response(serializer.data)

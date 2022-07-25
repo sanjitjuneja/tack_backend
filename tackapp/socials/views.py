@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views
 from rest_framework.response import Response
@@ -18,7 +19,8 @@ from core.choices import SMSType
 class TwilioSendMessage(views.APIView):
     """View for sending SMS to user for subsequent verification"""
 
-    @swagger_auto_schema(request_body=SMSSendSerializer, responses={200: "uuid", 400: "error_message"})
+    # @swagger_auto_schema(request_body=SMSSendSerializer, responses={200: "uuid", 400: "error_message"})
+    @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -47,7 +49,11 @@ class TwilioSendMessage(views.APIView):
 class TwilioUserRegistration(views.APIView):
     """View for User registration with phone number"""
 
-    @swagger_auto_schema(request_body=TwilioUserRegistrationSerializer)
+    # @swagger_auto_schema(request_body=TwilioUserRegistrationSerializer)
+    @extend_schema(
+        request=TwilioUserRegistrationSerializer,
+        responses={
+            200: TwilioUserRegistrationSerializer, 400: {"message": "text"}})
     @transaction.atomic
     def post(self, request):
         serializer = TwilioUserRegistrationSerializer(data=request.data)
@@ -75,7 +81,8 @@ class TwilioUserRegistration(views.APIView):
 class Login(views.APIView):
     """Login view"""
 
-    @swagger_auto_schema(request_body=LoginSerializer)
+    # @swagger_auto_schema(request_body=LoginSerializer)
+    @extend_schema(request=LoginSerializer, responses=LoginSerializer)
     def post(self, request):
         phone_number = request.data.get("phone_number")
         password = request.data.get("password")
@@ -90,6 +97,7 @@ class Login(views.APIView):
 class Logout(views.APIView):
     """Logout view"""
 
+    @extend_schema(request=serializers.Serializer, responses=serializers.Serializer)
     def get(self, request):
         if request.user.is_authenticated:
             logout(request)
@@ -116,7 +124,8 @@ class AccountProfileView(views.APIView):
 class PasswordRecoverySendMessage(views.APIView):
     """View for sending SMS for subsequent password recovery"""
 
-    @swagger_auto_schema(request_body=SMSSendSerializer)
+    # @swagger_auto_schema(request_body=SMSSendSerializer)
+    @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -152,7 +161,8 @@ class PasswordRecoverySendMessage(views.APIView):
 class PasswordRecoveryChange(views.APIView):
     """View for changing user password through recovery"""
 
-    @swagger_auto_schema(request_body=PasswordRecoveryChangeSerializer)
+    # @swagger_auto_schema(request_body=PasswordRecoveryChangeSerializer)
+    @extend_schema(request=PasswordRecoveryChangeSerializer, responses=PasswordRecoveryChangeSerializer)
     def post(self, request):
         if request.user.is_authenticated:
             return Response({"message": "Can not recover password when authorized"})
@@ -181,7 +191,8 @@ class PasswordRecoveryChange(views.APIView):
 class PasswordChange(views.APIView):
     """View for changing user password manually"""
 
-    @swagger_auto_schema(request_body=PasswordChangeSerializer)
+    # @swagger_auto_schema(request_body=PasswordChangeSerializer)
+    @extend_schema(request=PasswordChangeSerializer, responses=PasswordChangeSerializer)
     def post(self, request):
         if not request.user.is_authenticated:
             return Response({"message": "User is not autheticated"}, status=401)
@@ -214,7 +225,8 @@ class PasswordChange(views.APIView):
 class VerifySMSCode(views.APIView):
     """View for verification SMS code"""
 
-    @swagger_auto_schema(request_body=VerifySMSCodeSerializer)
+    # @swagger_auto_schema(request_body=VerifySMSCodeSerializer)
+    @extend_schema(request=VerifySMSCodeSerializer, responses=VerifySMSCodeSerializer)
     def post(self, request):
         serializer = VerifySMSCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
