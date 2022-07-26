@@ -37,7 +37,7 @@ class GroupMembers(models.Model):
 
 
 class GroupInvitations(models.Model):
-    inviter = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_inviter")
+    # inviter = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_inviter")
     invitee = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_invitee")
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
 

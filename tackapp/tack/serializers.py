@@ -116,7 +116,9 @@ class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
         fields = "__all__"
-        read_only_fields = "runner", "is_accepted", "offer_type"
+        read_only_fields = (
+            "runner", "is_accepted", "offer_type", "creation_time", "lifetime_seconds"
+        )
 
 
 class TackUserSerializer(serializers.ModelSerializer):

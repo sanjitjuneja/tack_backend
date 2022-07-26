@@ -55,9 +55,9 @@ class GroupOwnerPermission(BasePermission):
         return obj.owner == request.user
 
 
-class InviterOrInviteePermission(BasePermission):
+class InviteePermission(BasePermission):
     def has_object_permission(self, request, view, obj):
-        return obj.inviter == request.user or obj.invitee == request.user
+        return obj.invitee == request.user
 
 
 class GroupMemberPermission(BasePermission):

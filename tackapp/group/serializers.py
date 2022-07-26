@@ -17,25 +17,42 @@ class GroupMembersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroupMembers
-        fields = "id", "group"
-        read_only_fields = "id", "group"
+        fields = "group",
+        read_only_fields = "group",
+
+# class GroupMembersSerializer(serializers.ModelSerializer):
+#     data = serializers.SerializerMethodField()
+#
+#     def get_data(self, obj: GroupMembers):
+#         return {
+#             "group": {
+#                 obj.group.id,
+#                 obj.group.owner.id,
+#                 obj.group.name,
+#                 obj.group.description,
+#                 obj.group.image,
+#                 obj.group.is_public
+#             }
+#         }
+#
+#     class Meta:
+#         model = GroupMembers
+#         fields = "group", "data"
+#         read_only_fields = "group", "data"
 
 
 class GroupInvitationsSerializer(serializers.ModelSerializer):
-    inviter = UserSerializer()
     group = GroupSerializer()
 
     class Meta:
         model = GroupInvitations
         fields = "__all__"
-        read_only_fields = "inviter",
 
 
 class GroupInvitationsPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupInvitations
         fields = "__all__"
-        read_only_fields = "inviter",
 
 
 class UserInviteSerializer(serializers.Serializer):

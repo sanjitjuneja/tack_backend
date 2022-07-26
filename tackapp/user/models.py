@@ -47,15 +47,6 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150, default="")
     phone_number = PhoneNumberField(unique=True)
     birthday = models.DateField(null=True, blank=True)
-    balance = MoneyField(
-        max_digits=8,
-        decimal_places=2,
-        default_currency="USD",
-        default=0,
-        validators=[
-            MinMoneyValidator(0),
-            MaxMoneyValidator(999_999),
-        ])
     active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, default=None)
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     tacks_amount = models.PositiveIntegerField(default=0)

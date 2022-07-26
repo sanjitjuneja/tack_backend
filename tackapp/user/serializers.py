@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User
+from payment.models import BankAccount
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,7 +21,6 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "password",
             "active_group",
-            "balance"
         )
         read_only_fields = ("active_group",)
         extra_kwargs = {"password": {"write_only": True}}

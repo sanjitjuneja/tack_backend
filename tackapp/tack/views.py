@@ -11,7 +11,7 @@ from core.choices import TackStatus, OfferType
 from group.models import GroupTacks
 from .serializers import *
 from .services import accept_offer, complete_tack
-from .tasks import change_tack_status
+from .tasks import change_tack_status, delete_offer_task
 
 
 class TackViewset(
@@ -160,6 +160,7 @@ class OfferViewset(
 
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
+
         return Response(serializer.data, status=201, headers=headers)
 
     @action(
@@ -213,4 +214,4 @@ class OfferViewset(
         return Response(status=204)
 
     def perform_create(self, serializer):
-        serializer.save(runner=self.request.user)
+        offer = serializer.save(runner=self.request.user)

@@ -26,14 +26,14 @@ class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     list_display = (
         "username", "email", "first_name", "last_name",
-        "is_staff", "phone_number", "balance",
+        "is_staff", "phone_number",
     )
     list_display_links = "phone_number",
     fieldsets = (
         (None, {"fields": ("phone_number", "password")}),
         (_("Personal info"), {"fields": (
             "username", "first_name", "last_name", "email",
-            "balance", "profile_picture", "birthday")}
+            "profile_picture", "birthday")}
          ),
         (
             _("Permissions"),

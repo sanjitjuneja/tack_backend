@@ -1,9 +1,11 @@
+from decimal import Decimal
+
 from djmoney.money import Money
 from drf_spectacular.utils import extend_schema
 from rest_framework import views
 from rest_framework.response import Response
 
-from payment.serializers import AddBalanceSerializer, MoneyWithdrawalSerializer
+from payment.serializers import AddBalanceSerializer, MoneyWithdrawalSerializer, BankAccountSerializer
 from user.serializers import UserSerializer
 
 
@@ -18,9 +20,9 @@ class AddBalance(views.APIView):
         serializer = AddBalanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        request.user.balance += Money(serializer.data["balance"], serializer.data["balance_currency"])
-        request.user.save()
-        return Response(UserSerializer(request.user).data)
+        request.user.bankaccount.usd_balance += Decimal(serializer.data["balance"])
+        request.user.bankaccount.save()
+        return Response(BankAccountSerializer(request.user.bankaccount).data)
 
 
 class MoneyWithdrawal(views.APIView):
@@ -34,9 +36,9 @@ class MoneyWithdrawal(views.APIView):
         serializer = MoneyWithdrawalSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if Money(serializer.data["balance"], serializer.data["balance_currency"]) > request.user.balance:
+        if Decimal(serializer.data["balance"]) > request.user.bankaccount.usd_balance:
             return Response({"error": "Not enough money"})
-        request.user.balance -= Money(serializer.data["balance"], serializer.data["balance_currency"])
-        request.user.save()
+        request.user.bankaccount.usd_balance -= Decimal(serializer.data["balance"])
+        request.user.bankaccount.save()
 
-        return Response(UserSerializer(request.user).data)
+        return Response(BankAccountSerializer(request.user.bankaccount).data)
