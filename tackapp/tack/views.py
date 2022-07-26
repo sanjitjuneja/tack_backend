@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import views, viewsets, mixins
@@ -11,7 +12,7 @@ from core.choices import TackStatus, OfferType
 from group.models import GroupTacks
 from .serializers import *
 from .services import accept_offer, complete_tack
-from .tasks import change_tack_status, delete_offer_task
+from .tasks import change_tack_status_finished, delete_offer_task
 
 
 class TackViewset(
@@ -71,7 +72,7 @@ class TackViewset(
             return Response({"detail": "Current Tack status is not In Progress"})
 
         complete_tack(tack, serializer.validated_data["message"])
-        task = change_tack_status.apply_async(countdown=300, kwargs={"tack_id": tack.id})
+        task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(serializer.data, status=200)
 
     @action(
@@ -177,8 +178,14 @@ class OfferViewset(
 
         offer = self.get_object()
         price = offer.price if offer.price else offer.tack.price
-        if request.user.balance < price:
-            return Response({"message": "Not enough money"}, status=400)
+        if request.user.bankaccount.usd_balance < price:
+            return Response(
+                {
+                    "message": "Not enough money",
+                    "balance": request.user.bankaccount.usd_balance,
+                    "tack_price": price
+                },
+                status=400)
 
         accept_offer(offer)
         serializer = OfferSerializer(offer)

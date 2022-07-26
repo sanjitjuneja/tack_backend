@@ -86,7 +86,8 @@ class AcceptOfferSerializer(serializers.ModelSerializer):
             "runner",
             "price",
             "offer_type",
-            "is_accepted"
+            "is_accepted",
+            "lifetime_seconds"
         )
 
     # def to_representation(self, instance):

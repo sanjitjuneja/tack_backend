@@ -22,7 +22,7 @@ class GroupViewset(viewsets.ModelViewSet):
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = Group.objects.filter(groupmembers__member=request.user)
+        qs = Group.objects.filter(groupmembers__member=request.user).distinct()
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 

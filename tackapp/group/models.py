@@ -14,6 +14,7 @@ class Group(models.Model):
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default="")
     creation_time = models.DateTimeField(auto_now_add=True)
+    # members_count
 
     def __str__(self):
         return f"{self.name}"
@@ -28,16 +29,16 @@ class GroupMembers(models.Model):
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
 
-    UniqueConstraint(fields=['group', 'member'], name='unique_member_for_group')
-
     class Meta:
         db_table = "group_membership"
         verbose_name = "Group membership"
         verbose_name_plural = "Groups membership"
+        constraints = [
+            UniqueConstraint(fields=['group', 'member'], name='unique_member_for_group')
+        ]
 
 
 class GroupInvitations(models.Model):
-    # inviter = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_inviter")
     invitee = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_invitee")
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
 

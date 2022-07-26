@@ -1,16 +1,23 @@
 from celery import shared_task
 from django.db import transaction
 
+from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
 from core.choices import TackStatus
 
 
 @shared_task
 @transaction.atomic
-def change_tack_status(tack_id: int):
+def change_tack_status_finished(tack_id: int):
     tack = Tack.objects.get(pk=tack_id)
-    tack.status = TackStatus.finished
-    tack.save()
+    if tack.status != TackStatus.finished:
+        send_payment_to_runner(tack)
+        tack.status = TackStatus.finished
+        tack.tacker.tacks_amount += 1
+        tack.runner.tacks_amount += 1
+        tack.tacker.save()
+        tack.runner.save()
+        tack.save()
     return True
 
 

@@ -34,6 +34,7 @@ class Tack(models.Model):
     status = models.CharField(
         max_length=16, choices=TackStatus.choices, default=TackStatus.created
     )
+    is_paid = models.BooleanField(default=False)
     # setting after Runner completed the Tack
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
@@ -83,7 +84,6 @@ class Offer(models.Model):
         db_table = "offers"
         verbose_name = "Offer"
         verbose_name_plural = "Offers"
-
         constraints = [
             UniqueConstraint(fields=['tack', 'runner'], name='unique_runner_for_tack')
         ]

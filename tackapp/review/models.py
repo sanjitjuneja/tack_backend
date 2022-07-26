@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+
 from core.choices import ReviewRating
 
 
@@ -19,3 +21,6 @@ class Review(models.Model):
         db_table = "reviews"
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
+        constraints = [
+            UniqueConstraint(fields=['user', 'tack'], name='unique_user_for_tack')
+        ]

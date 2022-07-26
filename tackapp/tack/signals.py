@@ -20,7 +20,6 @@ def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
 @receiver(signal=post_save, sender=Tack)
 def assign_tack_with_group(instance: Tack, created: bool, *args, **kwargs):
     if created:
-        print("here")
         GroupTacks.objects.create(group=instance.tacker.active_group, tack=instance)
 
 

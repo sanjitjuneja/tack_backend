@@ -1,12 +1,17 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
+from core.choices import TackStatus
 from core.permissions import ReviewPermission
 from review.models import Review
 from review.serializers import ReviewSerializer
 
 
-class ReviewViewset(viewsets.ModelViewSet):
+class ReviewViewset(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = (ReviewPermission,)
@@ -19,13 +24,23 @@ class ReviewViewset(viewsets.ModelViewSet):
         tack = serializer.validated_data["tack"]
         if not tack.is_participant(request.user):
             return Response({"detail": "You do not have permission to perform this action."})
+        if tack.status != TackStatus.waiting_review:
+            return Response({"detail": f"Tack is not in status {TackStatus.waiting_review}"})
 
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=201, headers=headers)
+        try:
+            review = Review.objects.get(tack=tack, user=request.user)
+            return Response(
+                {
+                    "detail": "You are already have a review on this Tack",
+                    "review": ReviewSerializer(review).data
+                },
+                status=400)
+        except ObjectDoesNotExist:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=201, headers=headers)
+        except MultipleObjectsReturned:
+            return Response({"detail": "Multiple reviews found"}, status=400)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-    def perform_update(self, serializer):
         serializer.save(user=self.request.user)
