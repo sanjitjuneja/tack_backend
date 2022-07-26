@@ -40,6 +40,7 @@ class TackDetailSerializer(serializers.ModelSerializer):
             "status",
             "completion_message",
             "completion_time",
+            "is_paid"
         )
 
 
