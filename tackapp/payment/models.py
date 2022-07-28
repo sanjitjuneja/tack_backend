@@ -9,6 +9,7 @@ class BankAccount(models.Model):
             MinValueValidator(0),
             MaxValueValidator(999_999_99),
         ),
+        default=0
     )
     # stripe_user
 
