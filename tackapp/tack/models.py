@@ -29,7 +29,6 @@ class Tack(models.Model):
     )
     description = models.CharField(max_length=512)
     creation_time = models.DateTimeField(auto_now_add=True)
-    expiration_time = models.DateTimeField()
     allow_counter_offer = models.BooleanField()
     status = models.CharField(
         max_length=16, choices=TackStatus.choices, default=TackStatus.created

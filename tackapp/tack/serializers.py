@@ -14,7 +14,6 @@ class TackSerializer(serializers.ModelSerializer):
             "title",
             "price",
             "status",
-            "expiration_time",
             "estimation_time_seconds",
         )
         read_only_fields = (
