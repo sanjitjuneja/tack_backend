@@ -41,7 +41,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
-    bankaccount = BankAccountSerializer()
+    bankaccount = BankAccountSerializer(read_only=True)
 
     class Meta:
         model = User
@@ -64,4 +64,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "tacks_amount",
             "bankaccount",
             "active_group",
+            "phone_number",
+            "profile_picture",
+            "active_group"
         )
