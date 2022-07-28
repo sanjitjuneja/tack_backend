@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from payment.serializers import BankAccountSerializer
 from .models import User
 from payment.models import BankAccount
 
@@ -35,4 +37,31 @@ class UserListSerializer(serializers.ModelSerializer):
             "last_name",
             "tacks_rating",
             "tacks_amount",
+        )
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    bankaccount = BankAccountSerializer()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "tacks_rating",
+            "tacks_amount",
+            "bankaccount",
+            "email",
+            "profile_picture",
+            "phone_number",
+            "birthday",
+            "active_group",
+        )
+        read_only_fields = (
+            "id",
+            "tacks_rating",
+            "tacks_amount",
+            "bankaccount",
+            "active_group",
         )

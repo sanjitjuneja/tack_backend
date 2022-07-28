@@ -1,6 +1,7 @@
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from review.serializers import ReviewSerializer
@@ -13,8 +14,15 @@ class UsersViewset(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username', '=phone_number')
+
+    @action(methods=["GET"], detail=False, serializer_class=UserDetailSerializer)
+    def me(self, request, *args, **kwargs):
+        self.queryset = User.objects.all().prefetch_related("bankaccount")
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=True)
     def reviews_as_reviewed(self, request, *args, **kwargs):
