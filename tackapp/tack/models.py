@@ -18,15 +18,13 @@ class Tack(models.Model):
         "user.User", on_delete=models.DO_NOTHING, related_name="tack_runner", null=True, blank=True
     )
     title = models.CharField(max_length=64)
-    price = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
+    price = models.IntegerField(
         validators=(
-            DecimalValidator(8, 2),
             MinValueValidator(0),
-            MaxValueValidator(999_999.99),
+            MaxValueValidator(999_999_99),
         ),
     )
+    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True)
     description = models.CharField(max_length=512)
     creation_time = models.DateTimeField(auto_now_add=True)
     allow_counter_offer = models.BooleanField()
@@ -64,13 +62,10 @@ class Tack(models.Model):
 class Offer(models.Model):
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
     runner = models.ForeignKey("user.User", on_delete=models.CASCADE)
-    price = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
+    price = models.IntegerField(
         validators=(
-            DecimalValidator(8, 2),
             MinValueValidator(0),
-            MaxValueValidator(999_999.99),
+            MaxValueValidator(999_999_99),
         ),
         null=True
     )

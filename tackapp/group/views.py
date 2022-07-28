@@ -74,6 +74,9 @@ class GroupViewset(viewsets.ModelViewSet):
         group = self.get_object()
         try:
             gm = GroupMembers.objects.get(member=request.user, group=group)
+            if request.user.active_group == group:
+                request.user.active_group = None
+                request.user.save()
             gm.delete()
         except ObjectDoesNotExist:
             return Response({"message": "You are not a member of this group"}, status=400)
@@ -100,7 +103,7 @@ class GroupViewset(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def perform_update(self, serializer):
-        serializer.save(owner=self.request.user)
+        serializer.save()
 
 
 class InvitesView(

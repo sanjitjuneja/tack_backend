@@ -4,15 +4,13 @@ from django.db import models
 
 class BankAccount(models.Model):
     user = models.OneToOneField("user.User", on_delete=models.CASCADE)
-    usd_balance = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        default=0,
-        validators=[
-            DecimalValidator(8, 2),
+    usd_balance = models.IntegerField(
+        validators=(
             MinValueValidator(0),
-            MaxValueValidator(999_999.99),
-        ])
+            MaxValueValidator(999_999_99),
+        ),
+    )
+    # stripe_user
 
     class Meta:
         db_table = "bank_account"

@@ -19,6 +19,7 @@ class TackViewset(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
@@ -37,6 +38,24 @@ class TackViewset(
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        tack = self.get_object()
+        serializer = self.get_serializer(tack, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        if tack.status != TackStatus.created:
+            return Response({"error": "You cannot change Tack with active offers"}, status=400)
+
+        self.perform_update(serializer)
+
+        if getattr(tack, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            tack._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=False, url_path="me/as_tacker")
     def me_as_tacker(self, request, *args, **kwargs):
@@ -118,7 +137,7 @@ class TackViewset(
         return Response(data)
 
     def perform_create(self, serializer):
-        serializer.save(tacker=self.request.user)
+        serializer.save(tacker=self.request.user, group=self.request.user.active_group)
         # TODO: send notifications OR/AND make record in TackGroup table  (signals already?)
 
     def perform_update(self, serializer):
@@ -221,4 +240,4 @@ class OfferViewset(
         return Response(status=204)
 
     def perform_create(self, serializer):
-        offer = serializer.save(runner=self.request.user)
+        serializer.save(runner=self.request.user)
