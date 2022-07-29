@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm
 from django.forms import forms
+from django.contrib.sessions.models import Session
 
 from .models import *
 from django.utils.translation import gettext_lazy as _
@@ -25,8 +27,8 @@ class CustomUserCreationForm(UserCreationForm):
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     list_display = (
-        "username", "email", "first_name", "last_name",
-        "is_staff", "phone_number",
+        "id", "phone_number", "email", "first_name", "last_name",
+        "is_staff", "username",
     )
     list_display_links = "phone_number",
     fieldsets = (
@@ -57,4 +59,11 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
+class SessionAdmin(ModelAdmin):
+    def _session_data(self, obj):
+        return obj.get_decoded()
+    list_display = ['session_key', '_session_data', 'expire_date']
+
+
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(Session, SessionAdmin)
