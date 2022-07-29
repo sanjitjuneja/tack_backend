@@ -11,7 +11,8 @@ class UserSerializer(serializers.ModelSerializer):
             phone_number=validated_data.pop("phone_number"),
             password=validated_data.pop("password"),
             first_name=validated_data.pop("first_name"),
-            last_name=validated_data.pop("last_name"))
+            last_name=validated_data.pop("last_name"),
+            email=validated_data.pop("email"))
         return instance
 
     class Meta:
@@ -23,6 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "password",
             "active_group",
+            "email",
         )
         read_only_fields = ("active_group",)
         extra_kwargs = {"password": {"write_only": True}}

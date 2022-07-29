@@ -222,6 +222,8 @@ REST_FRAMEWORK = {
     # 'DEFAULT_PARSER_CLASSES': (
     #     'rest_framework.parsers.JSONParser',
     # ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 SPECTACULAR_SETTINGS = {

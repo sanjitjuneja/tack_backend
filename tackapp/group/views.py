@@ -23,6 +23,11 @@ class GroupViewset(viewsets.ModelViewSet):
         """Endpoint for get all User's groups he is member of"""
 
         qs = Group.objects.filter(groupmembers__member=request.user).distinct()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
@@ -128,8 +133,14 @@ class InvitesView(
     def me(self, request, *args, **kwargs):
         """Endpoint for view current User's Group invites"""
 
-        qs_gi = GroupInvitations.objects.filter(invitee=request.user)
-        serializer = self.get_serializer(qs_gi, many=True)
+        qs = GroupInvitations.objects.filter(invitee=request.user)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(methods=["POST"], detail=True, serializer_class=serializers.Serializer)
