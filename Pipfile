@@ -27,6 +27,8 @@ celery = "*"
 flower = "*"
 django-money = "*"
 drf-spectacular = "*"
+djangorestframework-simplejwt = "==5.2.0"
+djoser = "*"
 
 [dev-packages]
 

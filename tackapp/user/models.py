@@ -2,8 +2,6 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-from djmoney.models.fields import MoneyField
-from djmoney.models.validators import MaxMoneyValidator, MinMoneyValidator
 from review.models import Review
 
 
