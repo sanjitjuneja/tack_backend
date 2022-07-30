@@ -47,8 +47,9 @@ class UsersViewset(
 
         user = self.get_object()
         reviews_qs = get_reviews_by_user(user)
-        serializer = ReviewSerializer(reviews_qs, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(reviews_qs)
+        serializer = ReviewSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=["GET"], detail=True)
     def reviews_as_reviewer(self, request, *args, **kwargs):
@@ -56,5 +57,6 @@ class UsersViewset(
 
         user = self.get_object()
         reviews_qs = get_reviews_as_reviewer_by_user(user)
-        serializer = ReviewSerializer(reviews_qs, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(reviews_qs)
+        serializer = ReviewSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)

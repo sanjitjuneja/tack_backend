@@ -147,11 +147,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -226,9 +223,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
+
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Your Project API',
-    'DESCRIPTION': 'Your project description',
+    'TITLE': 'Tackapp API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': "/api/v1",
@@ -240,12 +237,6 @@ SPECTACULAR_SETTINGS = {
 TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
-
-
-# Swagger
-# SWAGGER_SETTINGS = {
-#     "USE_SESSION_AUTH": False
-# }
 
 
 def show_toolbar(request):

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from core.choices import OfferType
+from group.serializers import GroupSerializer
 from user.serializers import UserSerializer, UserListSerializer
 from .models import *
 
@@ -25,11 +26,10 @@ class TackSerializer(serializers.ModelSerializer):
 
 
 class TackDetailSerializer(serializers.ModelSerializer):
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     for _ in TackStatus.choices:
-    #         ret["status"] = _[1] if ret["status"] == _[0] else ret["status"]
-    #     return ret
+    tacker = UserListSerializer(read_only=True)
+    runner = UserListSerializer(read_only=True)
+    group = GroupSerializer(read_only=True)
+
     class Meta:
         model = Tack
         fields = "__all__"
@@ -62,6 +62,7 @@ class TackRunnerSerializer(serializers.ModelSerializer):
             "completion_message",
             "completion_time",
         )
+
 
 class AcceptRunnerSerializer(serializers.Serializer):
     runner_id = serializers.IntegerField(min_value=1)

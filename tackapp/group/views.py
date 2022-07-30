@@ -1,12 +1,15 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from core.choices import TackStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
+from tack.models import Tack
 from tack.serializers import TackDetailSerializer
 from .serializers import *
 from .services import get_tacks_by_group
@@ -48,7 +51,11 @@ class GroupViewset(viewsets.ModelViewSet):
 
     @extend_schema(
         request=GroupInviteLinkSerializer,
-        responses={200: GroupInvitationsSerializer, 404: {"message": "text"}}
+        responses={200: GroupInvitationsSerializer, 404: {"message": "text"}},
+        parameters=[
+            OpenApiParameter(name='uuid', location=OpenApiParameter.QUERY, description='Group unique id',
+                             required=True, type=OpenApiTypes.UUID),
+        ],
     )
     @action(
         methods=["GET"],
@@ -72,7 +79,8 @@ class GroupViewset(viewsets.ModelViewSet):
         return Response(invite_serializer.data)
 
     @extend_schema(responses={"message"})
-    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,),
+            serializer_class=serializers.Serializer)
     def leave(self, request, *args, **kwargs):
         """Endpoint for leaving Group"""
 
@@ -88,14 +96,24 @@ class GroupViewset(viewsets.ModelViewSet):
 
         return Response({"message": "Leaved Successfully"})
 
-    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,))
+    @action(methods=["GET"], detail=True, serializer_class=TackDetailSerializer,
+            permission_classes=(GroupMemberPermission,))
     def tacks(self, request, *args, **kwargs):
         """Endpoint for getting *created* and *active* Tacks of certain Group"""
 
         group = self.get_object()
-        tacks = get_tacks_by_group(group)
-        serializer = TackDetailSerializer(tacks, many=True)
-        return Response(serializer.data)
+        tacks = Tack.objects.filter(group=group, status__in=[TackStatus.created, TackStatus.active]).select_related("tacker", "runner", "group")
+        page = self.paginate_queryset(tacks)
+        serializer = TackDetailSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(methods=["GET"], detail=True, serializer_class=UserListSerializer, permission_classes=(GroupMemberPermission,))
+    def members(self, request, *args, **kwargs):
+        group = self.get_object()
+        users_qs = User.objects.filter(groupmembers__group=group)
+        page = self.paginate_queryset(users_qs)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,))
     def get_invite_link(self, request, *args, **kwargs):
@@ -136,12 +154,8 @@ class InvitesView(
         qs = GroupInvitations.objects.filter(invitee=request.user)
 
         page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=["POST"], detail=True, serializer_class=serializers.Serializer)
     def accept(self, request, *args, **kwargs):

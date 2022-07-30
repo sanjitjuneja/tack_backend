@@ -61,19 +61,31 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        qs = Tack.objects.filter(tacker=request.user)
+        qs = Tack.objects.filter(tacker=request.user).prefetch_related("tacker")
         qs = self.filter_queryset(qs)
-        serializer = self.serializer_class(qs, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(qs)
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
-    @action(methods=["GET"], detail=False, url_path="me/as_runner")
+    # @action(methods=["GET"], detail=False, url_path="me/as_runner")
+    # def me_as_runner(self, request, *args, **kwargs):
+    #     """Endpoint to display current User's Tacks as Runner"""
+    #
+    #     qs = Tack.objects.filter(runner=request.user).prefetch_related("tacker")
+    #     qs = self.filter_queryset(qs)
+    #     page = self.paginate_queryset(qs)
+    #     serializer = self.serializer_class(page, many=True)
+    #     return self.get_paginated_response(serializer.data)
+
+    @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
     def me_as_runner(self, request, *args, **kwargs):
-        """Endpoint to display current User's Tacks as Runner"""
+        """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        qs = Tack.objects.filter(runner=request.user)
-        qs = self.filter_queryset(qs)
-        serializer = self.serializer_class(qs, many=True)
-        return Response(serializer.data)
+        offers = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner")
+        page = self.paginate_queryset(offers)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
 
     @action(
         methods=["POST"],
@@ -107,34 +119,16 @@ class TackViewset(
         tack.change_status(TackStatus.in_progress)
         return Response(self.get_serializer(tack).data)
 
-    # TODO: deprecated?
-    # @action(methods=["POST"], detail=True, serializer_class=serializers.Serializer)
-    # def confirm_complete(self, request, *args, **kwargs):
-    #     """Endpoint for Tacker to confirm completion of a Tack"""
-    #
-    #     tack = self.get_object()
-    #
-    #     if not tack.completion_time:
-    #         return Response(
-    #             {"message": "Tack is not finished yet from Runner side"}, status=400)
-    #     if tack.status == TackStatus.finished:
-    #         return Response({"message": "That Tack is already finished"}, status=400)
-    #
-    #     tack.change_status(TackStatus.finished)
-    #     return Response({"message": "Tack status changed to Finished"}, status=200)
-
-    @action(methods=["GET"], detail=True, permission_classes=(StrictTackOwnerPermission,))
+    @action(methods=["GET"], detail=True, serializer_class=OfferSerializer, permission_classes=(StrictTackOwnerPermission,))
     def offers(self, request, *args, **kwargs):
         """Endpoint to display Offers related to specific Tack"""
 
         # TODO filter backend? maybe
         tack = self.get_object()
         offers = Offer.objects.filter(tack=tack)
-        if not offers:
-            return Response([])
-
-        data = OfferSerializer(offers, many=True).data
-        return Response(data)
+        page = self.paginate_queryset(offers)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(tacker=self.request.user, group=self.request.user.active_group)
@@ -155,14 +149,6 @@ class OfferViewset(
     permission_classes = (OfferPermission,)  # TODO: Allows to see offers by id
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('offer_type',)
-
-    # @action(methods=["GET"], detail=False)
-    # def me(self, request, *args, **kwargs):
-    #     """Endpoint to display current User's Offers"""
-    #
-    #     qs = self.filter_queryset(Offer.objects.filter(runner=request.user))
-    #     serializer = self.get_serializer(qs, many=True)
-    #     return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         """Endpoint for creating Runner-side offers. Provide price ONLY for Counter-offering"""
@@ -210,25 +196,12 @@ class OfferViewset(
         serializer = OfferSerializer(offer)
         return Response(serializer.data)
 
-    @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer)
+    @action(methods=["GET"], detail=False)
     def me(self, request, *args, **kwargs):
-        """Endpoint to display current User's Offers"""
-
-        qs = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner")
-        offers_qs = self.filter_queryset(qs)
-        serializer = self.get_serializer(offers_qs, many=True)
-        return Response(serializer.data)
-
-    # @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer)
-    # def me(self, request, *args, **kwargs):
-    #     """Endpoint to display current User's Offers"""
-    #
-    #     qs_offers = Offer.objects.filter(runner=request.user)
-    #     print(f"{qs = }")
-    #     offers_qs = self.filter_queryset(qs)
-    #     print(f"{offers_qs = }")
-    #     serializer = self.get_serializer(offers_qs, many=True)
-    #     return Response(serializer.data)
+        qs = Offer.objects.filter(runner=request.user)
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         """Endpoint for Runner to delete their own not accepted Offers"""

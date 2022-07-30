@@ -61,6 +61,9 @@ class InviteePermission(BasePermission):
 
 
 class GroupMemberPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
         try:
             GroupMembers.objects.get(group=obj, member=request.user)

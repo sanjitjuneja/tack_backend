@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from user.models import User
-from user.serializers import UserSerializer
+from user.serializers import UserSerializer, UserListSerializer
 from .models import *
 
 
@@ -13,12 +13,13 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class GroupMembersSerializer(serializers.ModelSerializer):
-    group = GroupSerializer()
+    group = GroupSerializer(read_only=True)
+    member = UserListSerializer(read_only=True)
 
     class Meta:
         model = GroupMembers
-        fields = "group",
-        read_only_fields = "group",
+        fields = "group", "member"
+        read_only_fields = "group", "member"
 
 # class GroupMembersSerializer(serializers.ModelSerializer):
 #     data = serializers.SerializerMethodField()
