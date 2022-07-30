@@ -14,6 +14,7 @@ class PhoneVerification(models.Model):
     message_sid = models.CharField(max_length=64)
     sms_type = models.CharField(max_length=2, choices=SMSType.choices)
     is_verified = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now=True)  # For expiration purposes
 
     class Meta:
         db_table = "verifications"

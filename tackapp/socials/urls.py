@@ -21,11 +21,11 @@ urlpatterns = [
     ),
     path(r"verify/sms-code/", VerifySMSCode.as_view(), name="verify-sms-code"),
     path(
-        r"accounts/password-change/",
+        r"users/me/password-change/",
         PasswordChange.as_view(),
         name="accounts-password-change",
     ),
-    path(r"accounts/login/", Login.as_view(), name="accounts-login"),
-    path(r"accounts/logout/", Logout.as_view(), name="accounts-logout"),
+    # path(r"accounts/login/", Login.as_view(), name="accounts-login"),
+    # path(r"accounts/logout/", Logout.as_view(), name="accounts-logout"),
     # path(r"accounts/profile/", AccountProfileView.as_view(), name="accounts-profile"),
 ]

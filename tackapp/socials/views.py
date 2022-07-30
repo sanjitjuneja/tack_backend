@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from drf_spectacular.utils import extend_schema
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views
@@ -6,6 +8,7 @@ from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
+from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
 from user.models import User
@@ -66,8 +69,8 @@ class TwilioUserRegistration(views.APIView):
                 return Response(
                     {"message": "SMS code wasn't verified in previous step"}, status=400
                 )
-
-            user_serializer = UserSerializer(data=serializer.validated_data["user"])
+            user_data = serializer.validated_data["user"].copy() | {"phone_number": phv.phone_number.as_e164}
+            user_serializer = UserSerializer(data=user_data)
             user_serializer.is_valid(raise_exception=True)
             user = user_serializer.save()
 
@@ -78,47 +81,32 @@ class TwilioUserRegistration(views.APIView):
             return Response({"message": "invalid uuid"}, status=400)
 
 
-class Login(views.APIView):
-    """Login view"""
-
-    # @swagger_auto_schema(request_body=LoginSerializer)
-    @extend_schema(request=LoginSerializer, responses=LoginSerializer)
-    def post(self, request):
-        phone_number = request.data.get("phone_number")
-        password = request.data.get("password")
-        user = authenticate(request, phone_number=phone_number, password=password)
-        if user is not None:
-            login(request, user)
-            return Response({"message": "Successfully authorized"})
-        else:
-            return Response({"message": "Invalid credentials"}, status=401)
-
-
-class Logout(views.APIView):
-    """Logout view"""
-
-    @extend_schema(request=serializers.Serializer, responses=serializers.Serializer)
-    def get(self, request):
-        if request.user.is_authenticated:
-            logout(request)
-            return Response({"message": "Successfully logged out"}, status=200)
-        else:
-            return Response({"message": "User not logged in"}, status=200)
+# class Login(views.APIView):
+#     """Login view"""
+#
+#     # @swagger_auto_schema(request_body=LoginSerializer)
+#     @extend_schema(request=LoginSerializer, responses=LoginSerializer)
+#     def post(self, request):
+#         phone_number = request.data.get("phone_number")
+#         password = request.data.get("password")
+#         user = authenticate(request, phone_number=phone_number, password=password)
+#         if user is not None:
+#             login(request, user)
+#             return Response({"message": "Successfully authorized"})
+#         else:
+#             return Response({"message": "Invalid credentials"}, status=401)
 
 
-class AccountProfileView(views.APIView):
-    """Plug-view for displaying information about user"""
-
-    def get(self, request):
-        if request.user.is_authenticated:
-            return Response(
-                {
-                    "is_authenticated": f"{request.user.is_authenticated}",
-                    "user": f"{request.user}",
-                    "phone_number": f"{request.user.phone_number}",
-                }
-            )
-        return Response({"is_authenticated": f"{request.user.is_authenticated}"})
+# class Logout(views.APIView):
+#     """Logout view"""
+#
+#     @extend_schema(request=serializers.Serializer, responses=serializers.Serializer)
+#     def get(self, request):
+#         if request.user.is_authenticated:
+#             logout(request)
+#             return Response({"message": "Successfully logged out"}, status=200)
+#         else:
+#             return Response({"message": "User not logged in"}, status=200)
 
 
 class PasswordRecoverySendMessage(views.APIView):
@@ -152,7 +140,7 @@ class PasswordRecoverySendMessage(views.APIView):
 
         except ObjectDoesNotExist:
             return Response(
-                {"message": "User with given phone number is not found"}, status=400
+                {"message": "User with the given phone number is not found"}, status=400
             )
         except TwilioRestException:
             return Response({"error": "Twilio service temporarily unavailable"}, status=503)
@@ -171,27 +159,28 @@ class PasswordRecoveryChange(views.APIView):
         uuid = serializer.validated_data["uuid"]
 
         phv = PhoneVerification.objects.get(uuid=uuid)
+        if not phv.is_verified:
+            return Response({"message": "You did not verify your SMS code"})
         user = phv.user
         user.set_password(serializer.validated_data["new_password"])
         user.save()
 
-        # Login after password change
-        user = authenticate(
-            request,
-            phone_number=user.phone_number,
-            password=serializer.validated_data["new_password"],
-        )
-        login(request, user)
+        # # Login after password change
+        # user = authenticate(
+        #     request,
+        #     phone_number=user.phone_number,
+        #     password=serializer.validated_data["new_password"],
+        # )
+        # login(request, user)
 
         return Response(
-            {"message": "Password successfully changed and logged in"}, status=200
+            {"message": "Password successfully changed"}, status=200
         )
 
 
 class PasswordChange(views.APIView):
     """View for changing user password manually"""
 
-    # @swagger_auto_schema(request_body=PasswordChangeSerializer)
     @extend_schema(request=PasswordChangeSerializer, responses=PasswordChangeSerializer)
     def post(self, request):
         if not request.user.is_authenticated:
@@ -210,15 +199,18 @@ class PasswordChange(views.APIView):
 
         request.user.set_password(new_password)
         request.user.save()
-
+        refresh = RefreshToken.for_user(request.user)
         # Login after password change
-        user = authenticate(
-            request, phone_number=request.user.phone_number, password=new_password
-        )
-        login(request, user)
+        # user = authenticate(
+        #     request, phone_number=request.user.phone_number, password=new_password
+        # )
 
         return Response(
-            {"message": "Password successfully changed and logged in"}, status=200
+            {
+                "message": "Password successfully changed",
+                "refresh": str(refresh),
+                "access": str(refresh.access_token)
+            }, status=200
         )
 
 
@@ -233,8 +225,11 @@ class VerifySMSCode(views.APIView):
 
         uuid = serializer.validated_data["uuid"]
         sms_code = serializer.validated_data["sms_code"]
+        expiration_time = timedelta(hours=6)
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
+            if datetime.now() > phv.created + expiration_time:
+                return Response({"message": "Verification period expired"}, status=400)
             if sms_code != phv.sms_code:
                 return Response({"message": "SMS code is wrong"}, status=400)
             phv.is_verified = True

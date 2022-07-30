@@ -1,25 +1,11 @@
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include, re_path
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
 from django.conf import settings
 import debug_toolbar
-from rest_framework import permissions
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView, TokenBlacklistView
 
-# schema_view = get_schema_view(
-#     openapi.Info(
-#         title="Snippets API",
-#         default_version="v1",
-#         description="Test description",
-#         terms_of_service="https://www.google.com/policies/terms/",
-#         contact=openapi.Contact(email="contact@snippets.local"),
-#         license=openapi.License(name="BSD License"),
-#     ),
-#     public=True,
-#     permission_classes=(permissions.AllowAny,),
-# )
 
 urlpatterns = [
     re_path(r"admin/", admin.site.urls),
@@ -29,22 +15,17 @@ urlpatterns = [
     re_path(r"api/v1/", include("group.urls")),
     re_path(r"api/v1/", include("review.urls")),
     re_path(r"api/v1/", include("payment.urls")),
+    re_path(r"api/v1/tokens/obtain/", TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    re_path(r"api/v1/tokens/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
+    re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
+    re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
     # re_path(r"", include("social_django.urls", namespace="social")),
-
-    # re_path(
-    #     r"^(?P<format>\.json|\.yaml)$",
-    #     schema_view.without_ui(cache_timeout=0),
-    #     name="schema-json",
-    # ),
-    # re_path(
-    #     r"^$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"
-    # ),
 
     path("__debug__/", include(debug_toolbar.urls)),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('api/v1/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 if settings.DEBUG:
