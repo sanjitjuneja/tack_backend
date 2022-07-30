@@ -57,6 +57,13 @@ class TackViewset(
 
         return Response(serializer.data)
 
+    def destroy(self, request, *args, **kwargs):
+        tack = self.get_object()
+        if tack.status != TackStatus.created:
+            return Response({"message": "You can not delete tacks while it have active offers"})
+        self.perform_destroy(tack)
+        return Response(status=204)
+
     @action(methods=["GET"], detail=False, url_path="me/as_tacker")
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
