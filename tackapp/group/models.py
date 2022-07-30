@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -9,7 +7,7 @@ class Group(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=256, null=True, blank=True)
     image = models.ImageField(
-        null=True, blank=True, upload_to="static/media/group_images/"
+        null=True, blank=True, upload_to="group_images/"
     )
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default="")

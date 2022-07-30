@@ -29,6 +29,7 @@ django-money = "*"
 drf-spectacular = "*"
 djangorestframework-simplejwt = "==5.2.0"
 djoser = "*"
+gunicorn = "*"
 
 [dev-packages]
 

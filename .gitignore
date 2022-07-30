@@ -55,3 +55,4 @@ drf_example
 creds.txt
 CONTAINER_ALREADY_STARTED_PLACEHOLDER
 static/
+media/
