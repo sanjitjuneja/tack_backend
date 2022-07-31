@@ -1,8 +1,20 @@
+from datetime import datetime
+from uuid import uuid4
+
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
+
+from core.validators import username_validator
 from review.models import Review
+
+
+def upload_path_user_avs(instance, filename: str):
+    extension = filename.split(".")[-1]
+    today = datetime.today()
+    year, month = today.year, today.month
+    return f"profiles/{year}/{month}/{uuid4()}.{extension}"
 
 
 class CustomUserManager(BaseUserManager):
@@ -36,10 +48,10 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=150, null=True, blank=True)
+    username = models.CharField(max_length=150, validators=(username_validator,), default="")
     password = models.CharField(max_length=128)
     profile_picture = models.ImageField(
-        null=True, blank=True, upload_to="static/media/profile_pictures/"
+        null=True, blank=True, upload_to=upload_path_user_avs
     )
     first_name = models.CharField(max_length=150, default="")
     last_name = models.CharField(max_length=150, default="")

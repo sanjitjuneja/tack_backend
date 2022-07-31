@@ -1,5 +1,15 @@
+from datetime import datetime
+from uuid import uuid4
+
 from django.db import models
 from django.db.models import UniqueConstraint
+
+
+def upload_path_group_image(instance, filename: str):
+    extension = filename.split(".")[-1]
+    today = datetime.today()
+    year, month = today.year, today.month
+    return f"groups/{year}/{month}/{uuid4()}.{extension}"
 
 
 class Group(models.Model):
@@ -7,12 +17,16 @@ class Group(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=256, null=True, blank=True)
     image = models.ImageField(
-        null=True, blank=True, upload_to="group_images/"
+        null=True, blank=True, upload_to=upload_path_group_image
     )
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default="")
     creation_time = models.DateTimeField(auto_now_add=True)
     # members_count
+
+    # def save(self, *args, **kwargs):
+    #     self.invitation_link = uuid4()
+    #     super(Group, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name}"

@@ -1,3 +1,6 @@
+import os
+from uuid import uuid4
+
 from group.models import Group, GroupTacks
 from django.db.models import Subquery
 from core.choices import TackStatus

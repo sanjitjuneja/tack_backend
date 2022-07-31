@@ -13,10 +13,11 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         print(f"{validated_data = }")
         instance = User.objects.create_user(
-            phone_number=validated_data.pop("phone_number"),
-            password=validated_data.pop("password"),
-            first_name=validated_data.pop("first_name"),
-            last_name=validated_data.pop("last_name"),
+            phone_number=validated_data.get("phone_number"),
+            password=validated_data.get("password"),
+            first_name=validated_data.get("first_name"),
+            last_name=validated_data.get("last_name"),
+            username=validated_data.get("phone_number").as_e164[1:]
             # email=validated_data.pop("email")
         )
         return instance

@@ -35,8 +35,25 @@ class CustomPasswordValidator:
         return ""
 
 
-def supported_currency(currency):
+def supported_currency(currency: str) -> bool:
     supported_currencies = ("USD",)
     if currency in supported_currencies:
         return True
     raise ValidationError(f"Currency must be in one of those: {supported_currencies}")
+
+
+def username_validator(value: str) -> bool:
+    errors = {}
+    allowed_chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890-_"
+
+    # if value[0] not in allowed_chars[:52]:
+    #     errors["start"] = "Username should start with letter"
+    if not 3 < len(value) <= 64:
+        errors["length"] = "Username length should be in range from 3 to 64 symbols"
+    if not any(char in allowed_chars for char in value):
+        errors["symbols"] = "Username may contain only letters, numbers, - and _"
+    if errors:
+        raise ValidationError(
+            [ValidationError(_(message), code) for code, message in errors.items()]
+        )
+    return True

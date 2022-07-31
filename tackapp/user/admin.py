@@ -1,9 +1,11 @@
+import unicodedata
+
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import UserCreationForm
-from django.forms import forms
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
+from django.forms import forms, CharField, ModelForm
 from django.contrib.sessions.models import Session
 
 from .models import *
@@ -11,20 +13,28 @@ from django.utils.translation import gettext_lazy as _
 
 
 class CustomUserCreationForm(UserCreationForm):
-    def clean(self):
-        password = self.cleaned_data.get('password')
-        if password:
-            try:
-                password_validation.validate_password(password, self.instance)
-            except forms.ValidationError as error:
-                self.add_error('password', error)
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        user.username = user.phone_number.as_e164[1:]
+        if commit:
+            user.save()
+        return user
 
-    class Meta:
+    class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("phone_number",)
+        fields = ('phone_number',)
+
+
+class CustomUserChangeForm(UserChangeForm):
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('phone_number',)
 
 
 class CustomUserAdmin(UserAdmin):
+    form = CustomUserChangeForm
     add_form = CustomUserCreationForm
     list_display = (
         "id", "phone_number", "email", "first_name", "last_name",
@@ -57,6 +67,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('phone_number', 'password1', 'password2', "first_name", "last_name"),
         }),
     )
+    ordering = ("id",)
 
 
 class SessionAdmin(ModelAdmin):
