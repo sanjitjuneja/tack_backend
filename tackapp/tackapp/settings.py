@@ -17,15 +17,21 @@ import django
 from django.utils.encoding import force_str
 django.utils.encoding.force_text = force_str
 
-env = environ.Env(
-    # set casting, default value
-    DEBUG=(bool, True)
-)
+if os.getenv("app") == "prod":
+    env = environ.Env(
+        prefix="prod",
+        DEBUG=(bool, False)
+    )
+else:
+    env = environ.Env(
+        prefix="dev",
+        DEBUG=(bool, True)
+    )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 

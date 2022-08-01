@@ -7,11 +7,15 @@ services:
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
     volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
-    command: ["gunicorn", "tackapp.wsgi:application", "--bind", "0.0.0.0:8000"]
-    expose:
-      - 8000
+      - .:/app/
+    environment:
+      - app=dev
+#    volumes:
+#      - static_volume:/app/tackapp/staticfiles
+#      - media_volume:/app/tackapp/media
+    command: ["python3", "manage.py", "runserver", "0.0.0.0:80"]
+    ports:
+      - "80:80"
     depends_on:
       - postgres
 
@@ -20,27 +24,29 @@ services:
     container_name: 'postgres'
     restart: always
     env_file:
-      - tackapp/prod.env
-
-  nginx:
-    container_name: 'nginx'
-    build: ./nginx
+      - tackapp/dev.env
     ports:
-      - "8020:80"
-    volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
-    depends_on:
-      - web
+      - "5432:5432"
+
+#  nginx:
+#    container_name: 'nginx'
+#    build: ./nginx
+#    ports:
+#      - "80:80"
+#    volumes:
+#      - static_volume:/app/tackapp/staticfiles
+#      - media_volume:/app/tackapp/media
+#    depends_on:
+#      - web
 
   celery:
     build: .
     container_name: 'celery'
     command: celery -A tackapp worker --loglevel=info --logfile=celery.log
-    environment:
-      - app=prod
+#    volumes:
+#      - .:/app/
     env_file:
-      - tackapp/prod.env
+      - tackapp/dev.env
     depends_on:
       - web
       - redis
@@ -53,14 +59,16 @@ services:
     build: .
     container_name: 'flower'
     command: celery -A tackapp --broker=redis://redis:6379/0 flower --port=443
+#    ports:
+#      - "443:443"
     env_file:
-      - tackapp/prod.env
+      - tackapp/dev.env
     depends_on:
       - web
       - redis
       - celery
       - postgres
-
-volumes:
-  static_volume:
-  media_volume:
+#
+#volumes:
+#  static_volume:
+#  media_volume:

@@ -11,14 +11,13 @@ class UserSerializer(serializers.ModelSerializer):
     )
 
     def create(self, validated_data):
-        print(f"{validated_data = }")
         instance = User.objects.create_user(
             phone_number=validated_data.get("phone_number"),
             password=validated_data.get("password"),
             first_name=validated_data.get("first_name"),
             last_name=validated_data.get("last_name"),
-            username=validated_data.get("phone_number").as_e164[1:]
-            # email=validated_data.pop("email")
+            username=validated_data.get("phone_number").as_e164[1:],
+            email=validated_data.get("email")
         )
         return instance
 
@@ -82,5 +81,5 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "first_name", "last_name", "password", "phone_number")
+        fields = ("id", "first_name", "last_name", "password", "phone_number", "email")
         read_only_fields = ("id", "phone_number")
