@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             password=validated_data.get("password"),
             first_name=validated_data.get("first_name"),
             last_name=validated_data.get("last_name"),
-            username=validated_data.get("phone_number").as_e164[1:],
+            username=validated_data.get("phone_number")[1:],
             email=validated_data.get("email")
         )
         return instance
