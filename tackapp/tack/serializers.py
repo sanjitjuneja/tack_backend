@@ -109,13 +109,6 @@ class OfferSerializer(serializers.ModelSerializer):
 
         return instance
 
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     for _ in OfferType.choices:
-    #         if ret.get("offer_type"):
-    #             ret["offer_type"] = _[1] if ret["offer_type"] == _[0] else ret["offer_type"]
-    #     return ret
-
     class Meta:
         model = Offer
         fields = "__all__"
@@ -146,42 +139,19 @@ class TackUserSerializer(serializers.ModelSerializer):
         )
 
 
-# class TacksOffersSerializer(serializers.ModelSerializer):
-#     tack = TackUserSerializer(read_only=True)
+class TacksOffersSerializer(serializers.Serializer):
+    tack = TackDetailSerializer()
+    offer = serializers.SerializerMethodField()
+
+    def get_offer(self, obj: Offer):
+        return OfferSerializer(obj).data
+
+
+# class TacksOffersSerializer2(serializers.ModelSerializer):
+#     tack = TackDetailSerializer()
+#     offer = OfferSerializer()
 #
 #     class Meta:
-#         model = Offer
+#         model = TacksOffers
 #         fields = "__all__"
-#         read_only_fields = "id", "tack", "runner", "price", "is_accepted", "offer_type"
 
-
-class TacksOffersSerializer(serializers.Serializer):
-    data = serializers.SerializerMethodField()
-
-    def get_data(self, obj: Offer):
-        return {
-            "offer": {
-                "id": obj.id,
-                "type": obj.offer_type,
-                "price": obj.price,
-                "offer_type": obj.offer_type,
-                "is_accepted": obj.is_accepted,
-                "runner": obj.runner.id,
-                "creation_time": obj.creation_time,
-                "lifetime_seconds": obj.lifetime_seconds
-                },
-            "tack": {
-                "id": obj.tack.id,
-                "tacker": {
-                    "id": obj.tack.tacker.id,
-                    "first_name": obj.tack.tacker.first_name,
-                    "last_name": obj.tack.tacker.last_name,
-                    "tacks_rating": obj.tack.tacker.tacks_rating,
-                    "tacks_amount": obj.tack.tacker.tacks_amount,
-                },
-                "title": obj.tack.title,
-                "price": obj.tack.price,
-                "status": obj.tack.status,
-                "estimation_time_seconds": obj.tack.estimation_time_seconds,
-                }
-            }

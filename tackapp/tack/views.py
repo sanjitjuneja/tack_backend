@@ -88,11 +88,19 @@ class TackViewset(
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        offers = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner")
+        offers = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner", "tack__group")
+        # tack_offers = TacksOffers.objects.all()
+        # print(f"{offers = }")
+        # new_offers = [[offer, offer.tack] for offer in list(offers)]
+        # print(new_offers)
+        # for offer in offers:
+        #     new_offers.append([offer, offer.tack])
+        # print(new_offers)
+        # tacks = Tack.objects.filter(offer__in=offers).prefetch_related("offer_set")
+        # new_offers = offers | tacks
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
-
 
     @action(
         methods=["POST"],

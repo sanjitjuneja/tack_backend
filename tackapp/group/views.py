@@ -122,6 +122,20 @@ class GroupViewset(viewsets.ModelViewSet):
         group = self.get_object()
         return Response({"invite_link": f"{request.get_host()}{reverse('group-invite')}?uuid={group.invitation_link}"})
 
+    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), url_path="me/tacks")
+    def my_tacks(self, request, *args, **kwargs):
+        """Endpoint for getting all current User's Tacks"""
+
+        group = self.get_object()
+        tacks = Tack.objects.filter(
+            group=group,
+            status__in=[TackStatus.created, TackStatus.active],
+            tacker=request.user
+        ).select_related("tacker", "runner", "group")
+        page = self.paginate_queryset(tacks)
+        serializer = TackDetailSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
