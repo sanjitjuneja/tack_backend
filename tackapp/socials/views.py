@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views
@@ -228,7 +229,7 @@ class VerifySMSCode(views.APIView):
         expiration_time = timedelta(hours=6)
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
-            if datetime.now() > phv.created + expiration_time:
+            if timezone.now() > phv.created + expiration_time:
                 return Response({"message": "Verification period expired"}, status=400)
             if sms_code != phv.sms_code:
                 return Response({"message": "SMS code is wrong"}, status=400)
