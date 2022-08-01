@@ -13,9 +13,9 @@ services:
 #    volumes:
 #      - static_volume:/app/tackapp/staticfiles
 #      - media_volume:/app/tackapp/media
-    command: ["python3", "manage.py", "runserver", "0.0.0.0:80"]
+    command: ["python3", "manage.py", "runserver", "0.0.0.0:8020"]
     ports:
-      - "80:80"
+      - "8020:8020"
     depends_on:
       - postgres
 
