@@ -17,21 +17,17 @@ import django
 from django.utils.encoding import force_str
 django.utils.encoding.force_text = force_str
 
-if os.getenv("app") == "prod":
-    env = environ.Env(
-        prefix="prod",
-        DEBUG=(bool, False)
-    )
-else:
-    env = environ.Env(
-        prefix="dev",
-        DEBUG=(bool, True)
-    )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
+if os.getenv("app") == "dev":
+    env = environ.Env(DEBUG=(bool, True))
+    environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+else:
+    env = environ.Env(DEBUG=(bool, False))
+    environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
@@ -42,7 +38,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "35.175.118.114", "*"]
+ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242"]
 
 
 # Application definition
@@ -78,7 +74,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -221,6 +217,7 @@ AUTH_USER_MODEL = "user.User"
 #     "fields": "id, name, email, age_range",
 # }
 
+# AUTHENTICATION_BACKENDS = ('user.auth_backend.AuthBackend',)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

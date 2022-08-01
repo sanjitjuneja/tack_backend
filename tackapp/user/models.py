@@ -60,6 +60,7 @@ class User(AbstractUser):
     active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, default=None)
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     tacks_amount = models.PositiveIntegerField(default=0)
+    email = models.EmailField(unique=True, blank=True, null=True)
 
     objects = CustomUserManager()
 

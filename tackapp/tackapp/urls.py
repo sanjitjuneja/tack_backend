@@ -6,6 +6,7 @@ import debug_toolbar
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView, TokenBlacklistView
 
+from user.auth_backend import CustomJWTSerializer
 
 urlpatterns = [
     re_path(r"admin/", admin.site.urls),
@@ -15,7 +16,7 @@ urlpatterns = [
     re_path(r"api/v1/", include("group.urls")),
     re_path(r"api/v1/", include("review.urls")),
     re_path(r"api/v1/", include("payment.urls")),
-    re_path(r"api/v1/tokens/obtain/", TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    re_path(r"api/v1/tokens/obtain/", TokenObtainPairView.as_view(serializer_class=CustomJWTSerializer), name='token_obtain_pair'),
     re_path(r"api/v1/tokens/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
     re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
     re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
