@@ -30,6 +30,9 @@ drf-spectacular = "*"
 djangorestframework-simplejwt = "==5.2.0"
 djoser = "*"
 gunicorn = "*"
+model-bakery = "*"
+faker = "*"
+faker-e164 = "*"
 
 [dev-packages]
 

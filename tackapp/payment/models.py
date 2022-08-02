@@ -24,6 +24,6 @@ class UserPaymentMethods(models.Model):
     payment_method = models.CharField(max_length=64)
 
     class Meta:
-        db_table = "payments"
+        db_table = "payment_methods"
         verbose_name = "Payment method"
         verbose_name_plural = "Payment methods"

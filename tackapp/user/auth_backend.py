@@ -22,8 +22,7 @@
 #             return None
 #
 #         return user if user.check_password(password) else None
-
-
+from django.db.models import Q
 from rest_framework_simplejwt.serializers import TokenObtainSerializer
 
 from django.contrib.auth import authenticate, get_user_model
@@ -45,7 +44,7 @@ from user.models import User
 
 
 class CustomJWTSerializer(TokenObtainPairSerializer):
-    username_field = "phone or email"
+    username_field = "phone_number"
 
     def validate(self, attrs):
         credentials = {
@@ -53,11 +52,14 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             'password': attrs.get("password")
         }
 
-        user_obj = User.objects.filter(
-            phone_number=credentials["phone_number"]).first() or \
-                   User.objects.filter(email=credentials["phone_number"]).first()
-        print(user_obj)
-        if user_obj:
-            credentials['phone_number'] = user_obj.phone_number
+        try:
+            user = User.objects.get(
+                Q(phone_number=credentials["phone_number"]) |
+                Q(email=credentials["phone_number"])
+            )
+            if user:
+                credentials['phone_number'] = user.phone_number
+        except User.DoesNotExist:
+            pass
 
         return super().validate(credentials)

@@ -102,7 +102,12 @@ class GroupViewset(viewsets.ModelViewSet):
         """Endpoint for getting *created* and *active* Tacks of certain Group"""
 
         group = self.get_object()
-        tacks = Tack.objects.filter(group=group, status__in=[TackStatus.created, TackStatus.active]).select_related("tacker", "runner", "group")
+        tacks = Tack.objects.filter(
+            group=group,
+            status__in=[TackStatus.created, TackStatus.active],
+        ).exclude(
+            tacker=request.user
+        ).select_related("tacker", "runner", "group")
         page = self.paginate_queryset(tacks)
         serializer = TackDetailSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)

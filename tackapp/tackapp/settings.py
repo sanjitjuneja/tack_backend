@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 import environ
 import django
+import stripe
 from django.utils.encoding import force_str
 django.utils.encoding.force_text = force_str
 
@@ -290,3 +291,7 @@ SIMPLE_JWT = {
 }
 
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8020", "http://44.203.217.242:8020"]
+
+STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+stripe.api_key = STRIPE_SECRET_KEY
