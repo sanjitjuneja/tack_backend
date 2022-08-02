@@ -5,3 +5,4 @@ from .models import *
 admin.site.register(Group)
 admin.site.register(GroupMembers)
 admin.site.register(GroupInvitations)
+admin.site.register(GroupMutes)

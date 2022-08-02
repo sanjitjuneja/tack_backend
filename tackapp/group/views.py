@@ -136,6 +136,23 @@ class GroupViewset(viewsets.ModelViewSet):
         serializer = TackDetailSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    def mute(self, request, *args, **kwargs):
+        group = self.get_object()
+        GroupMutes.objects.create(user=request.user, group=group)
+        return Response({"muted": GroupSerializer.data})
+
+    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    def unmute(self, request, *args, **kwargs):
+        group = self.get_object()
+        try:
+            mute = GroupMutes.objects.get(user=request.user, group=group)
+            mute.delete()
+        except ObjectDoesNotExist:
+            return Response({"detail": "Not found"})
+
+        return Response({"unmuted": GroupSerializer.data})
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
