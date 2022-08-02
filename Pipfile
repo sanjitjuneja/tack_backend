@@ -33,6 +33,7 @@ gunicorn = "*"
 model-bakery = "*"
 faker = "*"
 faker-e164 = "*"
+stripe = "*"
 
 [dev-packages]
 
