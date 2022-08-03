@@ -70,11 +70,10 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("id",)
 
 
-class SessionAdmin(ModelAdmin):
-    def _session_data(self, obj):
-        return obj.get_decoded()
-    list_display = ['session_key', '_session_data', 'expire_date']
+# class SessionAdmin(ModelAdmin):
+#     def _session_data(self, obj):
+#         return obj.get_decoded()
+#     list_display = ['session_key', '_session_data', 'expire_date']
 
 
 admin.site.register(User, CustomUserAdmin)
-admin.site.register(Session, SessionAdmin)

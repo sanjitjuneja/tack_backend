@@ -70,7 +70,8 @@ class Offer(models.Model):
             MinValueValidator(0),
             MaxValueValidator(999_999_99),
         ),
-        null=True
+        null=True,
+        blank=True
     )
     offer_type = models.CharField(max_length=13, choices=OfferType.choices, default=OfferType.offer)
     is_accepted = models.BooleanField(default=False)
