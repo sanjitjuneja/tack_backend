@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema
 from rest_framework import views, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -30,11 +31,10 @@ class TackViewset(
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['status']
 
+    @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = TackCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if not request.user.active_group:
-            return Response({"detail": "You need to set active group first"})
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=201, headers=headers)
@@ -74,30 +74,11 @@ class TackViewset(
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    # @action(methods=["GET"], detail=False, url_path="me/as_runner")
-    # def me_as_runner(self, request, *args, **kwargs):
-    #     """Endpoint to display current User's Tacks as Runner"""
-    #
-    #     qs = Tack.objects.filter(runner=request.user).prefetch_related("tacker")
-    #     qs = self.filter_queryset(qs)
-    #     page = self.paginate_queryset(qs)
-    #     serializer = self.serializer_class(page, many=True)
-    #     return self.get_paginated_response(serializer.data)
-
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
         offers = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner", "tack__group")
-        # tack_offers = TacksOffers.objects.all()
-        # print(f"{offers = }")
-        # new_offers = [[offer, offer.tack] for offer in list(offers)]
-        # print(new_offers)
-        # for offer in offers:
-        #     new_offers.append([offer, offer.tack])
-        # print(new_offers)
-        # tacks = Tack.objects.filter(offer__in=offers).prefetch_related("offer_set")
-        # new_offers = offers | tacks
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -146,7 +127,7 @@ class TackViewset(
         return self.get_paginated_response(serializer.data)
 
     def perform_create(self, serializer):
-        serializer.save(tacker=self.request.user, group=self.request.user.active_group)
+        serializer.save(tacker=self.request.user)  # , group=self.request.user.active_group)
         # TODO: send notifications OR/AND make record in TackGroup table  (signals already?)
 
     def perform_update(self, serializer):

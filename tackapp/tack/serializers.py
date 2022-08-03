@@ -44,6 +44,22 @@ class TackDetailSerializer(serializers.ModelSerializer):
         )
 
 
+class TackCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tack
+        fields = "__all__"
+        read_only_fields = (
+            "tacker",
+            "runner",
+            "status",
+            "completion_message",
+            "completion_time",
+            "is_paid",
+        )
+
+
+
+
 class TackRunnerSerializer(serializers.ModelSerializer):
     # def to_representation(self, instance):
     #     ret = super().to_representation(instance)

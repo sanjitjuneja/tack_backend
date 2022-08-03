@@ -6,7 +6,7 @@ from django.core.validators import (
 )
 from django.db.models import UniqueConstraint
 
-from core.choices import TackStatus, OfferType
+from core.choices import TackStatus, OfferType, TackType
 from user.models import User
 
 
@@ -18,6 +18,9 @@ class Tack(models.Model):
         "user.User", on_delete=models.DO_NOTHING, related_name="tack_runner", null=True, blank=True
     )
     title = models.CharField(max_length=64)
+    type = models.CharField(
+        max_length=7, choices=TackType.choices, default=TackType.groups
+    )
     price = models.IntegerField(
         validators=(
             MinValueValidator(0),

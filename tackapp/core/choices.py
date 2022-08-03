@@ -19,6 +19,13 @@ class TackStatus(models.TextChoices):
     finished = "finished", "Finished"  # Tack is fully completed either with Review or not
 
 
+class TackType(models.TextChoices):
+    """Tack Type"""
+    groups = "groups", "Groups type"
+    friends = "friends", "Friends type",
+    public = "public", "Public (Anonymous)"
+
+
 class OfferType(models.TextChoices):
     """Choice for Offer type"""
 

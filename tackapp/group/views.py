@@ -35,20 +35,20 @@ class GroupViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
-    @action(
-        methods=["POST"],
-        detail=True,
-        serializer_class=serializers.Serializer,
-        permission_classes=(GroupMemberPermission,)
-    )
-    def set_active(self, request, *args, **kwargs):
-        """Endpoint for setting active Group to the User (for further Tack creation)"""
-
-        group = self.get_object()
-        request.user.active_group = group
-        request.user.save()
-        serializer = GroupSerializer(group)
-        return Response(serializer.data)
+    # @action(
+    #     methods=["POST"],
+    #     detail=True,
+    #     serializer_class=serializers.Serializer,
+    #     permission_classes=(GroupMemberPermission,)
+    # )
+    # def set_active(self, request, *args, **kwargs):
+    #     """Endpoint for setting active Group to the User (for further Tack creation)"""
+    #
+    #     group = self.get_object()
+    #     request.user.active_group = group
+    #     request.user.save()
+    #     serializer = GroupSerializer(group)
+    #     return Response(serializer.data)
 
     @extend_schema(
         request=GroupInviteLinkSerializer,
