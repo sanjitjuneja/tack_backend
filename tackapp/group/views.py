@@ -162,7 +162,7 @@ class GroupViewset(viewsets.ModelViewSet):
     @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def popular_tacks(self, request, *args, **kwargs):
         group = self.get_object()
-        popular_tacks = PopularTack.objects.filter(group=group)
+        popular_tacks = PopularTack.objects.filter(group=group)[:10]
         tacks = Tack.objects.filter(
             group=group,
             status__in=[TackStatus.waiting_review, TackStatus.finished]
