@@ -126,6 +126,22 @@ class TackViewset(
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @action(methods=["GET"], detail=False, serializer_class=serializers.Serializer)
+    def nearby(self, request, *args, **kwargs):
+        popular_tacks = PopularTack.objects.filter(group__isnull=True)
+        # tacks = Tack.objects.filter(
+        #     group=group,
+        #     status__in=[TackStatus.waiting_review, TackStatus.finished]
+        # ).order_by("?")
+        # tacks_len = 10 - len(popular_tacks)
+        # tacks = tacks[:tacks_len]
+        serializer_popular = PopularTackSerializer(popular_tacks, many=True)
+        # serializer_default = TackTemplateSerializer(tacks, many=True)
+        return Response({
+            "popular": serializer_popular.data,
+            # "groups": serializer_default.data
+        })
+
     def perform_create(self, serializer):
         serializer.save(tacker=self.request.user)  # , group=self.request.user.active_group)
         # TODO: send notifications OR/AND make record in TackGroup table  (signals already?)

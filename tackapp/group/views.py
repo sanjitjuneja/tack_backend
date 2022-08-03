@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from core.choices import TackStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
-from tack.models import Tack
-from tack.serializers import TackDetailSerializer
+from tack.models import Tack, PopularTack
+from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer
 from .serializers import *
 from .services import get_tacks_by_group
 
@@ -158,6 +158,23 @@ class GroupViewset(viewsets.ModelViewSet):
             pass
 
         return Response({"unmuted": GroupSerializer.data})
+
+    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    def popular_tacks(self, request, *args, **kwargs):
+        group = self.get_object()
+        popular_tacks = PopularTack.objects.filter(group=group)
+        tacks = Tack.objects.filter(
+            group=group,
+            status__in=[TackStatus.waiting_review, TackStatus.finished]
+        ).order_by("?")
+        tacks_len = 10 - len(popular_tacks)
+        tacks = tacks[:tacks_len]
+        serializer_popular = PopularTackSerializer(popular_tacks, many=True)
+        serializer_default = TackTemplateSerializer(tacks, many=True)
+        return Response({
+            "popular": serializer_popular.data,
+            "groups": serializer_default.data
+        })
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)

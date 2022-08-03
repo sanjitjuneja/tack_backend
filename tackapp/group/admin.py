@@ -7,6 +7,7 @@ from .models import *
 @admin.register(Group)
 class GroupAdmin(ModelAdmin):
     list_display = ['name', 'owner', 'description', 'is_public']
+    list_filter = ['is_public']
 
 
 @admin.register(GroupMembers)

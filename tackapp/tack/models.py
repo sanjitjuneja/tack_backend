@@ -27,7 +27,7 @@ class Tack(models.Model):
             MaxValueValidator(999_999_99),
         ),
     )
-    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True)
+    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
     creation_time = models.DateTimeField(auto_now_add=True)
     allow_counter_offer = models.BooleanField()
@@ -85,3 +85,40 @@ class Offer(models.Model):
         constraints = [
             UniqueConstraint(fields=['tack', 'runner'], name='unique_runner_for_tack')
         ]
+
+
+class PopularTack(models.Model):
+    tacker = models.ForeignKey(
+        "user.User", on_delete=models.CASCADE, null=True, blank=True, default=None
+    )
+    # runner = models.ForeignKey(
+    #     "user.User", on_delete=models.DO_NOTHING, related_name="tack_runner", null=True, blank=True
+    # )
+    title = models.CharField(max_length=64)
+    type = models.CharField(
+        max_length=7, choices=TackType.choices, default=TackType.groups
+    )
+    price = models.IntegerField(
+        validators=(
+            MinValueValidator(0),
+            MaxValueValidator(999_999_99),
+        ),
+    )
+    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.CharField(max_length=512)
+    # creation_time = models.DateTimeField(auto_now_add=True)
+    allow_counter_offer = models.BooleanField()
+    # status = models.CharField(
+    #     max_length=16, choices=TackStatus.choices, default=TackStatus.created
+    # )
+    # is_paid = models.BooleanField(default=False)
+    # setting after Runner completed the Tack
+    # completion_message = models.CharField(max_length=256, null=True, blank=True)
+    # completion_time = models.DateTimeField(null=True, blank=True)
+    # setting before Tack creating (for the info)
+    estimation_time_seconds = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "popular_tacks"
+        verbose_name = "Popular Tack"
+        verbose_name_plural = "Popular Tacks"

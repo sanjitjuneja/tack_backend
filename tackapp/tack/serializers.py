@@ -171,3 +171,17 @@ class TacksOffersSerializer(serializers.Serializer):
 #         model = TacksOffers
 #         fields = "__all__"
 
+
+class PopularTackSerializer(serializers.ModelSerializer):
+    # tacker = UserListSerializer(read_only=True)
+    # group = GroupSerializer(read_only=True)
+
+    class Meta:
+        model = PopularTack
+        fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
+
+
+class TackTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tack
+        fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
