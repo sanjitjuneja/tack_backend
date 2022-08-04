@@ -24,8 +24,8 @@ class ReviewViewset(
         tack = serializer.validated_data["tack"]
         if not tack.is_participant(request.user):
             return Response({"detail": "You do not have permission to perform this action."})
-        if tack.status != TackStatus.waiting_review:
-            return Response({"detail": f"Tack is not in status {TackStatus.waiting_review}"})
+        if tack.status != TackStatus.WAITING_REVIEW:
+            return Response({"detail": f"Tack is not in status {TackStatus.WAITING_REVIEW}"})
 
         try:
             review = Review.objects.get(tack=tack, user=request.user)

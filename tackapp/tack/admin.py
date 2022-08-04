@@ -8,6 +8,7 @@ from .models import Tack, Offer, PopularTack
 class TackAdmin(ModelAdmin):
     list_display = ['id', 'tacker', 'runner', 'status', 'title', 'price', 'allow_counter_offer']
     list_filter = ['allow_counter_offer', 'status']
+    search_fields = ("tacker__name__contains",)
 
 
 @admin.register(PopularTack)

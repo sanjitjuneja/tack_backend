@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import (
-    DecimalValidator,
     MinValueValidator,
     MaxValueValidator,
 )
@@ -19,7 +18,7 @@ class Tack(models.Model):
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
-        max_length=7, choices=TackType.choices, default=TackType.groups
+        max_length=7, choices=TackType.choices, default=TackType.GROUPS
     )
     price = models.IntegerField(
         validators=(
@@ -32,14 +31,15 @@ class Tack(models.Model):
     creation_time = models.DateTimeField(auto_now_add=True)
     allow_counter_offer = models.BooleanField()
     status = models.CharField(
-        max_length=16, choices=TackStatus.choices, default=TackStatus.created
+        max_length=16, choices=TackStatus.choices, default=TackStatus.CREATED
     )
     is_paid = models.BooleanField(default=False)
+    estimation_time_seconds = models.PositiveIntegerField(default=0)
+    # setting after Tacker accepts Runner's Offer
+    accepted_time = models.DateTimeField(null=True, blank=True)
     # setting after Runner completed the Tack
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
-    # setting before Tack creating (for the info)
-    estimation_time_seconds = models.PositiveIntegerField(default=0)
 
     def change_status(self, status: str):
         self.status = status
@@ -73,7 +73,7 @@ class Offer(models.Model):
         null=True,
         blank=True
     )
-    offer_type = models.CharField(max_length=13, choices=OfferType.choices, default=OfferType.offer)
+    offer_type = models.CharField(max_length=13, choices=OfferType.choices, default=OfferType.OFFER)
     is_accepted = models.BooleanField(default=False)
     creation_time = models.DateTimeField(auto_now=True)
     lifetime_seconds = models.PositiveIntegerField(default=900)
@@ -83,7 +83,7 @@ class Offer(models.Model):
         verbose_name = "Offer"
         verbose_name_plural = "Offers"
         constraints = [
-            UniqueConstraint(fields=['tack', 'runner'], name='unique_runner_for_tack')
+            UniqueConstraint(fields=('tack', 'runner'), name='unique_runner_for_tack')
         ]
 
 
@@ -91,12 +91,9 @@ class PopularTack(models.Model):
     tacker = models.ForeignKey(
         "user.User", on_delete=models.CASCADE, null=True, blank=True, default=None
     )
-    # runner = models.ForeignKey(
-    #     "user.User", on_delete=models.DO_NOTHING, related_name="tack_runner", null=True, blank=True
-    # )
     title = models.CharField(max_length=64)
     type = models.CharField(
-        max_length=7, choices=TackType.choices, default=TackType.groups
+        max_length=7, choices=TackType.choices, default=TackType.GROUPS
     )
     price = models.IntegerField(
         validators=(
@@ -106,16 +103,7 @@ class PopularTack(models.Model):
     )
     group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
-    # creation_time = models.DateTimeField(auto_now_add=True)
     allow_counter_offer = models.BooleanField()
-    # status = models.CharField(
-    #     max_length=16, choices=TackStatus.choices, default=TackStatus.created
-    # )
-    # is_paid = models.BooleanField(default=False)
-    # setting after Runner completed the Tack
-    # completion_message = models.CharField(max_length=256, null=True, blank=True)
-    # completion_time = models.DateTimeField(null=True, blank=True)
-    # setting before Tack creating (for the info)
     estimation_time_seconds = models.PositiveIntegerField(default=0)
 
     class Meta:

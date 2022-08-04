@@ -29,7 +29,7 @@ class Group(models.Model):
     #     super(Group, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.id}: {self.name}"
 
     class Meta:
         db_table = "groups"

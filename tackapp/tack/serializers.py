@@ -33,6 +33,23 @@ class TackDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tack
         fields = "__all__"
+        # fields = (
+        #     "id",
+        #     "tacker",
+        #     "runner",
+        #     "group",
+        #     "title",
+        #     "type",
+        #     "price",
+        #     "description",
+        #     "creation_time",
+        #     "allow_counter_offer",
+        #     "is_paid",
+        #     "estimation_time_seconds",
+        #     "accepted_time",
+        #     "completion_message",
+        #     "completion_time"
+        # )
         read_only_fields = (
             "tacker",
             "runner",
@@ -40,24 +57,23 @@ class TackDetailSerializer(serializers.ModelSerializer):
             "completion_message",
             "completion_time",
             "is_paid",
-            "group"
+            "group",
+            "accepted_time",
         )
 
 
 class TackCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tack
-        fields = "__all__"
-        read_only_fields = (
-            "tacker",
-            "runner",
-            "status",
-            "completion_message",
-            "completion_time",
-            "is_paid",
+        fields = (
+            "title",
+            "type",
+            "group",
+            "price",
+            "description",
+            "allow_counter_offer",
+            "estimation_time_seconds"
         )
-
-
 
 
 class TackRunnerSerializer(serializers.ModelSerializer):
@@ -117,7 +133,7 @@ class AcceptOfferSerializer(serializers.ModelSerializer):
 
 class OfferSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
-        offer_type = OfferType.counter_offer if validated_data.get("price") else OfferType.offer
+        offer_type = OfferType.COUNTER_OFFER if validated_data.get("price") else OfferType.OFFER
         instance = Offer.objects.create(
             **validated_data,
             offer_type=offer_type
@@ -159,7 +175,7 @@ class TacksOffersSerializer(serializers.Serializer):
     tack = TackDetailSerializer()
     offer = serializers.SerializerMethodField()
 
-    def get_offer(self, obj: Offer):
+    def get_offer(self, obj: Offer) -> OfferSerializer:
         return OfferSerializer(obj).data
 
 

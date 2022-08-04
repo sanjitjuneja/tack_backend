@@ -35,9 +35,10 @@ class TackViewset(
     def create(self, request, *args, **kwargs):
         serializer = TackCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        tack = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=201, headers=headers)
+        output_serializer = TackDetailSerializer(tack)  # Refactor
+        return Response(output_serializer.data, status=201, headers=headers)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -45,7 +46,7 @@ class TackViewset(
         serializer = self.get_serializer(tack, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
-        if tack.status != TackStatus.created:
+        if tack.status != TackStatus.CREATED:
             return Response({"error": "You cannot change Tack with active offers"}, status=400)
 
         self.perform_update(serializer)
@@ -59,7 +60,7 @@ class TackViewset(
 
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
-        if tack.status != TackStatus.created:
+        if tack.status != TackStatus.CREATED:
             return Response({"message": "You can not delete tacks while it have active offers"})
         self.perform_destroy(tack)
         return Response(status=204)
@@ -95,7 +96,7 @@ class TackViewset(
         tack = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if tack.status != TackStatus.in_progress:
+        if tack.status != TackStatus.IN_PROGRESS:
             return Response({"detail": "Current Tack status is not In Progress"})
 
         complete_tack(tack, serializer.validated_data["message"])
@@ -112,7 +113,7 @@ class TackViewset(
         """Endpoint for Runner to start doing the Tack"""
 
         tack = self.get_object()
-        tack.change_status(TackStatus.in_progress)
+        tack.change_status(TackStatus.IN_PROGRESS)
         return Response(self.get_serializer(tack).data)
 
     @action(methods=["GET"], detail=True, serializer_class=OfferSerializer, permission_classes=(StrictTackOwnerPermission,))
@@ -128,23 +129,16 @@ class TackViewset(
 
     @action(methods=["GET"], detail=False, serializer_class=serializers.Serializer)
     def nearby(self, request, *args, **kwargs):
+        """Endpoint for getting manual Popular templates"""
+
         popular_tacks = PopularTack.objects.filter(group__isnull=True)[:10]
-        # tacks = Tack.objects.filter(
-        #     group=group,
-        #     status__in=[TackStatus.waiting_review, TackStatus.finished]
-        # ).order_by("?")
-        # tacks_len = 10 - len(popular_tacks)
-        # tacks = tacks[:tacks_len]
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
-        # serializer_default = TackTemplateSerializer(tacks, many=True)
         return Response({
             "popular": serializer_popular.data,
-            # "groups": serializer_default.data
         })
 
     def perform_create(self, serializer):
-        serializer.save(tacker=self.request.user)  # , group=self.request.user.active_group)
-        # TODO: send notifications OR/AND make record in TackGroup table  (signals already?)
+        return serializer.save(tacker=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save(tacker=self.request.user)
@@ -158,7 +152,7 @@ class OfferViewset(
 ):
     queryset = Offer.objects.all()
     serializer_class = OfferSerializer
-    permission_classes = (OfferPermission,)  # TODO: Allows to see offers by id
+    permission_classes = (OfferPermission,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('offer_type',)
 
@@ -210,6 +204,8 @@ class OfferViewset(
 
     @action(methods=["GET"], detail=False)
     def me(self, request, *args, **kwargs):
+        """Endpoint for getting owned Offers"""
+
         qs = Offer.objects.filter(runner=request.user)
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)

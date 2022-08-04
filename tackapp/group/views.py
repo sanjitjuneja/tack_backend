@@ -35,20 +35,20 @@ class GroupViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
-    # @action(
-    #     methods=["POST"],
-    #     detail=True,
-    #     serializer_class=serializers.Serializer,
-    #     permission_classes=(GroupMemberPermission,)
-    # )
-    # def set_active(self, request, *args, **kwargs):
-    #     """Endpoint for setting active Group to the User (for further Tack creation)"""
-    #
-    #     group = self.get_object()
-    #     request.user.active_group = group
-    #     request.user.save()
-    #     serializer = GroupSerializer(group)
-    #     return Response(serializer.data)
+    @action(
+        methods=["POST"],
+        detail=True,
+        serializer_class=serializers.Serializer,
+        permission_classes=(GroupMemberPermission,)
+    )
+    def set_active(self, request, *args, **kwargs):
+        """Endpoint for setting active Group to the User (for further Tack creation)"""
+
+        group = self.get_object()
+        request.user.active_group = group
+        request.user.save()
+        serializer = GroupSerializer(group)
+        return Response(serializer.data)
 
     @extend_schema(
         request=GroupInviteLinkSerializer,
@@ -105,7 +105,7 @@ class GroupViewset(viewsets.ModelViewSet):
         group = self.get_object()
         tacks = Tack.objects.filter(
             group=group,
-            status__in=[TackStatus.created, TackStatus.active],
+            status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
         ).exclude(
             tacker=request.user
         ).select_related("tacker", "runner", "group")
@@ -135,7 +135,7 @@ class GroupViewset(viewsets.ModelViewSet):
         group = self.get_object()
         tacks = Tack.objects.filter(
             group=group,
-            status__in=[TackStatus.created, TackStatus.active],
+            status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
             tacker=request.user
         ).select_related("tacker", "runner", "group")
         page = self.paginate_queryset(tacks)
@@ -165,7 +165,7 @@ class GroupViewset(viewsets.ModelViewSet):
         popular_tacks = PopularTack.objects.filter(group=group)[:10]
         tacks = Tack.objects.filter(
             group=group,
-            status__in=[TackStatus.waiting_review, TackStatus.finished]
+            status__in=[TackStatus.WAITING_REVIEW, TackStatus.FINISHED]
         ).order_by("?")
         tacks_len = 10 - len(popular_tacks)
         tacks = tacks[:tacks_len]

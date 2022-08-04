@@ -10,7 +10,7 @@ from tack.models import Tack
 def get_tacks_by_group(group: Group):
     """Retrieve all tacks in active statuses that attached to the Group"""
 
-    active_statuses = (TackStatus.created, TackStatus.active)
+    active_statuses = (TackStatus.CREATED, TackStatus.ACTIVE)
     qs = Tack.objects.filter(
         id__in=Subquery(
             GroupTacks.objects.filter(

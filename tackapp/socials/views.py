@@ -37,7 +37,7 @@ class TwilioSendMessage(views.APIView):
         except TwilioRestException:
             return Response({"error": "Twilio service temporarily unavailable"}, status=503)
 
-        sms_type = SMSType.signup
+        sms_type = SMSType.SIGNUP
         PhoneVerification(
             uuid=uuid,
             user=None,
@@ -121,7 +121,7 @@ class PasswordRecoverySendMessage(views.APIView):
         uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
         sms_code = generate_sms_code()
-        sms_type = SMSType.recovery
+        sms_type = SMSType.RECOVERY
 
         try:
             user = User.objects.get(phone_number=phone_number)

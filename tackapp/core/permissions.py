@@ -5,6 +5,8 @@ from group.models import GroupMembers
 
 
 class TackOwnerPermission(BasePermission):
+    """Permission for checking if User is owner of a Tack"""
+
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
@@ -15,6 +17,8 @@ class TackOwnerPermission(BasePermission):
 
 
 class TackFromRunnerPermission(BasePermission):
+    """Permission for checking if User is Runner of a Tack"""
+
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
@@ -23,11 +27,16 @@ class TackFromRunnerPermission(BasePermission):
 
 
 class StrictTackOwnerPermission(BasePermission):
+    # TODO: deprecated to TackOwnerPermission?
+    """Permission for checking if User is owner of a Tack"""
+
     def has_object_permission(self, request, view, obj):
         return obj.tacker == request.user
 
 
 class OfferPermission(BasePermission):
+    """Permission for checking if User is Runner of Offer"""
+
     def has_permission(self, request, view):
         return request.user.is_authenticated
 

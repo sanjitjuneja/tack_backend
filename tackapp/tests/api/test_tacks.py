@@ -104,6 +104,6 @@ def test_offer_positive_case(user_client_tacker, user_client_runner, tack_creds_
     response = user_client_tacker.post(reverse("tack-confirm-complete", args=[tack_id]))
     tack = Tack.objects.get(pk=tack_id)
     assert response.status_code == 200
-    assert tack.status == TackStatus.finished
+    assert tack.status == TackStatus.FINISHED
 
 

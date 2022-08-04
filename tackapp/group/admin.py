@@ -8,6 +8,7 @@ from .models import *
 class GroupAdmin(ModelAdmin):
     list_display = ['name', 'owner', 'description', 'is_public']
     list_filter = ['is_public']
+    search_fields = ("name__contains",)
 
 
 @admin.register(GroupMembers)

@@ -27,7 +27,6 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 class CustomUserChangeForm(UserChangeForm):
-
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ('phone_number',)
@@ -41,6 +40,8 @@ class CustomUserAdmin(UserAdmin):
         "is_staff", "username",
     )
     list_display_links = "phone_number",
+    search_fields = ("first_name__contains", "last_name__contains", "phone_number__contains",
+                     "email__contains", "username__contains")
     fieldsets = (
         (None, {"fields": ("phone_number", "password")}),
         (_("Personal info"), {"fields": (
@@ -64,7 +65,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('phone_number', 'password1', 'password2', "first_name", "last_name"),
+            'fields': ('phone_number', 'password1', 'password2', "first_name", "last_name", "email"),
         }),
     )
     ordering = ("id",)
