@@ -216,7 +216,7 @@ class InvitesView(
         """Endpoint for accepting pending Invites (for invitee)"""
 
         invite = self.get_object()
-        gm = GroupMembers.objects.create(group=invite.group, member=invite.invitee)
+        GroupMembers.objects.create(group=invite.group, member=invite.invitee)
         invite.delete()
         return Response({"accepted group": GroupSerializer(invite.group).data})
 

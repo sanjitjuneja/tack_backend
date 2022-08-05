@@ -19,7 +19,6 @@ def change_tack_status_finished(tack_id: int):
         tack.tacker.save()
         tack.runner.save()
         tack.save()
-    return True
 
 
 @shared_task
@@ -27,8 +26,8 @@ def change_tack_status_finished(tack_id: int):
 def delete_offer_task(offer_id: int):
     try:
         offer = Offer.objects.get(pk=offer_id)
-        offer.delete()
     except ObjectDoesNotExist:
         return False
 
-    return True
+    offer.is_active = False
+    offer.save()

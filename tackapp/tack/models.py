@@ -77,6 +77,7 @@ class Offer(models.Model):
     is_accepted = models.BooleanField(default=False)
     creation_time = models.DateTimeField(auto_now=True)
     lifetime_seconds = models.PositiveIntegerField(default=900)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "offers"
