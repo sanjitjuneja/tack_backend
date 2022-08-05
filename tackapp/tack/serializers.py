@@ -121,7 +121,8 @@ class AcceptOfferSerializer(serializers.ModelSerializer):
             "price",
             "offer_type",
             "is_accepted",
-            "lifetime_seconds"
+            "lifetime_seconds",
+            "is_active"
         )
 
     # def to_representation(self, instance):
@@ -145,7 +146,7 @@ class OfferSerializer(serializers.ModelSerializer):
         model = Offer
         fields = "__all__"
         read_only_fields = (
-            "runner", "is_accepted", "offer_type", "creation_time", "lifetime_seconds"
+            "runner", "is_accepted", "offer_type", "creation_time", "lifetime_seconds", "is_active"
         )
 
 
