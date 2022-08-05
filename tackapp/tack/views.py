@@ -69,7 +69,13 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        qs = Tack.objects.filter(tacker=request.user).prefetch_related("tacker")
+        qs = Tack.objects.filter(
+            tacker=request.user
+        ).exclude(
+            status=TackStatus.FINISHED
+        ).order_by(
+            "creation_time"
+        ).prefetch_related("tacker")
         qs = self.filter_queryset(qs)
         page = self.paginate_queryset(qs)
         serializer = self.serializer_class(page, many=True)
@@ -79,7 +85,13 @@ class TackViewset(
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        offers = Offer.objects.filter(runner=request.user).select_related("tack", "tack__tacker", "runner", "tack__group")
+        offers = Offer.objects.filter(
+            runner=request.user
+        ).exclude(
+            tack__status=TackStatus.FINISHED
+        ).order_by(
+            "creation_time"
+        ).select_related("tack", "tack__tacker", "runner", "tack__group")
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)

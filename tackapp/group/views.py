@@ -163,11 +163,11 @@ class GroupViewset(viewsets.ModelViewSet):
     def popular_tacks(self, request, *args, **kwargs):
         group = self.get_object()
         popular_tacks = PopularTack.objects.filter(group=group)[:10]
+        tacks_len = 10 - len(popular_tacks)
         tacks = Tack.objects.filter(
             group=group,
             status__in=[TackStatus.WAITING_REVIEW, TackStatus.FINISHED]
-        ).order_by("?")
-        tacks_len = 10 - len(popular_tacks)
+        ).order_by("?")[:tacks_len]  # TODO: order by num_offers
         tacks = tacks[:tacks_len]
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
         serializer_default = TackTemplateSerializer(tacks, many=True)
