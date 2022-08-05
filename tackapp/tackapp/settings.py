@@ -39,7 +39,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242"]
+ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost"]
 
 
 # Application definition
@@ -64,9 +64,9 @@ INSTALLED_APPS = [
     "sslserver",
     "phonenumber_field",
     "django_filters",
-    # "djmoney",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "djstripe",
 ]
 
 
@@ -295,3 +295,14 @@ CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8020", "http://44.203.217.242:8020"]
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
+
+# STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
+STRIPE_TEST_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_LIVE_MODE = False  # Change to True in production
+# DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"  # Get it from the section in the Stripe dashboard where you added the webhook endpoint
+DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+# DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
+DJSTRIPE_WEBHOOK_SECRET = "whsec_14ffdc8d5242250b363f4ff2d698c2341bf19a2de803a4403c2a04f7f0bcd43f"
+
+# CSRF_COOKIE_SECURE = False
