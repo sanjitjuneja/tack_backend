@@ -34,6 +34,8 @@ model-bakery = "*"
 faker = "*"
 faker-e164 = "*"
 stripe = "*"
+django-celery-beat = "*"
+django-jet-reboot = "*"
 
 [dev-packages]
 

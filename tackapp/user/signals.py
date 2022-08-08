@@ -14,4 +14,4 @@ def assign_tack_with_group(instance: User, created: bool, *args, **kwargs):
             name=instance.get_full_name(),
             phone=instance.phone_number
         )
-        # BankAccount.objects.create(user=instance, stripe_user=customer.id)
+        BankAccount.objects.create(user=instance, stripe_user=customer.id)

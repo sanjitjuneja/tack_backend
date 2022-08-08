@@ -6,13 +6,6 @@ from .models import Group, GroupMembers
 
 
 @receiver(signal=post_save, sender=Group)
-def create_invitation_link(instance: Group, created: bool, *args, **kwargs):
-    if created:
-        instance.invitation_link = uuid4()
-        instance.save()
-
-
-@receiver(signal=post_save, sender=Group)
 def set_owner_as_group_member(instance: Group, created: bool, *args, **kwargs):
     if created:
         GroupMembers.objects.create(group=instance, member=instance.owner)

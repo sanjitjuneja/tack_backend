@@ -22,6 +22,8 @@ class AddBalance(views.APIView):
 
         request.user.bankaccount.usd_balance += Decimal(serializer.data["balance"])
         request.user.bankaccount.save()
+
+
         return Response(BankAccountSerializer(request.user.bankaccount).data)
 
 

@@ -4,6 +4,8 @@ from uuid import uuid4
 from django.db import models
 from django.db.models import UniqueConstraint
 
+from core.abstract_models import CoreModel
+
 
 def upload_path_group_image(instance, filename: str):
     extension = filename.split(".")[-1]
@@ -12,7 +14,7 @@ def upload_path_group_image(instance, filename: str):
     return f"groups/{year}/{month}/{uuid4()}.{extension}"
 
 
-class Group(models.Model):
+class Group(CoreModel):
     owner = models.ForeignKey("user.User", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=256, null=True, blank=True)
@@ -20,8 +22,7 @@ class Group(models.Model):
         null=True, blank=True, upload_to=upload_path_group_image
     )
     is_public = models.BooleanField(default=False)
-    invitation_link = models.CharField(max_length=36, unique=True, default="")
-    creation_time = models.DateTimeField(auto_now_add=True)
+    invitation_link = models.CharField(max_length=36, unique=True, default=uuid4)
     # members_count
 
     # def save(self, *args, **kwargs):
@@ -50,7 +51,7 @@ class GroupMembers(models.Model):
         ]
 
 
-class GroupInvitations(models.Model):
+class GroupInvitations(CoreModel):
     invitee = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_invitee")
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
 

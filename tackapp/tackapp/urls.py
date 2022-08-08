@@ -9,6 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from user.auth_backend import CustomJWTSerializer
 
 urlpatterns = [
+    path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
+    path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),  # Django JET dashboard URLS
     re_path(r"admin/", admin.site.urls),
     re_path(r"api/v1/", include("tack.urls")),
     re_path(r"api/v1/", include("socials.urls")),

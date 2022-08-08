@@ -45,6 +45,8 @@ ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242"]
 # Application definition
 
 INSTALLED_APPS = [
+    "jet.dashboard",
+    "jet",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -67,6 +69,7 @@ INSTALLED_APPS = [
     # "djmoney",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "django_celery_beat",
 ]
 
 

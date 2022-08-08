@@ -1,10 +1,11 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 
+from core.abstract_models import CoreModel
 from core.choices import ReviewRating
 
 
-class Review(models.Model):
+class Review(CoreModel):
     user = models.ForeignKey(
         "user.User", on_delete=models.CASCADE, related_name="review_user"
     )

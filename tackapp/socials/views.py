@@ -229,7 +229,7 @@ class VerifySMSCode(views.APIView):
         expiration_time = timedelta(hours=6)
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
-            if timezone.now() > phv.created + expiration_time:
+            if timezone.now() > phv.creation_time + expiration_time:
                 return Response({"message": "Verification period expired"}, status=400)
             if sms_code != phv.sms_code:
                 return Response({"message": "SMS code is wrong"}, status=400)

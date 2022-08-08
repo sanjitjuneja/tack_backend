@@ -1,10 +1,11 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
+from core.abstract_models import CoreModel
 from core.choices import SMSType
 
 
-class PhoneVerification(models.Model):
+class PhoneVerification(CoreModel):
     uuid = models.CharField(max_length=36)
     user = models.ForeignKey(
         "user.User", on_delete=models.CASCADE, blank=True, null=True
@@ -14,7 +15,6 @@ class PhoneVerification(models.Model):
     message_sid = models.CharField(max_length=64)
     sms_type = models.CharField(max_length=2, choices=SMSType.choices)
     is_verified = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now=True)  # For expiration purposes
 
     class Meta:
         db_table = "verifications"
