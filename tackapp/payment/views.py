@@ -30,28 +30,28 @@ class AddBalance(views.APIView):
 
         customer, created = Customer.get_or_create(subscriber=request.user)
 
-        # pi = stripe.PaymentIntent.create(
-        #     customer=customer.id,
-        #     currency="USD",
-        #     amount=serializer.validated_data['balance'],
-        #     # receipt_email=customer.email
-        # )
-        ch = customer.charge(
-            amount=Decimal(serializer.validated_data['balance'] / 100, Context(prec=2)),
+        pi = stripe.PaymentIntent.create(
+            customer=customer.id,
             currency="USD",
-            # application_fee=int(serializer.validated_data['balance'] / 10)
+            amount=serializer.validated_data['balance'],
+            # receipt_email=customer.email
         )
+        # ch = customer.charge(
+        #     amount=Decimal(serializer.validated_data['balance'] / 100, Context(prec=2)),
+        #     currency="USD",
+        #     # application_fee=int(serializer.validated_data['balance'] / 10)
+        # )
         # ch = stripe.Charge.create(
         #     customer=customer.id,
         #     currency="USD",
         #     amount=serializer.validated_data['balance'],
         #     # receipt_email=customer.email
         # )
-        print(ch)
+        # print(ch)
         # customer.balance += ch['amount']
         # customer.save()
 
-        return Response({str(ch)})
+        return Response(pi)
 
 
 class AccountBalanceAdd(views.APIView):
