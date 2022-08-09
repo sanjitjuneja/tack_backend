@@ -28,14 +28,14 @@ class AddBalance(views.APIView):
         serializer = AddBalanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        customer, created = Customer.get_or_create(subscriber=request.user)
+        # customer, created = Customer.get_or_create(subscriber=request.user)
 
-        pi = stripe.PaymentIntent.create(
-            customer=customer.id,
-            currency="USD",
-            amount=serializer.validated_data['balance'],
-            # receipt_email=customer.email
-        )
+        # pi = stripe.PaymentIntent.create(
+        #     customer=customer.id,
+        #     currency="USD",
+        #     amount=serializer.validated_data['balance'],
+        #     # receipt_email=customer.email
+        # )
         # ch = customer.charge(
         #     amount=Decimal(serializer.validated_data['balance'] / 100, Context(prec=2)),
         #     currency="USD",
@@ -49,9 +49,35 @@ class AddBalance(views.APIView):
         # )
         # print(ch)
         # customer.balance += ch['amount']
-        # customer.save()
-
-        return Response(pi)
+        # customer.save()\
+        # account = stripe.Account.create(
+        #     type="express"
+        # )
+        # balance = stripe.Balance.retrieve()
+        # print(balance)
+        payout = stripe.Payout.create(
+            amount=990,
+            currency='usd',
+            # method='instant',
+            destination='acct_1LUnhFQkadbscSaM',
+        )
+        # account = stripe.Account.create(
+        #     country="US",
+        #     type="custom",
+        #     business_type="individual",
+        #     email="exmaple2@test.com",
+        #     capabilities={
+        #         "card_payments": {"requested": True},
+        #         "transfers": {"requested": True},
+        #     },
+        #     individual={
+        #         "email": "exmaple2@test.com",
+        #         "first_name": "test",
+        #         "last_name": "lastnametest",
+        #         # "phone": "+375291111111"
+        #     }
+        # )
+        return Response(payout)
 
 
 class AccountBalanceAdd(views.APIView):
@@ -72,7 +98,7 @@ class AddCreditCard(views.APIView):
     def post(self, request, *args, **kwargs):
 
         si = stripe.SetupIntent.create(
-            stripe_account=Customer.get_or_create(subscriber=request.user)[0].id
+            stripe_account="acct_1KYDDWHUDqRuKWfq"
         )
         # customer.add_payment_method() ? customer.add_card() ?
         return Response(si)
