@@ -13,7 +13,8 @@ from rest_framework import views
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from payment.serializers import AddBalanceSerializer, MoneyWithdrawalSerializer, BankAccountSerializer, PISerializer
+from payment.serializers import AddBalanceSerializer, MoneyWithdrawalSerializer, BankAccountSerializer, PISerializer, \
+    AddAccountSerializer, PayoutSerializer
 from user.serializers import UserSerializer
 
 
@@ -121,3 +122,38 @@ class MoneyWithdrawal(views.APIView):
         request.user.bankaccount.save()
 
         return Response(BankAccountSerializer(request.user.bankaccount).data)
+
+
+class AddAccount(views.APIView):
+
+    @extend_schema(request=AddAccountSerializer, responses=AddAccountSerializer)
+    def post(self, request, *args, **kwargs):
+        serializer = AddAccountSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        account = stripe.Account.create(
+            country=serializer.validated_data["country"],
+            email=serializer.validated_data["email"],
+            type=serializer.validated_data["type"],
+            business_type=serializer.validated_data["business_type"],
+            capabilities={
+                "card_payments": {"requested": serializer.validated_data["capabilities"]["card_payments"]},
+                "transfers": {"requested": serializer.validated_data["capabilities"]["transfers"]},
+            },
+        )
+        return Response(account)
+
+class PayoutView(views.APIView):
+
+    @extend_schema(request=PayoutSerializer, responses=PayoutSerializer)
+    def post(self, request, *args, **kwargs):
+        serializer = PayoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payout = stripe.Payout.create(
+            amount=serializer.validated_data["amount"],
+            currency=serializer.validated_data["currency"],
+            destination=serializer.validated_data["destination"],
+            method=serializer.validated_data["method"]
+        )
+        return Response(payout)
