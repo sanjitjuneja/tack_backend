@@ -303,6 +303,6 @@ STRIPE_LIVE_MODE = False  # Change to True in production
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
-DJSTRIPE_WEBHOOK_SECRET = "whsec_14ffdc8d5242250b363f4ff2d698c2341bf19a2de803a4403c2a04f7f0bcd43f"
+DJSTRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
 
 # CSRF_COOKIE_SECURE = False

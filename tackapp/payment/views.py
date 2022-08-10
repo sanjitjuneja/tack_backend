@@ -143,6 +143,7 @@ class AddAccount(views.APIView):
         )
         return Response(account)
 
+
 class PayoutView(views.APIView):
 
     @extend_schema(request=PayoutSerializer, responses=PayoutSerializer)
