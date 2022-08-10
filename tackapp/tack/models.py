@@ -5,11 +5,12 @@ from django.core.validators import (
 )
 from django.db.models import UniqueConstraint
 
+from core.abstract_models import CoreModel
 from core.choices import TackStatus, OfferType, TackType
 from user.models import User
 
 
-class Tack(models.Model):
+class Tack(CoreModel):
     tacker = models.ForeignKey(
         "user.User", on_delete=models.CASCADE, related_name="tack_tacker"
     )
@@ -28,7 +29,6 @@ class Tack(models.Model):
     )
     group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
-    creation_time = models.DateTimeField(auto_now_add=True)
     allow_counter_offer = models.BooleanField()
     status = models.CharField(
         max_length=16, choices=TackStatus.choices, default=TackStatus.CREATED
@@ -62,7 +62,7 @@ class Tack(models.Model):
         verbose_name_plural = "Tacks"
 
 
-class Offer(models.Model):
+class Offer(CoreModel):
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
     runner = models.ForeignKey("user.User", on_delete=models.CASCADE)
     price = models.IntegerField(
@@ -75,7 +75,6 @@ class Offer(models.Model):
     )
     offer_type = models.CharField(max_length=13, choices=OfferType.choices, default=OfferType.OFFER)
     is_accepted = models.BooleanField(default=False)
-    creation_time = models.DateTimeField(auto_now=True)
     lifetime_seconds = models.PositiveIntegerField(default=900)
 
     class Meta:

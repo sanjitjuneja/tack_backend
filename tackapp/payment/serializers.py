@@ -28,3 +28,23 @@ class PISerializer(serializers.ModelSerializer):
     class Meta:
         model = djstripe.models.PaymentIntent
         fields = "__all__"
+
+
+class CapabilitiesSerializer(serializers.Serializer):
+    card_payments = serializers.BooleanField(default=True)
+    transfers = serializers.BooleanField(default=True)
+
+
+class AddAccountSerializer(serializers.Serializer):
+    country = serializers.CharField(max_length=64, default="US")
+    type = serializers.CharField(max_length=64, default="custom")
+    business_type = serializers.CharField(max_length=64, default="individual")
+    email = serializers.CharField(max_length=64, default="exmaple2@test.com")
+    capabilities = CapabilitiesSerializer()
+
+
+class PayoutSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(min_value=1, default=1000)
+    currency = serializers.CharField(min_length=1, default="USD")
+    method = serializers.CharField(min_length=1, default="instant"),
+    destination = serializers.CharField(min_length=1, default='acct_1KYDDWHUDqRuKWfq')
