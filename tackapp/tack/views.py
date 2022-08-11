@@ -12,7 +12,7 @@ from core.permissions import *
 from core.choices import TackStatus, OfferType
 from group.models import GroupTacks
 from .serializers import *
-from .services import accept_offer, complete_tack
+from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished, delete_offer_task
 
 
@@ -148,6 +148,17 @@ class TackViewset(
         return Response({
             "popular": serializer_popular.data,
         })
+
+    @action(methods=("POST",), detail=True, permission_classes=(TackOwnerPermission,))
+    def confirm_complete(self, request, *args, **kwargs):
+        """Endpoint for Tacker to send payment to Runner without creating Review"""
+
+        tack = self.get_object()
+        if tack.status == TackStatus.WAITING_REVIEW:
+            confirm_complete_tack(tack)
+            return Response(TackDetailSerializer(tack).data)
+        else:
+            return Response({"error": "Tack status is not in status Waiting Review"})
 
     def perform_create(self, serializer):
         return serializer.save(tacker=self.request.user)

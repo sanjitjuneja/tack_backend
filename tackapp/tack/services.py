@@ -4,6 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.choices import TackStatus
+from payment.services import send_payment_to_runner
 from .models import Offer, Tack
 
 
@@ -21,6 +22,14 @@ def accept_offer(offer: Offer):
 @transaction.atomic
 def complete_tack(tack: Tack, message: str):
     tack.completion_message = message
-    tack.completion_time = datetime.now()
+    tack.completion_time = timezone.now()
     tack.status = TackStatus.WAITING_REVIEW
+    tack.save()
+
+
+@transaction.atomic
+def confirm_complete_tack(tack: Tack):
+    tack.completion_time = timezone.now()
+    send_payment_to_runner(tack)
+    tack.status = TackStatus.FINISHED
     tack.save()
