@@ -12,6 +12,7 @@ class BankAccount(models.Model):
         default=0
     )
     stripe_user = models.CharField(max_length=64)
+    dwolla_user = models.CharField(max_length=64, null=True, blank=True, default=None)
 
     class Meta:
         db_table = "bank_account"
