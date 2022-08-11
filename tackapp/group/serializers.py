@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from user.models import User
@@ -6,9 +7,18 @@ from .models import *
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    is_muted = serializers.SerializerMethodField()
+
+    def get_is_muted(self, obj: Group) -> bool:
+        try:
+            GroupMutes.objects.get(group=obj)
+        except ObjectDoesNotExist:
+            return False
+        return True
+
     class Meta:
         model = Group
-        fields = "id", "owner", "name", "description", "image", "is_public"
+        fields = "id", "owner", "name", "description", "image", "is_public", "is_muted"
         read_only_fields = "owner",
 
 

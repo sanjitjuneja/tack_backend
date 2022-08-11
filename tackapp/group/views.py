@@ -16,7 +16,13 @@ from .serializers import *
 from .services import get_tacks_by_group
 
 
-class GroupViewset(viewsets.ModelViewSet):
+class GroupViewset(
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (GroupOwnerPermission,)
@@ -26,14 +32,10 @@ class GroupViewset(viewsets.ModelViewSet):
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = Group.objects.filter(groupmembers__member=request.user).distinct()
+        qs = Group.objects.filter(groupmembers__member=request.user)
         page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(
         methods=["POST"],
@@ -145,8 +147,8 @@ class GroupViewset(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def mute(self, request, *args, **kwargs):
         group = self.get_object()
-        GroupMutes.objects.create(user=request.user, group=group)
-        return Response({"muted": GroupSerializer.data})
+        GroupMutes.objects.get_or_create(user=request.user, group=group)
+        return Response(GroupSerializer(group).data)
 
     @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def unmute(self, request, *args, **kwargs):
@@ -157,7 +159,7 @@ class GroupViewset(viewsets.ModelViewSet):
         except ObjectDoesNotExist:
             pass
 
-        return Response({"unmuted": GroupSerializer.data})
+        return Response(GroupSerializer(group).data)
 
     @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def popular_tacks(self, request, *args, **kwargs):
