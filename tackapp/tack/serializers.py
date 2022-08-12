@@ -142,6 +142,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
         return instance
 
+    runner = UserListSerializer()
+
     class Meta:
         model = Offer
         fields = "__all__"

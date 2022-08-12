@@ -134,7 +134,7 @@ class TackViewset(
 
         # TODO filter backend? maybe
         tack = self.get_object()
-        offers = Offer.objects.filter(tack=tack)
+        offers = Offer.objects.filter(tack=tack).prefetch_related("runner")
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
