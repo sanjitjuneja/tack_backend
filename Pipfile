@@ -35,6 +35,8 @@ faker = "*"
 faker-e164 = "*"
 stripe = "*"
 dj-stripe = "*"
+dwollav2 = "*"
+plaid-python = "*"
 
 [dev-packages]
 

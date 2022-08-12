@@ -158,3 +158,10 @@ class PayoutView(views.APIView):
             method=serializer.validated_data["method"]
         )
         return Response(payout)
+
+
+# class DwollaTest(views.APIView):
+#
+#     def post(self, request, *args, **kwargs):
+#         dwo
+#         return Response({"ok"})

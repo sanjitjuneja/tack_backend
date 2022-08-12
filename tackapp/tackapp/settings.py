@@ -226,12 +226,12 @@ REST_FRAMEWORK = {
     ),
     # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-    ),
-    'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',
-    ),
+    # 'DEFAULT_RENDERER_CLASSES': (
+    #     'rest_framework.renderers.JSONRenderer',
+    # ),
+    # 'DEFAULT_PARSER_CLASSES': (
+    #     'rest_framework.parsers.JSONParser',
+    # ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
@@ -305,4 +305,7 @@ DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
 DJSTRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
 
+
+DWOLLA_APP_KEY = env('DWOLLA_APP_KEY')
+DWOLLA_APP_SECRET = env('DWOLLA_APP_SECRET')
 # CSRF_COOKIE_SECURE = False

@@ -11,8 +11,8 @@ from .models import Offer, Tack
 @transaction.atomic
 def accept_offer(offer: Offer):
     offer.tack.runner = offer.runner
+    offer.tack.accepted_offer = offer
     offer.tack.status = TackStatus.ACCEPTED
-    offer.tack.price = offer.price if offer.price else offer.tack.price
     offer.tack.accepted_time = timezone.now()
     offer.is_accepted = True
     offer.save()
