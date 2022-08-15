@@ -13,7 +13,7 @@ from plaid.model.processor_token_create_request import ProcessorTokenCreateReque
 from plaid.model.products import Products
 
 from core.choices import OfferType
-from core.plaid_test import plaid_client
+from payment.plaid import plaid_client
 from payment.dwolla import dwolla_client
 from payment.models import BankAccount
 from tack.models import Tack
