@@ -181,7 +181,7 @@ class GroupViewset(
         ).order_by(
             "-offer_count"
         )[:tacks_len]
-        logging.getLogger().warning(tacks.query)
+        # logging.getLogger().warning(tacks.query)
 
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
         serializer_default = TackTemplateSerializer(tacks, many=True)
