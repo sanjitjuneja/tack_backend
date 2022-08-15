@@ -1,20 +1,28 @@
+import json
+import logging
 from decimal import Decimal, Context
 
 import djstripe.models
 import stripe
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from djstripe import webhooks
 
-from djstripe.models import PaymentIntent, Customer
+from djstripe.models import Customer as dsCustomer
+from djstripe.models import PaymentMethod as dsPaymentMethod
 from djmoney.money import Money
 from drf_spectacular.utils import extend_schema
 from rest_framework import views
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from payment.dwolla import dwolla_client
+from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, MoneyWithdrawalSerializer, BankAccountSerializer, PISerializer, \
-    AddAccountSerializer, PayoutSerializer
+    AddAccountSerializer, PayoutSerializer, PaymentMethodSerializer, AddWithdrawMethodSerializer
+from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
+    get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla
 from user.serializers import UserSerializer
 
 
@@ -81,87 +89,99 @@ class AddBalance(views.APIView):
         return Response(payout)
 
 
-class AccountBalanceAdd(views.APIView):
-    @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
-    def post(self, request):
+# class AccountBalanceAdd(views.APIView):
+#     @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
+#     def post(self, request):
+#         if not request.user.is_authenticated:
+#             return Response({"message": "User not logged in"}, status=400)
+#
+#         ds_customer, created = dsCustomer.get_or_create(subscriber=request.user)
+#
+#         serializer = AddBalanceSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#
+#         return Response()
+
+
+class AddPaymentMethod(views.APIView):
+    def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
-
-        customer, created = Customer.get_or_create(subscriber=request.user)
-
-        serializer = AddBalanceSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        return Response()
-
-
-class AddCreditCard(views.APIView):
-    def post(self, request, *args, **kwargs):
+        ds_customer, created = dsCustomer.get_or_create(subscriber=request.user)
 
         si = stripe.SetupIntent.create(
-            stripe_account="acct_1KYDDWHUDqRuKWfq"
+            customer=ds_customer.id
         )
-        # customer.add_payment_method() ? customer.add_card() ?
         return Response(si)
 
 
-class MoneyWithdrawal(views.APIView):
-    """Endpoint for money withdrawal"""
-
-    @extend_schema(request=MoneyWithdrawalSerializer, responses=MoneyWithdrawalSerializer)
-    def post(self, request):
+class GetUserPaymentMethods(views.APIView):
+    # TODO: add Dwolla API call
+    def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
-
-        serializer = MoneyWithdrawalSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        if Decimal(serializer.data["balance"]) > request.user.bankaccount.usd_balance:
-            return Response({"error": "Not enough money"})
-        request.user.bankaccount.usd_balance -= Decimal(serializer.data["balance"])
-        request.user.bankaccount.save()
-
-        return Response(BankAccountSerializer(request.user.bankaccount).data)
-
-
-class AddAccount(views.APIView):
-
-    @extend_schema(request=AddAccountSerializer, responses=AddAccountSerializer)
-    def post(self, request, *args, **kwargs):
-        serializer = AddAccountSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        account = stripe.Account.create(
-            country=serializer.validated_data["country"],
-            email=serializer.validated_data["email"],
-            type=serializer.validated_data["type"],
-            business_type=serializer.validated_data["business_type"],
-            capabilities={
-                "card_payments": {"requested": serializer.validated_data["capabilities"]["card_payments"]},
-                "transfers": {"requested": serializer.validated_data["capabilities"]["transfers"]},
-            },
+        ds_customer, created = djstripe.models.Customer.get_or_create(
+            subscriber=request.user
         )
-        return Response(account)
+        pms = dsPaymentMethod.objects.filter(customer=ds_customer)
+        serializer = PaymentMethodSerializer(pms, many=True)
+        return Response(serializer.data)
 
 
-class PayoutView(views.APIView):
+class GetUserWithdrawMethods(views.APIView):
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+        try:
+            ba = BankAccount.objects.get(user=request.user)
+        except ObjectDoesNotExist:
+            # TODO: create dwolla account and return empty list
+            return Response({"error": "can not find dwolla user"})
 
-    @extend_schema(request=PayoutSerializer, responses=PayoutSerializer)
+        pms = get_dwolla_payment_methods(ba.dwolla_user)
+        return Response(pms)
+
+
+class GetLinkToken(views.APIView):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+        dwolla_id = get_dwolla_id(request.user)
+        link_token = get_link_token(dwolla_id)
+        logging.getLogger().warning(link_token)
+        return Response({"link_token": link_token})
+
+
+class AddUserWithdrawMethod(views.APIView):
+
+    @extend_schema(request=AddWithdrawMethodSerializer, responses=AddWithdrawMethodSerializer)
     def post(self, request, *args, **kwargs):
-        serializer = PayoutSerializer(data=request.data)
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+        serializer = AddWithdrawMethodSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        payout = stripe.Payout.create(
-            amount=serializer.validated_data["amount"],
-            currency=serializer.validated_data["currency"],
-            destination=serializer.validated_data["destination"],
-            method=serializer.validated_data["method"]
-        )
-        return Response(payout)
+        access_token = get_access_token(serializer.validated_data['public_token'])
+        accounts = get_accounts_with_processor_tokens(access_token)
+        attach_all_accounts_to_dwolla(request.user, accounts)
+        account_names = [account["official_name"] for account in accounts]
+        return Response(account_names)
 
-
-# class DwollaTest(views.APIView):
+# class MoneyWithdrawal(views.APIView):
+#     """Endpoint for money withdrawal"""
 #
-#     def post(self, request, *args, **kwargs):
-#         dwo
-#         return Response({"ok"})
+#     @extend_schema(request=MoneyWithdrawalSerializer, responses=MoneyWithdrawalSerializer)
+#     def post(self, request):
+#         if not request.user.is_authenticated:
+#             return Response({"message": "User not logged in"}, status=400)
+#
+#         serializer = MoneyWithdrawalSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#
+#         if Decimal(serializer.data["balance"]) > request.user.bankaccount.usd_balance:
+#             return Response({"error": "Not enough money"})
+#         request.user.bankaccount.usd_balance -= Decimal(serializer.data["balance"])
+#         request.user.bankaccount.save()
+#
+#         return Response(BankAccountSerializer(request.user.bankaccount).data)
+

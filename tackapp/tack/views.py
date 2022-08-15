@@ -24,7 +24,7 @@ class TackViewset(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Tack.objects.all()
+    queryset = Tack.active.all()
     serializer_class = TackDetailSerializer
     # TODO: ListView serializer for many tacks and Detailed serializer for single Tack
     permission_classes = (TackOwnerPermission,)
@@ -69,13 +69,15 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        qs = Tack.objects.filter(
+        qs = Tack.active.filter(
             tacker=request.user
         ).exclude(
             status=TackStatus.FINISHED
         ).order_by(
             "creation_time"
-        ).prefetch_related("tacker")
+        ).prefetch_related(
+            "tacker"
+        )
         qs = self.filter_queryset(qs)
         page = self.paginate_queryset(qs)
         serializer = self.serializer_class(page, many=True)
@@ -85,13 +87,18 @@ class TackViewset(
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        offers = Offer.objects.filter(
+        offers = Offer.active.filter(
             runner=request.user
         ).exclude(
             tack__status=TackStatus.FINISHED
         ).order_by(
             "creation_time"
-        ).select_related("tack", "tack__tacker", "runner", "tack__group")
+        ).select_related(
+            "tack",
+            "tack__tacker",
+            "runner",
+            "tack__group"
+        )
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -134,7 +141,7 @@ class TackViewset(
 
         # TODO filter backend? maybe
         tack = self.get_object()
-        offers = Offer.objects.filter(tack=tack).prefetch_related("runner")
+        offers = Offer.active.filter(tack=tack, is_active=True).prefetch_related("runner")
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -173,7 +180,7 @@ class OfferViewset(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Offer.objects.all()
+    queryset = Offer.active.all()
     serializer_class = OfferSerializer
     permission_classes = (OfferPermission,)
     filter_backends = (DjangoFilterBackend,)
@@ -211,6 +218,8 @@ class OfferViewset(
         # user.balance < tack.price - redirect on payment
 
         offer = self.get_object()
+
+        # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         if request.user.bankaccount.usd_balance < price:
             return Response(
@@ -229,7 +238,7 @@ class OfferViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for getting owned Offers"""
 
-        qs = Offer.objects.filter(runner=request.user)
+        qs = Offer.active.filter(runner=request.user)
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)

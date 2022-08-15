@@ -1,6 +1,7 @@
 import djstripe.models
 from rest_framework import serializers
 from djmoney.contrib.django_rest_framework import MoneyField
+from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.validators import supported_currency
 from payment.models import BankAccount
@@ -48,3 +49,19 @@ class PayoutSerializer(serializers.Serializer):
     currency = serializers.CharField(min_length=1, default="USD")
     method = serializers.CharField(min_length=1, default="instant"),
     destination = serializers.CharField(min_length=1, default='acct_1KYDDWHUDqRuKWfq')
+
+
+class AddCreditCardSerializer(serializers.Serializer):
+    customer_id = serializers.CharField(max_length=32)
+
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = dsPaymentMethod
+        # fields = "djstripe_id", "id", "billing_details", "type", "card",
+        # fields = "__all__"
+        exclude = "djstripe_owner_account", "customer"
+
+
+class AddWithdrawMethodSerializer(serializers.Serializer):
+    public_token = serializers.CharField(max_length=256)

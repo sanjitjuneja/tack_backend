@@ -7,13 +7,12 @@ from rest_framework import routers
 # router.register(r"tacks", TackViewset)
 
 urlpatterns = [
-    path(r"payment/refill/", AddBalance.as_view()),
-    path(r"payment/withdrawal/", MoneyWithdrawal.as_view()),
-    path(r"payment/add-payment-method/", AddCreditCard.as_view()),
-    path(r"payment/create-stripe-account", AddAccount.as_view()),
-    path(r"payment/payout", PayoutView.as_view())
-
-    # path(r"payment/webhook/", pi_created),
-    # path(r"payment/webhook2/", my_handler)
+    path("payment/refill/", AddBalance.as_view()),
+    # path(r"payment/withdrawal/", MoneyWithdrawal.as_view()),
+    path("payment/get-payment-methods/", GetUserPaymentMethods.as_view()),
+    path("payment/get-withdraw-methods/", GetUserWithdrawMethods.as_view()),
+    path("payment/add-payment-method/", AddPaymentMethod.as_view()),
+    path("payment/get-link-token/", GetLinkToken.as_view()),
+    path("payment/add-withdraw-method/", AddUserWithdrawMethod.as_view())
 ]
 # urlpatterns = router.urls

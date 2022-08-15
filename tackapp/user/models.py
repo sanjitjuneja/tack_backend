@@ -58,7 +58,7 @@ class User(AbstractUser):
     phone_number = PhoneNumberField(unique=True)
     birthday = models.DateField(null=True, blank=True)
     active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, default=None)
-    tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=5)
     tacks_amount = models.PositiveIntegerField(default=0)
     email = models.EmailField(unique=True, null=True, default=None)
 

@@ -37,6 +37,7 @@ stripe = "*"
 dj-stripe = "*"
 dwollav2 = "*"
 plaid-python = "*"
+aiohttp = "*"
 
 [dev-packages]
 

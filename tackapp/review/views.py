@@ -12,7 +12,7 @@ class ReviewViewset(
     mixins.CreateModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Review.objects.all()
+    queryset = Review.active.all()
     serializer_class = ReviewSerializer
     permission_classes = (ReviewPermission,)
 

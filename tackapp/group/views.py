@@ -1,4 +1,7 @@
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -10,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from core.choices import TackStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
-from tack.models import Tack, PopularTack
+from tack.models import Tack, PopularTack, Offer
 from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer
 from .serializers import *
 from .services import get_tacks_by_group
@@ -23,7 +26,7 @@ class GroupViewset(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = Group.objects.all()
+    queryset = Group.active.all()
     serializer_class = GroupSerializer
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
@@ -32,7 +35,7 @@ class GroupViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = Group.objects.filter(groupmembers__member=request.user)
+        qs = Group.active.filter(groupmembers__member=request.user)
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -74,9 +77,11 @@ class GroupViewset(
         uuid = serializer.validated_data["uuid"]
         try:
             group = self.get_queryset().get(invitation_link=uuid)
-        except ObjectDoesNotExist:
+            GroupMembers.objects.get(group=group, member=request.user)
+        except Group.DoesNotExist:
             return Response({"detail": "Not found"}, status=404)
-
+        except GroupMembers.DoesNotExist:
+            return GroupSerializer(group)
         invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
         invite_serializer = GroupInvitationsSerializer(invite)
         return Response(invite_serializer.data)
@@ -105,7 +110,7 @@ class GroupViewset(
         """Endpoint for getting *created* and *active* Tacks of certain Group"""
 
         group = self.get_object()
-        tacks = Tack.objects.filter(
+        tacks = Tack.active.filter(
             group=group,
             status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
         ).exclude(
@@ -129,14 +134,15 @@ class GroupViewset(
         """Endpoint to claim Group invitation link"""
 
         group = self.get_object()
-        return Response({"invite_link": f"{request.get_host()}{reverse('group-invite')}?uuid={group.invitation_link}"})
+        protocol = 'https' if request.is_secure() else 'http'
+        return Response({"invite_link": f"{protocol}://{request.get_host()}{reverse('group-invite')}?uuid={group.invitation_link}"})
 
     @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), url_path="me/tacks")
     def my_tacks(self, request, *args, **kwargs):
         """Endpoint for getting all current User's Tacks"""
 
         group = self.get_object()
-        tacks = Tack.objects.filter(
+        tacks = Tack.active.filter(
             group=group,
             status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
             tacker=request.user
@@ -167,11 +173,16 @@ class GroupViewset(
         group = self.get_object()
         popular_tacks = PopularTack.objects.filter(group=group)[:10]
         tacks_len = 10 - len(popular_tacks)
-        tacks = Tack.objects.filter(
+        tacks = Tack.active.filter(
             group=group,
             status__in=[TackStatus.WAITING_REVIEW, TackStatus.FINISHED]
-        ).order_by("?")[:tacks_len]  # TODO: order by num_offers
-        tacks = tacks[:tacks_len]
+        ).annotate(
+            offer_count=Count('offer')
+        ).order_by(
+            "-offer_count"
+        )[:tacks_len]
+        logging.getLogger().warning(tacks.query)
+
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
         serializer_default = TackTemplateSerializer(tacks, many=True)
         return Response({
