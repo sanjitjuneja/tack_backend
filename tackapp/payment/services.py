@@ -3,6 +3,7 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from djstripe.models import PaymentIntent
+from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.auth_get_request import AuthGetRequest
 from plaid.model.country_code import CountryCode
 from plaid.model.depository_account_subtype import DepositoryAccountSubtype
@@ -156,3 +157,20 @@ def save_dwolla_access_token(access_token: str, user: User):
     except BankAccount.DoesNotExist:
         # TODO: error handling/creating new BA
         pass
+
+
+def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
+    access_token = BankAccount.objects.get(user=user).dwolla_access_token
+
+    request = AccountsBalanceGetRequest(
+        access_token=access_token
+    )
+    response = plaid_client.accounts_balance_get(request)
+    payment_methods_qs = UserPaymentMethods.objects.filter(
+        bank_account__user=user,
+        dwolla_payment_method=payment_method
+    )
+
+
+    print(response['accounts'][0])
+

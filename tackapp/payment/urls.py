@@ -7,7 +7,7 @@ from rest_framework import routers
 # router.register(r"tacks", TackViewset)
 
 urlpatterns = [
-    path("payment/refill/", AddBalance.as_view()),
+    path("payment/refill-stripe/", AddBalanceStripe.as_view()),
     # path(r"payment/withdraw/", DwollaMoneyWithdraw.as_view()),
     path("payment/get-payment-methods/", GetUserPaymentMethods.as_view()),
     path("payment/get-withdraw-methods/", GetUserWithdrawMethods.as_view()),

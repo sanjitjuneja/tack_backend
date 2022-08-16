@@ -64,8 +64,7 @@ class UsersViewset(
 
     @action(methods=("GET",), detail=False, url_path="me/balance")
     def balance(self, request, *args, **kwargs):
-        try:
-            ba = BankAccount.objects.get(user=request.user)
-        except BankAccount.DoesNotExist:
-            ba = BankAccount.objects.create(user=request.user)
+        """Endpoint for retrieving USD balance of current User"""
+
+        ba = BankAccount.objects.get_or_create(user=request.user)
         return Response(BankAccountSerializer(ba).data)

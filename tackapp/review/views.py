@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -35,11 +37,12 @@ class ReviewViewset(
                     "review": ReviewSerializer(review).data
                 },
                 status=400)
-        except ObjectDoesNotExist:
+        except Review.DoesNotExist:
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=201, headers=headers)
         except MultipleObjectsReturned:
+            logging.getLogger().error(f"Multiple reviews found, {serializer.data}")
             return Response({"detail": "Multiple reviews found"}, status=400)
 
     def perform_create(self, serializer):

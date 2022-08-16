@@ -22,12 +22,12 @@ from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer,\
     PaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
-    get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token
+    get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance
 from user.serializers import UserSerializer
 
 
-class AddBalance(views.APIView):
-    """Endpoint for money refill"""
+class AddBalanceStripe(views.APIView):
+    """Endpoint for money refill from Stripe"""
 
     @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
     def post(self, request):
@@ -46,6 +46,29 @@ class AddBalance(views.APIView):
         )
 
         return Response(pi)
+
+
+class AddBalanceDwolla(views.APIView):
+    """Endpoint for money refill from Dwolla"""
+
+    @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+
+        serializer = AddBalanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        amount = serializer.validated_data["amount"]
+        payment_method = serializer.validated_data["payment_method"] \
+            if serializer.validated_data.get("payment_method") \
+            else None
+
+        # TODO: check_balance
+        # dwolla from user to Master account
+
+        check_dwolla_balance(request.user, amount, payment_method)
+
+        return Response("ok")
 
 
 class AddPaymentMethod(views.APIView):

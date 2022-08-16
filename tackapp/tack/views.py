@@ -206,7 +206,7 @@ class OfferViewset(
         return Response(serializer.data, status=201, headers=headers)
 
     @action(
-        methods=["POST"],
+        methods=("POST",),
         detail=True,
         permission_classes=(OfferTackOwnerPermission,),
         serializer_class=AcceptOfferSerializer
@@ -230,6 +230,20 @@ class OfferViewset(
                 },
                 status=400)
 
+        accept_offer(offer)
+        serializer = OfferSerializer(offer)
+        return Response(serializer.data)
+
+    @action(
+        methods=("POST",),
+        detail=True,
+        permission_classes=(OfferTackOwnerPermission,),
+        serializer_class=AcceptOfferSerializer
+    )
+    def test_accept(self, request, *args, **kwargs):
+        """*For testing purposes* Endpoint for Tacker to accept Runner's offer"""
+
+        offer = self.get_object()
         accept_offer(offer)
         serializer = OfferSerializer(offer)
         return Response(serializer.data)
