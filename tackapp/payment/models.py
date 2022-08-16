@@ -13,6 +13,7 @@ class BankAccount(models.Model):
     )
     stripe_user = models.CharField(max_length=64)
     dwolla_user = models.CharField(max_length=64, null=True, blank=True, default=None)
+    dwolla_access_token = models.CharField(max_length=128)
 
     class Meta:
         db_table = "bank_account"
@@ -22,7 +23,8 @@ class BankAccount(models.Model):
 
 class UserPaymentMethods(models.Model):
     bank_account = models.ForeignKey("payment.BankAccount", on_delete=models.CASCADE)
-    payment_method = models.CharField(max_length=64)
+    dwolla_payment_method = models.CharField(max_length=64)
+
 
     class Meta:
         db_table = "payment_methods"

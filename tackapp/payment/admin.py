@@ -11,4 +11,4 @@ class BankAccountAdmin(ModelAdmin):
 
 @admin.register(UserPaymentMethods)
 class UserPaymentMethodsAdmin(ModelAdmin):
-    list_display = ['bank_account', 'payment_method']
+    list_display = ['bank_account', 'dwolla_payment_method']

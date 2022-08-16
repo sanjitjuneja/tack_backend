@@ -8,7 +8,7 @@ from rest_framework import routers
 
 urlpatterns = [
     path("payment/refill/", AddBalance.as_view()),
-    # path(r"payment/withdrawal/", MoneyWithdrawal.as_view()),
+    # path(r"payment/withdraw/", DwollaMoneyWithdraw.as_view()),
     path("payment/get-payment-methods/", GetUserPaymentMethods.as_view()),
     path("payment/get-withdraw-methods/", GetUserWithdrawMethods.as_view()),
     path("payment/add-payment-method/", AddPaymentMethod.as_view()),

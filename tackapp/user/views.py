@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from payment.models import BankAccount
 from review.serializers import ReviewSerializer
 from .serializers import *
 from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
@@ -60,3 +61,11 @@ class UsersViewset(
         page = self.paginate_queryset(reviews_qs)
         serializer = ReviewSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+    @action(methods=("GET",), detail=False, url_path="me/balance")
+    def balance(self, request, *args, **kwargs):
+        try:
+            ba = BankAccount.objects.get(user=request.user)
+        except BankAccount.DoesNotExist:
+            ba = BankAccount.objects.create(user=request.user)
+        return Response(BankAccountSerializer(ba).data)

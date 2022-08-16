@@ -1,5 +1,8 @@
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from djstripe.models import PaymentIntent
 from plaid.model.auth_get_request import AuthGetRequest
 from plaid.model.country_code import CountryCode
 from plaid.model.depository_account_subtype import DepositoryAccountSubtype
@@ -15,7 +18,7 @@ from plaid.model.products import Products
 from core.choices import OfferType
 from payment.plaid import plaid_client
 from payment.dwolla import dwolla_client
-from payment.models import BankAccount
+from payment.models import BankAccount, UserPaymentMethods
 from tack.models import Tack
 from user.models import User
 
@@ -72,7 +75,7 @@ def get_dwolla_id(user: User):
     return ba.dwolla_user
 
 
-def get_access_token(public_token):
+def get_access_token(public_token: str) -> str:
     exchange_request = ItemPublicTokenExchangeRequest(
         public_token=public_token
     )
@@ -81,7 +84,7 @@ def get_access_token(public_token):
     return access_token
 
 
-def get_bank_account_ids(access_token):
+def get_bank_account_ids(access_token: str) -> list[dict]:
     request = AuthGetRequest(access_token=access_token)
     response = plaid_client.auth_get(request)
     supported_accounts = []
@@ -91,7 +94,7 @@ def get_bank_account_ids(access_token):
     return supported_accounts
 
 
-def get_accounts_with_processor_tokens(access_token):
+def get_accounts_with_processor_tokens(access_token: str) -> list[dict]:
     accounts = get_bank_account_ids(access_token)
 
     for account in accounts:
@@ -107,16 +110,49 @@ def get_accounts_with_processor_tokens(access_token):
     return accounts
 
 
-def attach_all_accounts_to_dwolla(user: User, accounts: list):
+def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list[dict]:
     dwolla_id = get_dwolla_id(user)
     for account in accounts:
-        attach_account_to_dwolla(dwolla_id, account)
+        payment_method_id = attach_account_to_dwolla(dwolla_id, account)
+
+    account_names = [account["official_name"] for account in accounts]
+    return account_names
 
 
-def attach_account_to_dwolla(dwolla_id, account):
+def attach_account_to_dwolla(dwolla_id: str, account: dict) -> str:
     token = dwolla_client.Auth.client()
     response = token.post(f"customers/{dwolla_id}/funding-sources",
                           {"plaidToken": account.get("plaidToken"),
                            "name": account.get("name")})
-    pm_id = response.headers["Location"].split("/")[-1]
-    return pm_id
+    # TODO: error handling
+
+    payment_method_id = response.headers["Location"].split("/")[-1]
+    try:
+        ba = BankAccount.objects.get(dwolla_user=dwolla_id)
+        UserPaymentMethods.objects.create(bank_account=ba, dwolla_payment_method=payment_method_id)
+    except BankAccount.DoesNotExist:
+        logging.getLogger().warning(f"Bank Account of {dwolla_id} not found")
+        # TODO: error handling
+
+    return payment_method_id
+
+
+@transaction.atomic
+def add_money_to_bank_account(payment_intent: PaymentIntent):
+    try:
+        ba = BankAccount.objects.get(stripe_user=payment_intent.customer)
+        ba.usd_balance += payment_intent.amount
+        ba.save()
+    except BankAccount.DoesNotExist:
+        # TODO: Error handling/create BA
+        logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")
+
+
+def save_dwolla_access_token(access_token: str, user: User):
+    try:
+        ba = BankAccount.objects.get(user=user)
+        ba.dwolla_access_token = access_token
+        ba.save()
+    except BankAccount.DoesNotExist:
+        # TODO: error handling/creating new BA
+        pass

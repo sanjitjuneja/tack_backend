@@ -8,21 +8,16 @@ from payment.models import BankAccount
 
 
 class AddBalanceSerializer(serializers.Serializer):
-    balance = serializers.IntegerField(min_value=100, max_value=10_000_00)
-    balance_currency = serializers.CharField(default="USD", validators=(supported_currency,))
-
-
-class MoneyWithdrawalSerializer(serializers.Serializer):
-    balance = serializers.IntegerField(min_value=100, max_value=10_000_00)
-    balance_currency = serializers.CharField(default="USD", validators=(supported_currency,))
-    # card?
+    amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
+    currency = serializers.CharField(default="USD", validators=(supported_currency,))
+    payment_method = serializers.CharField(min_length=6, required=False)
 
 
 class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = "usd_balance", "user"
-        read_only_fields = "usd_balance", "user"
+        fields = "usd_balance",
+        read_only_fields = "usd_balance",
 
 
 class PISerializer(serializers.ModelSerializer):
@@ -34,21 +29,6 @@ class PISerializer(serializers.ModelSerializer):
 class CapabilitiesSerializer(serializers.Serializer):
     card_payments = serializers.BooleanField(default=True)
     transfers = serializers.BooleanField(default=True)
-
-
-class AddAccountSerializer(serializers.Serializer):
-    country = serializers.CharField(max_length=64, default="US")
-    type = serializers.CharField(max_length=64, default="custom")
-    business_type = serializers.CharField(max_length=64, default="individual")
-    email = serializers.CharField(max_length=64, default="exmaple2@test.com")
-    capabilities = CapabilitiesSerializer()
-
-
-class PayoutSerializer(serializers.Serializer):
-    amount = serializers.IntegerField(min_value=1, default=1000)
-    currency = serializers.CharField(min_length=1, default="USD")
-    method = serializers.CharField(min_length=1, default="instant"),
-    destination = serializers.CharField(min_length=1, default='acct_1KYDDWHUDqRuKWfq')
 
 
 class AddCreditCardSerializer(serializers.Serializer):
@@ -65,3 +45,9 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
 
 class AddWithdrawMethodSerializer(serializers.Serializer):
     public_token = serializers.CharField(max_length=256)
+
+
+class DwollaMoneyWithdrawSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(min_value=1_00, max_value=4000_00)
+    currency = serializers.CharField(default="USD", validators=(supported_currency,))
+    payment_method = serializers.CharField(min_length=6)
