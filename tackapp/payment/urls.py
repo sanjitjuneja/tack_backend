@@ -1,10 +1,6 @@
 from django.urls import path
 
 from .views import *
-from rest_framework import routers
-
-# router = routers.SimpleRouter()
-# router.register(r"tacks", TackViewset)
 
 urlpatterns = [
     path("payment/refill-stripe/", AddBalanceStripe.as_view()),
@@ -16,4 +12,3 @@ urlpatterns = [
     path("payment/add-withdraw-method/", AddUserWithdrawMethod.as_view()),
     path("payment/withdraw/", DwollaMoneyWithdraw.as_view())
 ]
-# urlpatterns = router.urls

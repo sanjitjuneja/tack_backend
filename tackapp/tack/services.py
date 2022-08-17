@@ -33,3 +33,7 @@ def confirm_complete_tack(tack: Tack):
     send_payment_to_runner(tack)
     tack.status = TackStatus.FINISHED
     tack.save()
+
+
+def deactivate_related_offers(tack: Tack):
+    Offer.active.filter(tack=tack).update(is_active=False)

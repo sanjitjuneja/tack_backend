@@ -60,8 +60,8 @@ class TackViewset(
 
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
-        if tack.status != TackStatus.CREATED:
-            return Response({"message": "You can not delete tacks while it have active offers"})
+        if tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
+            return Response({"message": "You can not delete tacks when you accepted Offer"})
         self.perform_destroy(tack)
         return Response(status=204)
 

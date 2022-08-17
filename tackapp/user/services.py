@@ -15,9 +15,12 @@ from user.models import User
 def get_reviews_by_user(user):
     # Reviews where User.id is Tack.tacker or Tack.runner but not Review.user
     qs = Review.objects.filter(
-                (Q(tack__tacker=user) | Q(tack__runner=user)) &
-                ~Q(user=user)
-            ).select_related("tack")
+        (Q(tack__tacker=user) | Q(tack__runner=user))
+    ).exclude(
+        user=user
+    ).select_related(
+        "tack"
+    )
     return qs
 
 

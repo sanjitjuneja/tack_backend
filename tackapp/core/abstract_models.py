@@ -13,5 +13,9 @@ class CoreModel(models.Model):
     objects = models.Manager()
     active = ActiveManager()
 
+    def delete(self, using=None, keep_parents=False):
+        self.is_active = False
+        self.save()
+
     class Meta:
         abstract = True
