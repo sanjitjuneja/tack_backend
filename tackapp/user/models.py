@@ -67,6 +67,9 @@ class User(AbstractUser):
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = []
 
+    def get_contacts(self):
+        return {"phone_number": self.phone_number, "email": self.email}
+
     def __str__(self):
         return f"{self.last_name} {self.first_name}"
 

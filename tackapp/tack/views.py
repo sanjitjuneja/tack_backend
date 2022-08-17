@@ -1,4 +1,5 @@
 import datetime
+import logging
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -166,6 +167,16 @@ class TackViewset(
             return Response(TackDetailSerializer(tack).data)
         else:
             return Response({"error": "Tack status is not in status Waiting Review"})
+
+    @action(methods=("GET",), detail=True, permission_classes=(TackParticipantPermission,),)
+    def get_contacts(self, request, *args, **kwargs):
+        tack = self.get_object()
+        if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):
+            return Response({"error": "You cannot get contact data for Unaccepted Offer"})
+        contacts = tack.runner.get_contacts() if tack.tacker == request.user else tack.tacker.get_contacts()
+        logging.getLogger().warning(contacts)
+        serializer = ContactsSerializer(contacts)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         return serializer.save(tacker=self.request.user)

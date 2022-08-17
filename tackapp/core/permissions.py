@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from group.models import GroupMembers
+from tack.models import Tack
 
 
 class TackOwnerPermission(BasePermission):
@@ -10,7 +11,7 @@ class TackOwnerPermission(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request, view, obj: Tack):
         if request.method in SAFE_METHODS:
             return True
         return obj.tacker == request.user
@@ -22,8 +23,13 @@ class TackFromRunnerPermission(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request, view, obj: Tack):
         return obj.runner == request.user
+
+
+class TackParticipantPermission(BasePermission):
+    def has_object_permission(self, request, view, obj: Tack):
+        return obj.tacker == request.user or obj.runner == request.user
 
 
 class StrictTackOwnerPermission(BasePermission):

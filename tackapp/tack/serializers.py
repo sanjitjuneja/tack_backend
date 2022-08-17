@@ -3,6 +3,7 @@ from core.choices import OfferType
 from group.serializers import GroupSerializer
 from user.serializers import UserSerializer, UserListSerializer
 from .models import *
+from phonenumber_field.serializerfields import PhoneNumberField
 
 
 class TackSerializer(serializers.ModelSerializer):
@@ -204,3 +205,10 @@ class TackTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tack
         fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
+
+
+class ContactsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "phone_number", "email"
+        read_only_fields = "phone_number", "email"
