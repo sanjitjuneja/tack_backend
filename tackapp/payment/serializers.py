@@ -35,12 +35,27 @@ class AddCreditCardSerializer(serializers.Serializer):
     customer_id = serializers.CharField(max_length=32)
 
 
-class PaymentMethodSerializer(serializers.ModelSerializer):
+class StripeBillingDetailsSerializer(serializers.Serializer):
+    name = serializers.CharField(read_only=True)
+
+
+class StripeCardSerializer(serializers.Serializer):
+    brand = serializers.CharField(read_only=True)
+    last4 = serializers.CharField(read_only=True)
+    wallet = serializers.CharField(read_only=True)
+    country = serializers.CharField(read_only=True)
+    funding = serializers.CharField(read_only=True)
+    exp_year = serializers.IntegerField(read_only=True)
+    exp_month = serializers.IntegerField(read_only=True)
+
+
+class StripePaymentMethodSerializer(serializers.ModelSerializer):
+    billing_details = StripeBillingDetailsSerializer(read_only=True)
+    card = StripeCardSerializer(read_only=True)
+
     class Meta:
         model = dsPaymentMethod
-        # fields = "djstripe_id", "id", "billing_details", "type", "card",
-        # fields = "__all__"
-        exclude = "djstripe_owner_account", "customer"
+        fields = "id", "created", "billing_details", "type", "card",
 
 
 class AddWithdrawMethodSerializer(serializers.Serializer):

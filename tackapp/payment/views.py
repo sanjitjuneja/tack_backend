@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from payment.dwolla import dwolla_client
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
-    PaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
+    StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     withdraw_dwolla_money
@@ -93,11 +93,14 @@ class GetUserPaymentMethods(views.APIView):
             subscriber=request.user
         )
         pms = dsPaymentMethod.objects.filter(customer=ds_customer)
-        serializer = PaymentMethodSerializer(pms, many=True)
+        serializer = StripePaymentMethodSerializer(pms, many=True)
         return Response(serializer.data)
 
 
 class GetUserWithdrawMethods(views.APIView):
+    """Endpoint for getting Dwolla withdraw methods"""
+
+    # TODO: get methods from DB
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
@@ -111,7 +114,6 @@ class GetUserWithdrawMethods(views.APIView):
         data = pms["_embedded"]["funding-sources"]
         logging.getLogger().warning(data)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        # serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
 
@@ -126,7 +128,6 @@ class GetLinkToken(views.APIView):
 
 
 class AddUserWithdrawMethod(views.APIView):
-
     @extend_schema(request=AddWithdrawMethodSerializer, responses=AddWithdrawMethodSerializer)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -145,7 +146,6 @@ class AddUserWithdrawMethod(views.APIView):
 
 
 class DwollaMoneyWithdraw(views.APIView):
-
     @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
