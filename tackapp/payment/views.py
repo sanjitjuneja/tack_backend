@@ -23,7 +23,7 @@ from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PIS
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
-    withdraw_dwolla_money
+    withdraw_dwolla_money, refill_dwolla_money
 from user.serializers import UserSerializer
 
 
@@ -64,12 +64,9 @@ class AddBalanceDwolla(views.APIView):
             if serializer.validated_data.get("payment_method") \
             else None
 
-        # TODO: check_balance
-        # dwolla from user to Master account
-
         check_dwolla_balance(request.user, amount, payment_method)
-
-        return Response("ok")
+        response_body = refill_dwolla_money(request.user, **serializer.validated_data)
+        return Response(response_body)
 
 
 class AddPaymentMethod(views.APIView):
@@ -123,7 +120,6 @@ class GetLinkToken(views.APIView):
             return Response({"message": "User not logged in"}, status=400)
         dwolla_id = get_dwolla_id(request.user)
         link_token = get_link_token(dwolla_id)
-        # logging.getLogger().warning(link_token)
         return Response({"link_token": link_token})
 
 
