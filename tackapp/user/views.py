@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -66,5 +68,5 @@ class UsersViewset(
     def balance(self, request, *args, **kwargs):
         """Endpoint for retrieving USD balance of current User"""
 
-        ba = BankAccount.objects.get_or_create(user=request.user)
+        ba, created = BankAccount.objects.get_or_create(user=request.user)
         return Response(BankAccountSerializer(ba).data)

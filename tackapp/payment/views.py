@@ -19,10 +19,11 @@ from rest_framework.response import Response
 
 from payment.dwolla import dwolla_client
 from payment.models import BankAccount
-from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer,\
-    PaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer
+from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
+    PaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
-    get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance
+    get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
+    withdraw_dwolla_money
 from user.serializers import UserSerializer
 
 
@@ -107,7 +108,11 @@ class GetUserWithdrawMethods(views.APIView):
             return Response({"error": "can not find dwolla user"})
 
         pms = get_dwolla_payment_methods(ba.dwolla_user)
-        return Response(pms)
+        data = pms["_embedded"]["funding-sources"]
+        logging.getLogger().warning(data)
+        serializer = DwollaPaymentMethodSerializer(data, many=True)
+        # serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
 
 
 class GetLinkToken(views.APIView):
@@ -139,12 +144,23 @@ class AddUserWithdrawMethod(views.APIView):
         return Response(account_names)
 
 
-# class DwollaMoneyWithdraw(views.APIView):
-#
-#     @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
-#     def post(self, request, *args, **kwargs):
-#         if not request.user.is_authenticated:
-#             return Response({"message": "User not logged in"}, status=400)
+class DwollaMoneyWithdraw(views.APIView):
+
+    @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+        serializer = DwollaMoneyWithdrawSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            ba = BankAccount.objects.get(user=request.user)
+            if ba.usd_balance <= serializer.validated_data["amount"]:
+                return Response({"error": "Not enough money"})
+        except BankAccount.DoesNotExist:
+            pass
+        response_body = withdraw_dwolla_money(request.user, **serializer.validated_data)
+        return Response(response_body)
 
 
 class DwollaWebhook(views.APIView):

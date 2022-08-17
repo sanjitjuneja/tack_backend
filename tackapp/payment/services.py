@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal, Context
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -21,6 +22,7 @@ from payment.plaid import plaid_client
 from payment.dwolla import dwolla_client
 from payment.models import BankAccount, UserPaymentMethods
 from tack.models import Tack
+from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
 
 
@@ -166,11 +168,77 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         access_token=access_token
     )
     response = plaid_client.accounts_balance_get(request)
-    payment_methods_qs = UserPaymentMethods.objects.filter(
-        bank_account__user=user,
-        dwolla_payment_method=payment_method
-    )
-
+    if payment_method:
+        try:
+            payment_method_qs = UserPaymentMethods.objects.get(
+                bank_account__user=user,
+                dwolla_payment_method=payment_method
+            )
+        except ObjectDoesNotExist:
+            # TODO:
+            pass
+        for account in response['accounts']:
+            if account["account_id"] == payment_method_qs.dwolla_payment_method:
+                if Decimal(account["balances"]["available"], Context(prec=2)) >= Decimal(amount / 100, Context(prec=2)):
+                    return True
 
     print(response['accounts'][0])
 
+
+def convert_to_decimal(amount: int, currency: str = "USD"):
+    currency_cents_dict = {
+        "USD": 100,
+        "EUR": 100
+    }
+    amount = Decimal(amount, Context(prec=2))
+    return amount / currency_cents_dict[currency]
+
+
+@transaction.atomic
+def withdraw_dwolla_money(
+        user: User,
+        amount: int,
+        payment_method: str,
+        currency: str = "USD",
+        *args,
+        **kwargs):
+    token = dwolla_client.Auth.client()
+    transfer_request = get_transfer_request(
+        source=DWOLLA_MAIN_FUNDING_SOURCE,
+        destination=payment_method,
+        currency=currency,
+        amount=amount
+    )
+    response = token.post('transfers', transfer_request)
+    logging.getLogger().warning(response.headers)
+    logging.getLogger().warning(response.body)
+    ba = BankAccount.objects.get(user=user)
+    ba.usd_balance -= amount
+    ba.save()
+    return response.body
+
+
+def get_transfer_request(
+    source: str,
+    destination: str,
+    currency: str,
+    amount: int | Decimal,
+
+):
+    if type(amount) is int:
+        amount = convert_to_decimal(amount, currency)
+    transfer_request = {
+        '_links': {
+            'source': {
+                'href': f'https://api-sandbox.dwolla.com/funding-sources/{source}'
+            },
+            'destination': {
+                'href': f'https://api-sandbox.dwolla.com/funding-sources/{destination}'
+            }
+        },
+        'amount': {
+            'currency': currency,
+            'value': str(amount)
+        }
+    }
+    return transfer_request
