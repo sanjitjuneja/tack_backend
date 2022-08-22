@@ -143,7 +143,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
         return instance
 
-    runner = UserListSerializer()
+    runner = UserListSerializer(read_only=True)
 
     class Meta:
         model = Offer

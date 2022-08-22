@@ -76,3 +76,8 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     created = serializers.CharField(read_only=True)
     channels = serializers.ListField(read_only=True)
     bankName = serializers.CharField(read_only=True)
+
+
+class GetCardByIdSerializer(serializers.Serializer):
+    pm_id = serializers.CharField(write_only=True)
+    payment_method = StripePaymentMethodSerializer(read_only=True)
