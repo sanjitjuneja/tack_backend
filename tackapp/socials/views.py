@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from drf_yasg.utils import swagger_auto_schema
@@ -79,6 +80,13 @@ class TwilioUserRegistration(views.APIView):
             user_data = serializer.validated_data["user"].copy() | {"phone_number": phv.phone_number.as_e164}
             user_serializer = UserSerializer(data=user_data)
             user_serializer.is_valid(raise_exception=True)
+
+            try:
+                User.objects.get(email=serializer["email"])
+                return Response({"error": "code", "message": "User with given email already exists"})
+            except User.DoesNotExist:
+                pass
+
             user = user_serializer.save()
 
             phv.user = user
