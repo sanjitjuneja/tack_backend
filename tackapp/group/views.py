@@ -79,13 +79,12 @@ class GroupViewset(
             group = self.get_queryset().get(invitation_link=uuid)
             GroupMembers.objects.get(group=group, member=request.user)
         except Group.DoesNotExist:
-            return Response({"detail": "Not found"}, status=404)
+            return Response({"error": "Not found"}, status=404)
         except GroupMembers.DoesNotExist:
             invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
             invite_serializer = GroupInvitationsSerializer(invite)
-            return Response(invite_serializer.data)
-        return Response(GroupSerializer(group).data)
-
+            return Response({"invitation": invite_serializer.data})
+        return Response({"group": GroupSerializer(group).data})
 
     @extend_schema(responses={"message"})
     @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,),
