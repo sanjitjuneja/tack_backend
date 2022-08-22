@@ -6,7 +6,7 @@ from asgiref.sync import sync_to_async
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from payment.dwolla import dwolla_client
+from payment.dwolla_service import dwolla_client
 from payment.models import BankAccount
 from user.models import User
 from user.services import create_api_accounts

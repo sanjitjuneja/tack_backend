@@ -18,8 +18,8 @@ from plaid.model.processor_token_create_request import ProcessorTokenCreateReque
 from plaid.model.products import Products
 
 from core.choices import OfferType
-from payment.plaid import plaid_client
-from payment.dwolla import dwolla_client
+from payment.plaid_service import plaid_client
+from payment.dwolla_service import dwolla_client
 from payment.models import BankAccount, UserPaymentMethods
 from tack.models import Tack
 from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE

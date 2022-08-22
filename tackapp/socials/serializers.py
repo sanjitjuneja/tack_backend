@@ -30,8 +30,7 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 
 class PasswordRecoveryChangeSerializer(serializers.Serializer):
-    uuid = serializers.StringRelatedField(source="socials.phoneverification.uuid")
-    # uuid = serializers.CharField(max_length=36)
+    uuid = serializers.CharField(max_length=36)
     new_password = serializers.CharField(
         write_only=True, required=True, validators=[password_validator]
     )

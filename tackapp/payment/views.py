@@ -17,7 +17,6 @@ from rest_framework import views
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from payment.dwolla import dwolla_client
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
@@ -160,4 +159,6 @@ class DwollaMoneyWithdraw(views.APIView):
 
 
 class DwollaWebhook(views.APIView):
-    pass
+    def post(self, request, *args, **kwargs):
+        logging.getLogger().warning(request)
+        return Response()

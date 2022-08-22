@@ -7,7 +7,7 @@ import djstripe.models
 import stripe
 from django.db.models import Q
 
-from payment.dwolla import dwolla_client
+from payment.dwolla_service import dwolla_client
 from review.models import Review
 from user.models import User
 

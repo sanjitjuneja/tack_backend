@@ -33,6 +33,12 @@ class TwilioSendMessage(views.APIView):
         sms_code = generate_sms_code()
 
         try:
+            User.objects.get(phone_number=phone_number)
+            return Response({"error": "code", "message": "User already exists"})
+        except User.DoesNotExist:
+            pass
+
+        try:
             message_sid = twilio_client.send_signup_message(phone_number, sms_code)
         except TwilioRestException:
             return Response({"error": "Twilio service temporarily unavailable"}, status=503)
@@ -125,33 +131,32 @@ class PasswordRecoverySendMessage(views.APIView):
 
         try:
             user = User.objects.get(phone_number=phone_number)
-            message_sid = twilio_client.send_recovery_message(phone_number, sms_code)
-            PhoneVerification(
-                uuid=uuid,
-                user=user,
-                phone_number=phone_number,
-                sms_code=sms_code,
-                message_sid=message_sid,
-                sms_type=sms_type,
-            ).save()
-
+        except User.DoesNotExist:
             return Response(
-                {"uuid": uuid, "phone_number": phone_number.as_e164}, status=200
-            )
-
-        except ObjectDoesNotExist:
-            return Response(
-                {"message": "User with the given phone number is not found"}, status=400
+                {"error": "code", "message": "User with the given phone number is not found"}, status=400
             )
         except TwilioRestException:
             return Response({"error": "Twilio service temporarily unavailable"}, status=503)
+
+        message_sid = twilio_client.send_recovery_message(phone_number, sms_code)
+        PhoneVerification(
+            uuid=uuid,
+            user=user,
+            phone_number=phone_number,
+            sms_code=sms_code,
+            message_sid=message_sid,
+            sms_type=sms_type,
+        ).save()
+        return Response(
+            {"uuid": uuid, "phone_number": phone_number.as_e164}, status=200
+        )
 
 
 class PasswordRecoveryChange(views.APIView):
     """View for changing user password through recovery"""
 
     # @swagger_auto_schema(request_body=PasswordRecoveryChangeSerializer)
-    @extend_schema(request=PasswordRecoveryChangeSerializer, responses=PasswordRecoveryChangeSerializer)
+    @extend_schema(request=PasswordRecoveryChangeSerializer, responses={200: {"message": "text"}})
     def post(self, request):
         if request.user.is_authenticated:
             return Response({"message": "Can not recover password when authorized"})
@@ -159,7 +164,10 @@ class PasswordRecoveryChange(views.APIView):
         serializer.is_valid(raise_exception=True)
         uuid = serializer.validated_data["uuid"]
 
-        phv = PhoneVerification.objects.get(uuid=uuid)
+        try:
+            phv = PhoneVerification.objects.get(uuid=uuid)
+        except PhoneVerification.DoesNotExist:
+            return Response({"error": "code", "message": "Row with given uuid does not exist"})
         if not phv.is_verified:
             return Response({"message": "You did not verify your SMS code"})
         user = phv.user
