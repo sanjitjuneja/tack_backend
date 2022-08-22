@@ -81,7 +81,7 @@ class GroupViewset(
         except Group.DoesNotExist:
             return Response({"detail": "Not found"}, status=404)
         except GroupMembers.DoesNotExist:
-            return Response(GroupSerializer(group))
+            return Response(GroupSerializer(group).data)
         invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
         invite_serializer = GroupInvitationsSerializer(invite)
         return Response(invite_serializer.data)
