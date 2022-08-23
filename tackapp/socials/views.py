@@ -92,7 +92,7 @@ class TwilioUserRegistration(views.APIView):
 
             phv.user = user
             phv.save()
-            return Response({UserDetailSerializer(user).data}, status=200)
+            return Response(UserDetailSerializer(user).data, status=200)
         except ObjectDoesNotExist:
             return Response({"message": "invalid uuid"}, status=400)
 
