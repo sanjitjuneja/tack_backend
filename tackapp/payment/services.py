@@ -4,6 +4,9 @@ from decimal import Decimal, Context
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from djstripe.models import PaymentIntent
+from plaid.model.account_base import AccountBase
+from plaid.model.account_subtype import AccountSubtype
+from plaid.model.account_type import AccountType
 from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.auth_get_request import AuthGetRequest
 from plaid.model.country_code import CountryCode
@@ -89,7 +92,15 @@ def get_bank_account_ids(access_token: str) -> list[dict]:
     logger.warning(f"{response = }")
     supported_accounts = []
     for account in response.get('accounts'):
-        if account.get('subtype') == "checking" and account.get('type') == "depository":
+        logger.warning(f"{account = }")
+        logger.warning(type(account))
+        account: AccountBase
+
+        print(account.type, account.subtype)
+        print(f"{type(account.type) = }")
+        print(f"{type(account.subtype) = }")
+
+        if account.subtype == AccountSubtype("checking") and account.type == AccountType("depository"):
             logger.warning(f"supported {account = }")
             supported_accounts.append(account)
     return supported_accounts

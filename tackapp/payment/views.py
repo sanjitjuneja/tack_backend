@@ -184,4 +184,6 @@ class GetPaymentMethodById(views.APIView):
 class DwollaWebhook(views.APIView):
     def post(self, request, *args, **kwargs):
         logging.getLogger().warning(request)
+        logging.getLogger().warning(f"{request.data = }")
+        logging.getLogger().warning(f"{request.headers = }")
         return Response()
