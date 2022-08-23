@@ -23,7 +23,7 @@ from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PIS
     DwollaPaymentMethodSerializer, GetCardByIdSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
-    withdraw_dwolla_money, refill_dwolla_money
+    withdraw_dwolla_money, refill_dwolla_money, get_dwolla_pms_by_id
 from user.serializers import UserSerializer
 
 
@@ -132,15 +132,13 @@ class AddUserWithdrawMethod(views.APIView):
         serializer.is_valid(raise_exception=True)
         public_token = serializer.validated_data['public_token']
 
-        logger = logging.getLogger()
-        # TODO: attach access to current User
+
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
-        logger.warning(accounts)
         payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
-        logger.warning(payment_methods)
-        serializer = DwollaPaymentMethodSerializer(accounts, many=True)
+        pms = get_dwolla_pms_by_id(payment_methods)
+        serializer = DwollaPaymentMethodSerializer(pms, many=True)
         return Response(serializer.data)
 
 
