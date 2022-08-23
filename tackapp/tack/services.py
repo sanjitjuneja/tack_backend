@@ -3,7 +3,7 @@ from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferType
 from payment.services import send_payment_to_runner
 from .models import Offer, Tack
 
@@ -14,6 +14,7 @@ def accept_offer(offer: Offer):
     offer.tack.accepted_offer = offer
     offer.tack.status = TackStatus.ACCEPTED
     offer.tack.accepted_time = timezone.now()
+    offer.tack.price = offer.price if offer.price else offer.tack.price
     offer.is_accepted = True
     offer.save()
     offer.tack.save()
