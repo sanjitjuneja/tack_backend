@@ -14,8 +14,8 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             'password': attrs.get("password")
         }
 
-        if type(credentials['phone_number']) is str:
-            credentials['phone_number'] = credentials['phone_number'].lower()
+        # if type(credentials['phone_number']) is str:
+        #     credentials['phone_number'] = credentials['phone_number']
 
         try:
             user = User.objects.get(
