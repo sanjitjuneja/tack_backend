@@ -140,7 +140,7 @@ class AddUserWithdrawMethod(views.APIView):
         logger.warning(accounts)
         payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
         logger.warning(payment_methods)
-        serializer = DwollaPaymentMethodSerializer(payment_methods, many=True)
+        serializer = DwollaPaymentMethodSerializer(accounts, many=True)
         return Response(serializer.data)
 
 
