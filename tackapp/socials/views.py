@@ -65,7 +65,7 @@ class TwilioUserRegistration(views.APIView):
     @extend_schema(
         request=TwilioUserRegistrationSerializer,
         responses={
-            200: TwilioUserRegistrationSerializer, 400: {"message": "text"}})
+            200: UserDetailSerializer, 400: {"message": "text"}})
     @transaction.atomic
     def post(self, request):
         serializer = TwilioUserRegistrationSerializer(data=request.data)
@@ -92,7 +92,7 @@ class TwilioUserRegistration(views.APIView):
 
             phv.user = user
             phv.save()
-            return Response({"user": UserDetailSerializer(user).data}, status=200)
+            return Response({UserDetailSerializer(user).data}, status=200)
         except ObjectDoesNotExist:
             return Response({"message": "invalid uuid"}, status=400)
 
