@@ -19,7 +19,8 @@ from rest_framework.response import Response
 
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
-    StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer
+    StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
+    DwollaPaymentMethodSerializer, GetCardByIdSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     withdraw_dwolla_money, refill_dwolla_money
@@ -156,6 +157,25 @@ class DwollaMoneyWithdraw(views.APIView):
             pass
         response_body = withdraw_dwolla_money(request.user, **serializer.validated_data)
         return Response(response_body)
+
+
+class GetPaymentMethodById(views.APIView):
+    @extend_schema(request=GetCardByIdSerializer, responses=StripePaymentMethodSerializer)
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"message": "User not logged in"}, status=400)
+        serializer = GetCardByIdSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payment_method_id = serializer["pm_id"]
+        ds_customer, created = djstripe.models.Customer.get_or_create(
+            subscriber=request.user
+        )
+        try:
+            pm = dsPaymentMethod.objects.get(id=payment_method_id, customer=ds_customer.id)
+        except ObjectDoesNotExist:
+            return Response({"error": "code", "message": "Payment method not found"})
+
+        return Response(StripePaymentMethodSerializer(pm))
 
 
 class DwollaWebhook(views.APIView):
