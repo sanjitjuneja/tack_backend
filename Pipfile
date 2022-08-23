@@ -38,6 +38,7 @@ dj-stripe = "*"
 dwollav2 = "*"
 plaid-python = "*"
 aiohttp = "*"
+boto3 = "*"
 
 [dev-packages]
 

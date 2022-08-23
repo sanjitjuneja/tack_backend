@@ -16,30 +16,40 @@ import environ
 import django
 import stripe
 from django.utils.encoding import force_str
+from aws.secretmanager import receive_setting_secrets
+from aws.ssm import receive_setting_parameters
 django.utils.encoding.force_text = force_str
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-if os.getenv("app") == "dev":
-    env = environ.Env(DEBUG=(bool, True))
-    environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
-else:
-    env = environ.Env(DEBUG=(bool, False))
-    environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
+env = environ.Env(DEBUG=(bool, True))
+environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+# if os.getenv("app") == "dev":
+#     env = environ.Env(DEBUG=(bool, True))
+#     environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+# else:
+#     env = environ.Env(DEBUG=(bool, False))
+#     environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = env("AWS_REGION")
+setting_secrets = receive_setting_secrets(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
+allowed_hosts, celery_broker, _ = receive_setting_parameters(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
+
+SECRET_KEY = setting_secrets.get("DJANGO_SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost"]
+ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
+# ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost"]
 
 
 # Application definition
@@ -120,11 +130,11 @@ WSGI_APPLICATION = "tackapp.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": env("POSTGRES_DB"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST"),
-        "PORT": env("POSTGRES_PORT"),
+        "NAME": setting_secrets.get("POSTGRES_DB"),
+        "USER": setting_secrets.get("POSTGRES_USER"),
+        "PASSWORD": setting_secrets.get("POSTGRES_PASSWORD"),
+        "HOST": setting_secrets.get("POSTGRES_HOST"),
+        "PORT": setting_secrets.get("POSTGRES_PORT"),
     }
 }
 
@@ -247,9 +257,9 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Twilio
-TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
-MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
+TWILIO_ACCOUNT_SID = setting_secrets.get("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = setting_secrets.get("TWILIO_AUTH_TOKEN")
+MESSAGING_SERVICE_SID = setting_secrets.get("MESSAGING_SERVICE_SID")
 
 
 # def show_toolbar(request):
@@ -259,7 +269,7 @@ MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
 #     "INTERCEPT_REDIRECTS": False,
 # }
 
-CELERY_BROKER_URL = env("CELERY_BROKER")
+CELERY_BROKER_URL = celery_broker.get("Value")
 
 
 SIMPLE_JWT = {
@@ -292,23 +302,23 @@ SIMPLE_JWT = {
 
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8020", "http://44.203.217.242:8020"]
 
-STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
-STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = setting_secrets.get("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = setting_secrets.get("STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
 # STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
-STRIPE_TEST_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_TEST_SECRET_KEY = setting_secrets.get("STRIPE_SECRET_KEY")
 STRIPE_LIVE_MODE = False  # Change to True in production
 # DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"  # Get it from the section in the Stripe dashboard where you added the webhook endpoint
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
-DJSTRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+DJSTRIPE_WEBHOOK_SECRET = setting_secrets.get("STRIPE_WEBHOOK_SECRET")
 
 
-DWOLLA_APP_KEY = env('DWOLLA_APP_KEY')
-DWOLLA_APP_SECRET = env('DWOLLA_APP_SECRET')
-DWOLLA_MAIN_FUNDING_SOURCE = env('DWOLLA_MAIN_FUNDING_SOURCE')
+DWOLLA_APP_KEY = setting_secrets.get('DWOLLA_APP_KEY')
+DWOLLA_APP_SECRET = setting_secrets.get('DWOLLA_APP_SECRET')
+DWOLLA_MAIN_FUNDING_SOURCE = setting_secrets.get('DWOLLA_MAIN_FUNDING_SOURCE')
 # CSRF_COOKIE_SECURE = False
-PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
-PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
+PLAID_CLIENT_ID = setting_secrets.get("PLAID_CLIENT_ID")
+PLAID_CLIENT_SECRET = setting_secrets.get("PLAID_CLIENT_SECRET")
