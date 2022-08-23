@@ -33,9 +33,9 @@ def delete_offer_task(offer_id: int) -> None:
         offer = Offer.objects.get(pk=offer_id)
     except ObjectDoesNotExist:
         return None
-
-    offer.is_active = False
-    offer.save()
+    if not offer.is_accepted:
+        offer.is_active = False
+        offer.save()
 
 
 @shared_task

@@ -14,7 +14,7 @@ from core.choices import TackStatus, OfferType
 from group.models import GroupTacks
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
-from .tasks import change_tack_status_finished, delete_offer_task
+from .tasks import change_tack_status_finished
 
 
 class TackViewset(
