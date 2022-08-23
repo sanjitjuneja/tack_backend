@@ -108,7 +108,7 @@ class TackViewset(
         methods=["POST"],
         detail=True,
         permission_classes=(TackFromRunnerPermission,),
-        serializer_class=TackCompleteSerializer,
+        serializer_class=serializers.Serializer,
     )
     def complete(self, request, *args, **kwargs):
         """Endpoint for Runner to complete the Tack"""
