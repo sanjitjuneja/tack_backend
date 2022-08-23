@@ -82,7 +82,7 @@ class TwilioUserRegistration(views.APIView):
             user_serializer.is_valid(raise_exception=True)
 
             try:
-                User.objects.get(email=serializer.validated_data["email"])
+                User.objects.get(email=serializer.validated_data["user"]["email"])
                 return Response({"error": "code", "message": "User with given email already exists"}, status=400)
             except User.DoesNotExist:
                 pass
