@@ -15,7 +15,7 @@ class Tack(CoreModel):
         "user.User", on_delete=models.CASCADE, related_name="tack_tacker"
     )
     runner = models.ForeignKey(
-        "user.User", on_delete=models.DO_NOTHING, related_name="tack_runner", null=True, blank=True
+        "user.User", on_delete=models.SET_NULL, related_name="tack_runner", null=True, blank=True
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
