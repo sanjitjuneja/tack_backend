@@ -124,7 +124,7 @@ class GetLinkToken(views.APIView):
 
 
 class AddUserWithdrawMethod(views.APIView):
-    @extend_schema(request=AddWithdrawMethodSerializer, responses=AddWithdrawMethodSerializer)
+    @extend_schema(request=AddWithdrawMethodSerializer, responses=DwollaPaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
@@ -136,9 +136,9 @@ class AddUserWithdrawMethod(views.APIView):
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
-        account_names = attach_all_accounts_to_dwolla(request.user, accounts)
-
-        return Response(account_names)
+        payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
+        serializer = DwollaPaymentMethodSerializer(payment_methods, many=True)
+        return Response(serializer.data)
 
 
 class DwollaMoneyWithdraw(views.APIView):

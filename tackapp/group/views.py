@@ -114,7 +114,6 @@ class GroupViewset(
             group=group,
             status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
         ).exclude(
-            # tacker=request.user,
             offer__runner=request.user
         ).select_related("tacker", "runner", "group")
         page = self.paginate_queryset(tacks)

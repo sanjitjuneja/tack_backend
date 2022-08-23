@@ -108,13 +108,15 @@ def get_accounts_with_processor_tokens(access_token: str) -> list[dict]:
     return accounts
 
 
-def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list[dict]:
+def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list:
+    payment_methods = []
     dwolla_id = get_dwolla_id(user)
     for account in accounts:
         payment_method_id = attach_account_to_dwolla(dwolla_id, account)
+        payment_methods.append(payment_method_id)
 
-    account_names = [account["official_name"] for account in accounts]
-    return account_names
+    # account_names = [account["official_name"] for account in accounts]
+    return payment_methods
 
 
 def attach_account_to_dwolla(dwolla_id: str, account: dict) -> str:

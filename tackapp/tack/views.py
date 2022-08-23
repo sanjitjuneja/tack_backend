@@ -157,7 +157,7 @@ class TackViewset(
             "popular": serializer_popular.data,
         })
 
-    @action(methods=("POST",), detail=True, permission_classes=(TackOwnerPermission,))
+    @action(methods=("POST",), detail=True, permission_classes=(TackOwnerPermission,), serializer_class=serializers.Serializer)
     def confirm_complete(self, request, *args, **kwargs):
         """Endpoint for Tacker to send payment to Runner without creating Review"""
 
