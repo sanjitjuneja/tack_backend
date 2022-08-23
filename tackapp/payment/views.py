@@ -132,11 +132,14 @@ class AddUserWithdrawMethod(views.APIView):
         serializer.is_valid(raise_exception=True)
         public_token = serializer.validated_data['public_token']
 
+        logger = logging.getLogger()
         # TODO: attach access to current User
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
+        logger.warning(accounts)
         payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
+        logger.warning(payment_methods)
         serializer = DwollaPaymentMethodSerializer(payment_methods, many=True)
         return Response(serializer.data)
 
