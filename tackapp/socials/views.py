@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
 from user.models import User
+from user.serializers import UserDetailSerializer
 from .sms_service import twilio_client
 from .serializers import *
 from .services import generate_sms_code
@@ -91,7 +92,7 @@ class TwilioUserRegistration(views.APIView):
 
             phv.user = user
             phv.save()
-            return Response({"user": user_serializer.data}, status=200)
+            return Response({"user": UserDetailSerializer(user).data}, status=200)
         except ObjectDoesNotExist:
             return Response({"message": "invalid uuid"}, status=400)
 
