@@ -85,15 +85,20 @@ def get_access_token(public_token: str) -> str:
 def get_bank_account_ids(access_token: str) -> list[dict]:
     request = AuthGetRequest(access_token=access_token)
     response = plaid_client.auth_get(request)
+    logger = logging.getLogger()
+    logger.warning(f"{response = }")
     supported_accounts = []
     for account in response.get('accounts'):
         if account.get('subtype') == "checking" and account.get('type') == "depository":
+            logger.warning(f"supported {account = }")
             supported_accounts.append(account)
     return supported_accounts
 
 
 def get_accounts_with_processor_tokens(access_token: str) -> list[dict]:
     accounts = get_bank_account_ids(access_token)
+    logger = logging.getLogger()
+    logger.warning(f'{accounts = }')
 
     for account in accounts:
         request = ProcessorTokenCreateRequest(
