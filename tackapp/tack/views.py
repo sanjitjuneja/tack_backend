@@ -114,14 +114,14 @@ class TackViewset(
         """Endpoint for Runner to complete the Tack"""
 
         tack = self.get_object()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
         if tack.status != TackStatus.IN_PROGRESS:
             return Response({"detail": "Current Tack status is not In Progress"})
 
         complete_tack(tack, "")
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
-        return Response(serializer.data, status=200)
+        return Response(status=200)
 
     @action(
         methods=["POST"],
