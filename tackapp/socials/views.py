@@ -83,7 +83,7 @@ class TwilioUserRegistration(views.APIView):
 
             try:
                 User.objects.get(email=serializer["email"])
-                return Response({"error": "code", "message": "User with given email already exists"})
+                return Response({"error": "code", "message": "User with given email already exists"}, status=400)
             except User.DoesNotExist:
                 pass
 
@@ -175,9 +175,9 @@ class PasswordRecoveryChange(views.APIView):
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
         except PhoneVerification.DoesNotExist:
-            return Response({"error": "code", "message": "Row with given uuid does not exist"})
+            return Response({"error": "code", "message": "Row with given uuid does not exist"}, status=400)
         if not phv.is_verified:
-            return Response({"message": "You did not verify your SMS code"})
+            return Response({"message": "You did not verify your SMS code"}, status=400)
         user = phv.user
         user.set_password(serializer.validated_data["new_password"])
         user.save()
@@ -234,7 +234,6 @@ class PasswordChange(views.APIView):
 class VerifySMSCode(views.APIView):
     """View for verification SMS code"""
 
-    # @swagger_auto_schema(request_body=VerifySMSCodeSerializer)
     @extend_schema(request=VerifySMSCodeSerializer, responses=VerifySMSCodeSerializer)
     def post(self, request):
         serializer = VerifySMSCodeSerializer(data=request.data)

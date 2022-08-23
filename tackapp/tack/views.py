@@ -119,7 +119,7 @@ class TackViewset(
         if tack.status != TackStatus.IN_PROGRESS:
             return Response({"detail": "Current Tack status is not In Progress"})
 
-        complete_tack(tack, serializer.validated_data["message"])
+        complete_tack(tack, "")
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(serializer.data, status=200)
 
