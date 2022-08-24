@@ -11,6 +11,7 @@ class AddBalanceSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
     payment_method = serializers.CharField(min_length=6)
+    channel = serializers.CharField()
 
 
 class BankAccountSerializer(serializers.ModelSerializer):
@@ -66,6 +67,7 @@ class DwollaMoneyWithdrawSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
     payment_method = serializers.CharField(min_length=6)
+    channel = serializers.CharField()
 
 
 class DwollaPaymentMethodSerializer(serializers.Serializer):

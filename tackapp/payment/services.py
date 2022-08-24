@@ -180,6 +180,7 @@ def get_transfer_request(
         destination: str,
         currency: str,
         amount: int | Decimal,
+        channel: str
 ):
     if type(amount) is int:
         amount = convert_to_decimal(amount, currency)
@@ -195,9 +196,15 @@ def get_transfer_request(
         'amount': {
             'currency': currency,
             'value': str(amount)
-        }
+        },
+
         # TODO: clearing + add to function argument
     }
+
+    if channel == "real-time-payments":
+        transfer_request["processingChannel"] = {
+            destination: "real-time-payments",
+        }
     return transfer_request
 
 
@@ -239,6 +246,7 @@ def withdraw_dwolla_money(
         user: User,
         amount: int,
         payment_method: str,
+        channel: str,
         currency: str = "USD",
         *args,
         **kwargs):
@@ -247,7 +255,8 @@ def withdraw_dwolla_money(
         source=DWOLLA_MAIN_FUNDING_SOURCE,
         destination=payment_method,
         currency=currency,
-        amount=amount
+        amount=amount,
+        channel=channel
     )
     response = token.post('transfers', transfer_request)
     logging.getLogger().warning(response.headers)
@@ -263,6 +272,7 @@ def refill_dwolla_money(
         user: User,
         amount: int,
         payment_method: str,
+        channel: str,
         currency: str = "USD",
         *args,
         **kwargs):
@@ -271,7 +281,8 @@ def refill_dwolla_money(
         source=payment_method,
         destination=DWOLLA_MAIN_FUNDING_SOURCE,
         currency=currency,
-        amount=amount
+        amount=amount,
+        channel=channel
     )
     response = token.post('transfers', transfer_request)
     logging.getLogger().warning(response.headers)
@@ -293,6 +304,12 @@ def get_dwolla_pms_by_id(pms_id: list):
 
 def dwolla_webhook_handler(request):
     # TODO: check hash
+
+    try:
+        DwollaEvent.objects.get(event_id=request.data.get("id"))
+        return
+    except DwollaEvent.DoesNotExist:
+        pass
 
     DwollaEvent.objects.create(
         event_id=request.data.get("id"),
