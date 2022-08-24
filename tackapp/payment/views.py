@@ -3,6 +3,7 @@ import logging
 from decimal import Decimal, Context
 
 import djstripe.models
+import dwollav2
 import stripe
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -137,7 +138,10 @@ class AddUserWithdrawMethod(views.APIView):
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
-        payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
+        try:
+            payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
+        except dwollav2.Error as e:
+            return Response(e.body)
         logger.warning(f"{payment_methods = }")
         pms = get_dwolla_pms_by_id(payment_methods)
         logger.warning(f"{pms = }")
