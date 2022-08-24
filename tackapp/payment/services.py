@@ -299,7 +299,7 @@ def get_dwolla_pms_by_id(pms_id: list):
     responses = []
     for pm in pms_id:
         response = token.get(f"funding-sources/{pm}")
-        responses.append(response)
+        responses.append(response.body)
     return responses
 
 
