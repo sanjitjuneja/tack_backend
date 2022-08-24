@@ -97,34 +97,6 @@ class TwilioUserRegistration(views.APIView):
             return Response({"message": "invalid uuid"}, status=400)
 
 
-# class Login(views.APIView):
-#     """Login view"""
-#
-#     # @swagger_auto_schema(request_body=LoginSerializer)
-#     @extend_schema(request=LoginSerializer, responses=LoginSerializer)
-#     def post(self, request):
-#         phone_number = request.data.get("phone_number")
-#         password = request.data.get("password")
-#         user = authenticate(request, phone_number=phone_number, password=password)
-#         if user is not None:
-#             login(request, user)
-#             return Response({"message": "Successfully authorized"})
-#         else:
-#             return Response({"message": "Invalid credentials"}, status=401)
-
-
-# class Logout(views.APIView):
-#     """Logout view"""
-#
-#     @extend_schema(request=serializers.Serializer, responses=serializers.Serializer)
-#     def get(self, request):
-#         if request.user.is_authenticated:
-#             logout(request)
-#             return Response({"message": "Successfully logged out"}, status=200)
-#         else:
-#             return Response({"message": "User not logged in"}, status=200)
-
-
 class PasswordRecoverySendMessage(views.APIView):
     """View for sending SMS for subsequent password recovery"""
 
@@ -211,9 +183,9 @@ class PasswordChange(views.APIView):
         new_password = serializer.validated_data["new_password"]
 
         if not request.user.check_password(old_password):
-            return Response({"message": "Incorrect password"})
+            return Response({"message": "Incorrect password"}, status=400)
         if old_password == new_password:
-            return Response({"message": "Your passwords are identical"})
+            return Response({"message": "Your passwords are identical"}, status=400)
 
         request.user.set_password(new_password)
         request.user.save()

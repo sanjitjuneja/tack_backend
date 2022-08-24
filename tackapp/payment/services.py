@@ -197,8 +197,6 @@ def get_transfer_request(
             'currency': currency,
             'value': str(amount)
         },
-
-        # TODO: clearing + add to function argument
     }
 
     if channel == "real-time-payments":

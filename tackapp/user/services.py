@@ -40,7 +40,6 @@ def create_api_accounts(user: User):
     stripe_id = create_stripe_account(user)
     dwolla_id = create_dwolla_account(user)
 
-    # stripe_id, dwolla_id = await asyncio.gather(create_stripe_account(user), create_dwolla_account(user))
     return stripe_id, dwolla_id
 
 
@@ -61,7 +60,6 @@ def create_stripe_account(user: User):
 def create_dwolla_account(user: User):
     token = dwolla_client.Auth.client()
 
-    # TODO: Error handling
     response = token.post(
         "customers",
         {

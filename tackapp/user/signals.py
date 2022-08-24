@@ -16,7 +16,7 @@ from user.services import create_api_accounts
 def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs):
     if created:
         stripe_id, dwolla_id = create_api_accounts(instance)
-        # stripe_id, dwolla_id = await create_api_accounts(instance)
+
         print(f"{stripe_id = }, {dwolla_id = }")
         # Creating record in our system
         BankAccount.objects.create(

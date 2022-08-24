@@ -13,7 +13,9 @@ from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user
 
 
 class UsersViewset(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer

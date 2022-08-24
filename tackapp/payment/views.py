@@ -63,12 +63,14 @@ class AddBalanceDwolla(views.APIView):
         serializer = AddBalanceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         amount = serializer.validated_data["amount"]
-        payment_method = serializer.validated_data["payment_method"] \
-            if serializer.validated_data.get("payment_method") \
-            else None
+        payment_method = serializer.validated_data["payment_method"]
 
         check_dwolla_balance(request.user, amount, payment_method)
-        response_body = refill_dwolla_money(request.user, **serializer.validated_data)
+        try:
+            response_body = refill_dwolla_money(request.user, **serializer.validated_data)
+        except dwollav2.Error as e:
+            return Response(e.body)
+
         return Response(response_body)
 
 
@@ -110,7 +112,11 @@ class GetUserWithdrawMethods(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response({"error": "can not find dwolla user"})
 
-        pms = get_dwolla_payment_methods(ba.dwolla_user)
+        try:
+            pms = get_dwolla_payment_methods(ba.dwolla_user)
+        except dwollav2.Error as e:
+            return Response(e.body)
+
         data = pms["_embedded"]["funding-sources"]
         logging.getLogger().warning(data)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
