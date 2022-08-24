@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "group.apps.GroupConfig",
     "socials.apps.SocialsConfig",
     "payment.apps.PaymentConfig",
+    "dwolla_service.apps.DwollaServiceConfig",
     "drf_spectacular",
     "rest_framework",
     "debug_toolbar",

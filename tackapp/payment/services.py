@@ -21,6 +21,7 @@ from plaid.model.processor_token_create_request import ProcessorTokenCreateReque
 from plaid.model.products import Products
 
 from core.choices import OfferType
+from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client
 from payment.models import BankAccount, UserPaymentMethods
@@ -175,10 +176,10 @@ def save_dwolla_access_token(access_token: str, user: User):
 
 
 def get_transfer_request(
-    source: str,
-    destination: str,
-    currency: str,
-    amount: int | Decimal,
+        source: str,
+        destination: str,
+        currency: str,
+        amount: int | Decimal,
 ):
     if type(amount) is int:
         amount = convert_to_decimal(amount, currency)
@@ -288,3 +289,18 @@ def get_dwolla_pms_by_id(pms_id: list):
         response = token.get(f"funding-sources/{pms_id}")
         responses.append(response)
     return responses
+
+
+def dwolla_webhook_handler(request):
+    # TODO: check hash
+
+    DwollaEvent.objects.create(
+        event_id=request.data.get("id"),
+        topic=request.data.get("topic"),
+        timestamp=request.data.get("timestamp"),
+        _links=request.data.get("_links"),
+        account=request.data.get("account"),
+        resource=request.data.get("resource"),
+        customer=request.data.get("customer"),
+        created=request.data.get("created"),
+    )

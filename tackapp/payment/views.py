@@ -17,13 +17,14 @@ from rest_framework import views
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from dwolla_service.models import DwollaEvent
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
     DwollaPaymentMethodSerializer, GetCardByIdSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
-    withdraw_dwolla_money, refill_dwolla_money, get_dwolla_pms_by_id
+    withdraw_dwolla_money, refill_dwolla_money, get_dwolla_pms_by_id, dwolla_webhook_handler
 from user.serializers import UserSerializer
 
 
@@ -132,7 +133,6 @@ class AddUserWithdrawMethod(views.APIView):
         serializer.is_valid(raise_exception=True)
         public_token = serializer.validated_data['public_token']
 
-
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
@@ -181,7 +181,6 @@ class GetPaymentMethodById(views.APIView):
 
 class DwollaWebhook(views.APIView):
     def post(self, request, *args, **kwargs):
-        logging.getLogger().warning(request)
+        dwolla_webhook_handler(request)
         logging.getLogger().warning(f"{request.data = }")
-        logging.getLogger().warning(f"{request.headers = }")
         return Response()
