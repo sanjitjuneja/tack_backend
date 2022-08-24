@@ -298,9 +298,9 @@ def dwolla_webhook_handler(request):
         event_id=request.data.get("id"),
         topic=request.data.get("topic"),
         timestamp=request.data.get("timestamp"),
-        _links=request.data.get("_links"),
-        account=request.data.get("account"),
-        resource=request.data.get("resource"),
-        customer=request.data.get("customer"),
+        self_res=request.data.get("_links").get("self"),
+        account=request.data.get("_links").get("account"),
+        resource=request.data.get("_links").get("resource"),
+        customer=request.data.get("_links").get("customer"),
         created=request.data.get("created"),
     )

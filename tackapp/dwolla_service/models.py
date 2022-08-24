@@ -5,7 +5,7 @@ class DwollaEvent(models.Model):
     event_id = models.UUIDField()
     topic = models.CharField(max_length=64)
     timestamp = models.DateTimeField()
-    _links = models.JSONField()
+    self_res = models.JSONField()
     account = models.JSONField()
     resource = models.JSONField()
     customer = models.JSONField()
