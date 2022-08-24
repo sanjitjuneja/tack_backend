@@ -203,7 +203,7 @@ def get_transfer_request(
 
     if channel == "real-time-payments":
         transfer_request["processingChannel"] = {
-            destination: "real-time-payments",
+            "destination": "real-time-payments",
         }
     return transfer_request
 

@@ -142,9 +142,9 @@ class AddUserWithdrawMethod(views.APIView):
         try:
             payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
         except dwollav2.Error as e:
-            return Response(e.body)
+            return Response(e.body, status=400)
         except plaid.ApiException as e:
-            return Response(e.body)
+            return Response(e.body, status=400)
         logger.warning(f"{payment_methods = }")
         pms = get_dwolla_pms_by_id(payment_methods)
         logger.warning(f"{pms = }")

@@ -22,7 +22,7 @@ class LoginSerializer(serializers.Serializer):
 
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(
-        write_only=True, required=True, validators=[password_validator]
+        write_only=True, required=True
     )
     new_password = serializers.CharField(
         write_only=True, required=True, validators=[password_validator]
