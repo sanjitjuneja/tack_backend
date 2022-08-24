@@ -298,7 +298,7 @@ def get_dwolla_pms_by_id(pms_id: list):
     token = dwolla_client.Auth.client()
     responses = []
     for pm in pms_id:
-        response = token.get(f"funding-sources/{pms_id}")
+        response = token.get(f"funding-sources/{pm}")
         responses.append(response)
     return responses
 
