@@ -6,7 +6,7 @@ from .models import BankAccount, UserPaymentMethods
 
 @admin.register(BankAccount)
 class BankAccountAdmin(ModelAdmin):
-    list_display = ['user', 'usd_balance', 'stripe_user']
+    list_display = ['user', 'usd_balance', 'stripe_user', 'dwolla_user']
 
 
 @admin.register(UserPaymentMethods)

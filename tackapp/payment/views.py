@@ -133,11 +133,14 @@ class AddUserWithdrawMethod(views.APIView):
         serializer.is_valid(raise_exception=True)
         public_token = serializer.validated_data['public_token']
 
+        logger = logging.getLogger()
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
         payment_methods = attach_all_accounts_to_dwolla(request.user, accounts)
+        logger.warning(f"{payment_methods = }")
         pms = get_dwolla_pms_by_id(payment_methods)
+        logger.warning(f"{pms = }")
         serializer = DwollaPaymentMethodSerializer(pms, many=True)
         return Response(serializer.data)
 
