@@ -3,7 +3,8 @@ import logging
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import views, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -70,7 +71,7 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        qs = Tack.active.filter(
+        queryset = Tack.active.filter(
             tacker=request.user
         ).exclude(
             status=TackStatus.FINISHED
@@ -79,8 +80,8 @@ class TackViewset(
         ).prefetch_related(
             "tacker"
         )
-        qs = self.filter_queryset(qs)
-        page = self.paginate_queryset(qs)
+        queryset = self.filter_queryset(queryset)
+        page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
 

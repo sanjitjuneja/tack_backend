@@ -26,7 +26,7 @@ services:
     container_name: 'nginx'
     build: ./nginx
     ports:
-      - "8020:8020"
+      - "80:80"
     volumes:
       - static_volume:/app/tackapp/staticfiles
       - media_volume:/app/tackapp/media

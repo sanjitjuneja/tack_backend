@@ -37,7 +37,7 @@ class TwilioSendMessage(views.APIView):
 
         try:
             User.objects.get(phone_number=phone_number)
-            return Response({"error": "code", "message": "User already exists"})
+            return Response({"error": "code", "message": "User already exists"}, status=400)
         except User.DoesNotExist:
             pass
 
