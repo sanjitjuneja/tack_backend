@@ -76,7 +76,7 @@ def create_dwolla_account(user: User):
             "firstName": user.first_name,
             "lastName": user.last_name
         }
-        token.post(f"customers/{customer.id}", request)
+        token.post(f"customers/{customer['id']}", request)
         dwolla_id = customer.id
     else:
         response = token.post(
