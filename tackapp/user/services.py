@@ -111,3 +111,26 @@ def stripe_change_info(user: User):
         phone=user.phone_number,
         email=user.email
     )
+
+
+def deactivate_dwolla_customer(user: User):
+    dwolla_id = get_dwolla_id(user)
+    token = dwolla_client.Auth.client()
+    # response = token.get(f"customers/{dwolla_id}/transfers?status=pending")
+    # if response.body["total"] != 0:
+    #     #
+
+    # response = token.get(f"customers/{dwolla_id}/funding-sources")
+
+    # TODO: check pending transfers
+    # TODO: deattach all funding-sources
+
+    response = token.post(
+        f"customers/{dwolla_id}",
+        {"status": "deactivated"}
+    )
+
+
+def delete_stripe_customer(user: User):
+    customer, created = dsCustomer.get_or_create(subscriber=user)
+    stripe.Customer.delete(customer.id)

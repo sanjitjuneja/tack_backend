@@ -96,7 +96,7 @@ class GetUserPaymentMethods(views.APIView):
         )
         pms = dsPaymentMethod.objects.filter(customer=ds_customer)
         serializer = StripePaymentMethodSerializer(pms, many=True)
-        return Response(serializer.data)
+        return Response({"results": serializer.data})
 
 
 class GetUserWithdrawMethods(views.APIView):
@@ -120,7 +120,7 @@ class GetUserWithdrawMethods(views.APIView):
         data = pms["_embedded"]["funding-sources"]
         logging.getLogger().warning(data)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        return Response(serializer.data)
+        return Response({"results": serializer.data})
 
 
 class GetLinkToken(views.APIView):
@@ -155,7 +155,7 @@ class AddUserWithdrawMethod(views.APIView):
         pms = get_dwolla_pms_by_id(payment_methods)
         logger.warning(f"{pms = }")
         serializer = DwollaPaymentMethodSerializer(pms, many=True)
-        return Response(serializer.data)
+        return Response({"results": serializer.data})
 
 
 class DwollaMoneyWithdraw(views.APIView):
