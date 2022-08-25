@@ -39,7 +39,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost", "backend.tackapp.net"]
+ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost", "backend.tackapp.net", "172.31.8.161"]
 
 
 # Application definition
