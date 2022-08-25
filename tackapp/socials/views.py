@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import dwollav2
 from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
@@ -88,8 +89,10 @@ class TwilioUserRegistration(views.APIView):
             except User.DoesNotExist:
                 pass
 
-            user = user_serializer.save()
-
+            try:
+                user = user_serializer.save()
+            except dwollav2.InvalidResourceStateError as e:
+                return Response(e.body)
             phv.user = user
             phv.save()
             return Response(UserDetailSerializer(user).data, status=200)

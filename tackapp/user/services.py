@@ -74,8 +74,11 @@ def create_dwolla_account(user: User):
 
         request = {
             "firstName": user.first_name,
-            "lastName": user.last_name
+            "lastName": user.last_name,
         }
+        if customer["status"] == "deactivated":
+            request["status"] = "reactivated"
+        # if suspended == bad
         token.post(f"customers/{customer['id']}", request)
         dwolla_id = customer.id
     else:
