@@ -80,7 +80,7 @@ def create_dwolla_account(user: User):
             request["status"] = "reactivated"
         # if suspended == bad
         token.post(f"customers/{customer['id']}", request)
-        dwolla_id = customer.id
+        dwolla_id = customer["id"]
     else:
         response = token.post(
             "customers",
