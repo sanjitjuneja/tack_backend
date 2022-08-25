@@ -7,29 +7,21 @@ from .models import *
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    is_muted = serializers.SerializerMethodField()
-
-    def get_is_muted(self, obj: Group) -> bool:
-        try:
-            GroupMutes.objects.get(group=obj)
-        except ObjectDoesNotExist:
-            return False
-        return True
 
     class Meta:
         model = Group
-        fields = "id", "owner", "name", "description", "image", "is_public", "is_muted"
+        fields = "id", "owner", "name", "description", "image", "is_public"
         read_only_fields = "owner",
 
 
-class GroupMembersSerializer(serializers.ModelSerializer):
-    group = GroupSerializer(read_only=True)
-    member = UserListSerializer(read_only=True)
-
-    class Meta:
-        model = GroupMembers
-        fields = "group", "member"
-        read_only_fields = "group", "member"
+# class GroupMembersSerializer(serializers.ModelSerializer):
+#     group = GroupSerializer(read_only=True)
+#     member = UserListSerializer(read_only=True)
+#
+#     class Meta:
+#         model = GroupMembers
+#         fields = "group", "member"
+#         read_only_fields = "group", "member"
 
 # class GroupMembersSerializer(serializers.ModelSerializer):
 #     data = serializers.SerializerMethodField()
@@ -72,3 +64,11 @@ class UserInviteSerializer(serializers.Serializer):
 
 class GroupInviteLinkSerializer(serializers.Serializer):
     uuid = serializers.CharField(max_length=36, required=True)
+
+
+class GroupMembersSerializer(serializers.ModelSerializer):
+    group = GroupSerializer()
+
+    class Meta:
+        model = GroupMembers
+        fields = "group", "is_muted"

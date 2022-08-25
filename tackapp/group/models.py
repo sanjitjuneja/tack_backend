@@ -41,6 +41,7 @@ class Group(CoreModel):
 class GroupMembers(models.Model):
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    is_muted = models.BooleanField(default=False)
 
     class Meta:
         db_table = "group_membership"
@@ -69,13 +70,3 @@ class GroupTacks(models.Model):
         db_table = "group_tacks"
         verbose_name = "Group Tack"
         verbose_name_plural = "Group Tacks"
-
-
-class GroupMutes(models.Model):
-    user = models.ForeignKey("user.User", on_delete=models.CASCADE)
-    group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = "group_mutes"
-        verbose_name = "Group mute"
-        verbose_name_plural = "Group mutes"

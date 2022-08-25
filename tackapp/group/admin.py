@@ -13,7 +13,7 @@ class GroupAdmin(ModelAdmin):
 
 @admin.register(GroupMembers)
 class GroupMembersAdmin(ModelAdmin):
-    list_display = ['id', 'group', 'member']
+    list_display = ['id', 'group', 'member', 'is_muted']
     list_filter = ['group']
 
 
@@ -23,8 +23,8 @@ class GroupInvitationsAdmin(ModelAdmin):
     list_filter = ['group']
 
 
-@admin.register(GroupMutes)
-class GroupMutesAdmin(ModelAdmin):
-    list_display = ['id', 'group', 'user']
-    list_filter = ['group']
+# @admin.register(GroupMutes)
+# class GroupMutesAdmin(ModelAdmin):
+#     list_display = ['id', 'group', 'user']
+#     list_filter = ['group']
 

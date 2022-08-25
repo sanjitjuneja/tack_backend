@@ -31,11 +31,11 @@ class GroupViewset(
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
 
-    @action(methods=["GET"], detail=False)
+    @action(methods=["GET"], detail=False, serializer_class=GroupMembersSerializer)
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = Group.active.filter(groupmembers__member=request.user)
+        qs = GroupMembers.objects.filter(member=request.user)
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -153,17 +153,23 @@ class GroupViewset(
     @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def mute(self, request, *args, **kwargs):
         group = self.get_object()
-        GroupMutes.objects.get_or_create(user=request.user, group=group)
+        try:
+            gm = GroupMembers.objects.get(user=request.user, group=group)
+            gm.is_muted = True
+            gm.save()
+        except GroupMembers.DoesNotExist:
+            return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
         return Response(GroupSerializer(group).data)
 
     @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
     def unmute(self, request, *args, **kwargs):
         group = self.get_object()
         try:
-            mute = GroupMutes.objects.get(user=request.user, group=group)
-            mute.delete()
-        except ObjectDoesNotExist:
-            pass
+            gm = GroupMembers.objects.get(user=request.user, group=group)
+            gm.is_muted = False
+            gm.save()
+        except GroupMembers.DoesNotExist:
+            return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
 
         return Response(GroupSerializer(group).data)
 
@@ -219,7 +225,6 @@ class InvitesView(
         """Endpoint for view current User's Group invites"""
 
         qs = GroupInvitations.objects.filter(invitee=request.user)
-
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
