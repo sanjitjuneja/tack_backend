@@ -10,8 +10,8 @@ from payment.models import BankAccount
 class AddBalanceSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
-    payment_method = serializers.CharField(min_length=6, required=True)
-    channel = serializers.CharField()
+    payment_method = serializers.CharField(min_length=6)
+    channel = serializers.CharField(required=False)
 
 
 class BankAccountSerializer(serializers.ModelSerializer):
