@@ -39,7 +39,7 @@ class UsersViewset(
 
     @action(methods=["PATCH"], detail=False, url_path="me/change_bio", serializer_class=UserDetailSerializer)
     def me_change_bio(self, request, *args, **kwargs):
-        self.queryset = User.objects.all().prefetch_related("bankaccount")
+        self.queryset = User.objects.all()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = user_change_bio(request.user, serializer.validated_data)

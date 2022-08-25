@@ -6,9 +6,11 @@ import asyncio
 
 import djstripe.models
 import stripe
+from djstripe.models import Customer as dsCustomer
 from django.db.models import Q
 
 from payment.dwolla_service import dwolla_client
+from payment.services import get_dwolla_id
 from review.models import Review
 from user.models import User
 
@@ -34,6 +36,8 @@ def user_change_bio(user: User, data: OrderedDict):
     for key, value in data.items():
         exec(f"user.{key} = value")
     user.save()
+    dwolla_change_info(user)
+    stripe_change_info(user)
     return user
 
 
@@ -85,3 +89,25 @@ def create_dwolla_account(user: User):
             })
         dwolla_id = response.headers["Location"].split("/")[-1]
     return dwolla_id
+
+
+def dwolla_change_info(user: User):
+    token = dwolla_client.Auth.client()
+
+    dwolla_id = get_dwolla_id(user)
+    request = {
+        "firstName": user.first_name,
+        "lastName": user.last_name,
+        "email": user.email
+    }
+    token.post(f"customers/{dwolla_id}", request)
+
+
+def stripe_change_info(user: User):
+    customer, created = dsCustomer.get_or_create(subscriber=user)
+    stripe.Customer.modify(
+        customer.id,
+        name=user.get_full_name(),
+        phone=user.phone_number,
+        email=user.email
+    )
