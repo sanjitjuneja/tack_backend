@@ -1,3 +1,4 @@
+import logging
 from typing import OrderedDict
 from uuid import uuid4
 import aiohttp
@@ -59,14 +60,28 @@ def create_stripe_account(user: User):
 
 def create_dwolla_account(user: User):
     token = dwolla_client.Auth.client()
+    logger = logging.getLogger()
+    response = token.get(f"customers?email={user.email}")
 
-    response = token.post(
-        "customers",
-        {
+    # if user already exists in Dwolla system we update information about him
+    if response.body["total"] == 1:
+        customer = response.body["_embedded"]["customers"][0]
+        logger.warning("Found existing dwolla customer:", customer)
+
+        request = {
             "firstName": user.first_name,
-            "lastName": user.last_name,
-            "email": user.email,
-            "correlationId": user.id
-        })
-    dwolla_id = response.headers["Location"].split("/")[-1]
+            "lastName": user.last_name
+        }
+        token.post(f"customers/{customer.id}", request)
+        dwolla_id = customer.id
+    else:
+        response = token.post(
+            "customers",
+            {
+                "firstName": user.first_name,
+                "lastName": user.last_name,
+                "email": user.email,
+                # "correlationId": user.id
+            })
+        dwolla_id = response.headers["Location"].split("/")[-1]
     return dwolla_id
