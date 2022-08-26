@@ -39,7 +39,15 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["tackapp.net", "127.0.0.1", "44.203.217.242", "localhost", "backend.tackapp.net", "172.31.8.161"]
+ALLOWED_HOSTS = [
+    "tackapp.net",
+    "127.0.0.1",
+    "44.203.217.242",
+    "localhost",
+    "backend.tackapp.net",
+    "172.31.8.161",
+    "18.214.112.208"
+]
 
 
 # Application definition
@@ -291,7 +299,13 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
 }
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8020", "http://44.203.217.242:8020", "http://backend.tackapp.net"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8020",
+    "http://44.203.217.242:8020",
+    "http://backend.tackapp.net",
+    "172.31.8.161",
+    "18.214.112.208"
+]
 
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
