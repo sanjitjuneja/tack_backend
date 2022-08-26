@@ -31,19 +31,35 @@ class GroupViewset(
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
 
-    @action(methods=["GET"], detail=False, serializer_class=GroupMembersSerializer)
+    def retrieve(self, request, *args, **kwargs):
+        group = self.get_object()
+        try:
+            gm = GroupMembers.objects.get(group=group, member=request.user)
+        except GroupMembers.DoesNotExist:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You are not a member of this Group"
+                },
+                status=400
+            )
+
+        serializer = GroupMembersSerializer(gm)
+        return Response(serializer.data)
+
+    @action(methods=("GET",), detail=False, serializer_class=GroupMembersSerializer)
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = GroupMembers.objects.filter(member=request.user)
+        qs = GroupMembers.objects.filter(member=request.user).select_related("group")
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(request=None)
     @action(
-        methods=["POST"],
+        methods=("POST",),
         detail=True,
-        serializer_class=serializers.Serializer,
         permission_classes=(GroupMemberPermission,)
     )
     def set_active(self, request, *args, **kwargs):
@@ -64,7 +80,7 @@ class GroupViewset(
         ],
     )
     @action(
-        methods=["GET"],
+        methods=("GET",),
         detail=False,
         serializer_class=GroupInviteLinkSerializer,
         permission_classes=(IsAuthenticated,)
@@ -77,17 +93,17 @@ class GroupViewset(
         uuid = serializer.validated_data["uuid"]
         try:
             group = self.get_queryset().get(invitation_link=uuid)
-            GroupMembers.objects.get(group=group, member=request.user)
+            gm = GroupMembers.objects.get(group=group, member=request.user)
         except Group.DoesNotExist:
-            return Response({"error": "Not found"}, status=404)
+            return Response({"error": "code", "message": "Group not found"}, status=404)
         except GroupMembers.DoesNotExist:
             invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
             invite_serializer = GroupInvitationsSerializer(invite)
             return Response({"invitation": invite_serializer.data})
-        return Response({"group": GroupSerializer(group).data})
+        return Response({"group": GroupMembersSerializer(gm).data})
 
     @extend_schema(responses={"message"})
-    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,),
+    @action(methods=("POST",), detail=True, permission_classes=(GroupMemberPermission,),
             serializer_class=serializers.Serializer)
     def leave(self, request, *args, **kwargs):
         """Endpoint for leaving Group"""
@@ -102,10 +118,15 @@ class GroupViewset(
         except ObjectDoesNotExist:
             return Response({"message": "You are not a member of this group"}, status=400)
 
-        return Response({"message": "Leaved Successfully"})
+        return Response({"message": "Leaved Successfully",
+                         "group": GroupSerializer(group).data}, status=200)
 
-    @action(methods=["GET"], detail=True, serializer_class=TackDetailSerializer,
-            permission_classes=(GroupMemberPermission,))
+    @action(
+        methods=("GET",),
+        detail=True,
+        serializer_class=TackDetailSerializer,
+        permission_classes=(GroupMemberPermission,)
+    )
     def tacks(self, request, *args, **kwargs):
         """Endpoint for getting *created* and *active* Tacks of certain Group"""
 
@@ -120,7 +141,12 @@ class GroupViewset(
         serializer = TackDetailSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["GET"], detail=True, serializer_class=UserListSerializer, permission_classes=(GroupMemberPermission,))
+    @action(
+        methods=("GET",),
+        detail=True,
+        serializer_class=UserListSerializer,
+        permission_classes=(GroupMemberPermission,)
+    )
     def members(self, request, *args, **kwargs):
         group = self.get_object()
         users_qs = User.objects.filter(groupmembers__group=group)
@@ -128,15 +154,25 @@ class GroupViewset(
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,))
+    @action(methods=("GET",), detail=True, permission_classes=(GroupMemberPermission,))
     def get_invite_link(self, request, *args, **kwargs):
         """Endpoint to claim Group invitation link"""
 
         group = self.get_object()
         protocol = 'https' if request.is_secure() else 'http'
-        return Response({"invite_link": f"{protocol}://{request.get_host()}{reverse('group-invite')}?uuid={group.invitation_link}"})
+        return Response(
+            {"invite_link": (f"{protocol}://"
+                             f"{request.get_host()}"
+                             f"{reverse('group-invite')}"
+                             f"?uuid={group.invitation_link}")}
+        )
 
-    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), url_path="me/tacks")
+    @action(
+        methods=("GET",),
+        detail=True,
+        permission_classes=(GroupMemberPermission,),
+        url_path="me/tacks"
+    )
     def my_tacks(self, request, *args, **kwargs):
         """Endpoint for getting all current User's Tacks"""
 
@@ -150,30 +186,45 @@ class GroupViewset(
         serializer = TackDetailSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(
+        methods=("POST",),
+        detail=True,
+        permission_classes=(GroupMemberPermission,),
+    )
     def mute(self, request, *args, **kwargs):
         group = self.get_object()
         try:
-            gm = GroupMembers.objects.get(user=request.user, group=group)
+            gm = GroupMembers.objects.get(member=request.user, group=group)
             gm.is_muted = True
             gm.save()
         except GroupMembers.DoesNotExist:
             return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
-        return Response(GroupSerializer(group).data)
+        return Response(GroupMembersSerializer(gm).data)
 
-    @action(methods=["POST"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(
+        methods=("POST",),
+        detail=True,
+        permission_classes=(GroupMemberPermission,),
+    )
     def unmute(self, request, *args, **kwargs):
         group = self.get_object()
         try:
-            gm = GroupMembers.objects.get(user=request.user, group=group)
+            gm = GroupMembers.objects.get(member=request.user, group=group)
             gm.is_muted = False
             gm.save()
         except GroupMembers.DoesNotExist:
             return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
 
-        return Response(GroupSerializer(group).data)
+        return Response(GroupMembersSerializer(gm).data)
 
-    @action(methods=["GET"], detail=True, permission_classes=(GroupMemberPermission,), serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(
+        methods=("GET",),
+        detail=True,
+        permission_classes=(GroupMemberPermission,),
+    )
     def popular_tacks(self, request, *args, **kwargs):
         group = self.get_object()
         popular_tacks = PopularTack.objects.filter(group=group)[:10]
@@ -206,7 +257,7 @@ class InvitesView(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = GroupInvitations.objects.all().prefetch_related("group")
+    queryset = GroupInvitations.objects.all().select_related("group")
     permission_classes = (IsAuthenticated, InviteePermission)
     serializer_class = GroupInvitationsSerializer
 
@@ -220,16 +271,17 @@ class InvitesView(
         else:
             return super().get_serializer_class()
 
-    @action(methods=["GET"], detail=False)
+    @action(methods=("GET",), detail=False)
     def me(self, request, *args, **kwargs):
         """Endpoint for view current User's Group invites"""
 
-        qs = GroupInvitations.objects.filter(invitee=request.user)
+        qs = GroupInvitations.objects.filter(invitee=request.user).select_related("group")
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["POST"], detail=True, serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(methods=("POST",), detail=True)
     def accept(self, request, *args, **kwargs):
         """Endpoint for accepting pending Invites (for invitee)"""
 

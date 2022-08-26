@@ -7,6 +7,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import views, viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.fields import empty
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -105,18 +106,16 @@ class TackViewset(
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(request=None)
     @action(
-        methods=["POST"],
+        methods=("POST",),
         detail=True,
         permission_classes=(TackFromRunnerPermission,),
-        serializer_class=serializers.Serializer,
     )
     def complete(self, request, *args, **kwargs):
         """Endpoint for Runner to complete the Tack"""
 
         tack = self.get_object()
-        # serializer = self.get_serializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
         if tack.status != TackStatus.IN_PROGRESS:
             return Response({"detail": "Current Tack status is not In Progress"})
 
@@ -124,10 +123,10 @@ class TackViewset(
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
+    @extend_schema(request=None)
     @action(
         methods=["POST"],
         detail=True,
-        serializer_class=serializers.Serializer,
         permission_classes=(TackFromRunnerPermission,)
     )
     def start_tack(self, request, *args, **kwargs):
@@ -148,7 +147,8 @@ class TackViewset(
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["GET"], detail=False, serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(methods=["GET"], detail=False)
     def nearby(self, request, *args, **kwargs):
         """Endpoint for getting manual Popular templates"""
 
@@ -158,7 +158,8 @@ class TackViewset(
             "popular": serializer_popular.data,
         })
 
-    @action(methods=("POST",), detail=True, permission_classes=(TackOwnerPermission,), serializer_class=serializers.Serializer)
+    @extend_schema(request=None)
+    @action(methods=("POST",), detail=True, permission_classes=(TackOwnerPermission,))
     def confirm_complete(self, request, *args, **kwargs):
         """Endpoint for Tacker to send payment to Runner without creating Review"""
 
@@ -177,6 +178,18 @@ class TackViewset(
         contacts = tack.runner.get_contacts() if tack.tacker == request.user else tack.tacker.get_contacts()
         logging.getLogger().warning(contacts)
         serializer = ContactsSerializer(contacts)
+        return Response(serializer.data)
+
+    @extend_schema(request=None)
+    @action(methods=("POST",), detail=True, permission_classes=(TackFromRunnerPermission,))
+    def runner_cancel(self, request, *args, **kwargs):
+        tack = self.get_object()
+        if tack.status not in (TackStatus.ACCEPTED, TackStatus.IN_PROGRESS):
+            return Response({"error": "code", "message": "Cannot cancel Tack in this status"})
+        tack.is_active = False
+        tack.is_canceled = True
+        tack.save()
+        serializer = self.get_serializer(tack)
         return Response(serializer.data)
 
     def perform_create(self, serializer):

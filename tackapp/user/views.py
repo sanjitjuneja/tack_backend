@@ -31,13 +31,13 @@ class UsersViewset(
         else:
             return super().get_serializer_class()
 
-    @action(methods=["GET"], detail=False, serializer_class=UserDetailSerializer)
+    @action(methods=("GET",), detail=False, serializer_class=UserDetailSerializer)
     def me(self, request, *args, **kwargs):
         self.queryset = User.objects.all().prefetch_related("bankaccount")
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
-    @action(methods=["PATCH"], detail=False, url_path="me/change_bio", serializer_class=UserDetailSerializer)
+    @action(methods=("PATCH",), detail=False, url_path="me/change_bio", serializer_class=UserDetailSerializer)
     def me_change_bio(self, request, *args, **kwargs):
         self.queryset = User.objects.all()
         serializer = self.get_serializer(data=request.data)
@@ -46,7 +46,7 @@ class UsersViewset(
 
         return Response(self.get_serializer(user).data)
 
-    @action(methods=["GET"], detail=True)
+    @action(methods=("GET",), detail=True)
     def reviews_as_reviewed(self, request, *args, **kwargs):
         """Endpoint for get all Reviews of the User as reviewed"""
 
@@ -56,7 +56,7 @@ class UsersViewset(
         serializer = ReviewSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=["GET"], detail=True)
+    @action(methods=("GET",), detail=True)
     def reviews_as_reviewer(self, request, *args, **kwargs):
         """Endpoint for get all Reviews of the User as reviewer"""
 

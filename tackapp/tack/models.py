@@ -34,6 +34,7 @@ class Tack(CoreModel):
         max_length=16, choices=TackStatus.choices, default=TackStatus.CREATED
     )
     is_paid = models.BooleanField(default=False)
+    is_canceled = models.BooleanField(default=False)
     estimation_time_seconds = models.PositiveIntegerField(null=True, blank=True, default=None)
     # setting after Tacker accepts Runner's Offer
     accepted_time = models.DateTimeField(null=True, blank=True)

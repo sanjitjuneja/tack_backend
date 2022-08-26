@@ -24,7 +24,7 @@ from core.choices import OfferType
 from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client
-from payment.models import BankAccount, UserPaymentMethods
+from payment.models import BankAccount, UserPaymentMethods, Fee
 from tack.models import Tack
 from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
@@ -32,6 +32,8 @@ from user.models import User
 
 @transaction.atomic
 def send_payment_to_runner(tack: Tack):
+    """Transact money from one BankAccount to another"""
+
     if tack.is_paid:
         return
     tack.runner.bankaccount.usd_balance += tack.price
@@ -40,12 +42,16 @@ def send_payment_to_runner(tack: Tack):
 
 
 def get_dwolla_payment_methods(dwolla_user_id):
+    """Get all funding-sources by Dwolla customer id"""
+
     token = dwolla_client.Auth.client()
     response = token.get(f"customers/{dwolla_user_id}/funding-sources")
     return response.body
 
 
 def get_link_token(dwolla_id_user):
+    """Get link token for FE to initiate plaid authentication"""
+
     request = LinkTokenCreateRequest(
         products=[Products('transactions')],  # , Products("identity_verification")],
         client_name="Plaid Test App",
@@ -56,7 +62,10 @@ def get_link_token(dwolla_id_user):
         account_filters=LinkTokenAccountFilters(
             depository=DepositoryFilter(
                 account_subtypes=DepositoryAccountSubtypes(
-                    [DepositoryAccountSubtype('checking'), DepositoryAccountSubtype('savings')]
+                    [
+                        DepositoryAccountSubtype('checking'),
+                        # DepositoryAccountSubtype('savings')
+                    ]
                 )
             )
         ),
@@ -70,6 +79,8 @@ def get_link_token(dwolla_id_user):
 
 
 def get_dwolla_id(user: User):
+    """Get Dwolla customer id by User record in our system"""
+
     try:
         ba = BankAccount.objects.get(user=user)
     except ObjectDoesNotExist:
@@ -78,6 +89,8 @@ def get_dwolla_id(user: User):
 
 
 def get_access_token(public_token: str) -> str:
+    """Get access token from Plaid for further interaction with it to retrieve processor-token"""
+
     exchange_request = ItemPublicTokenExchangeRequest(
         public_token=public_token
     )
@@ -86,31 +99,24 @@ def get_access_token(public_token: str) -> str:
     return access_token
 
 
-def get_bank_account_ids(access_token: str) -> list[dict]:
+def get_bank_account_ids(access_token: str) -> list[AccountBase]:
+    """Get all supported bank accounts(checking+depository) to manage from Plaid"""
+
     request = AuthGetRequest(access_token=access_token)
     response = plaid_client.auth_get(request)
     logger = logging.getLogger()
-    logger.warning(f"{response = }")
     supported_accounts = []
     for account in response.get('accounts'):
-        logger.warning(f"{account = }")
-        logger.warning(type(account))
-        account: AccountBase
-
-        print(account.type, account.subtype)
-        print(f"{type(account.type) = }")
-        print(f"{type(account.subtype) = }")
-
         if account.subtype == AccountSubtype("checking") and account.type == AccountType("depository"):
             logger.warning(f"supported {account = }")
             supported_accounts.append(account)
     return supported_accounts
 
 
-def get_accounts_with_processor_tokens(access_token: str) -> list[dict]:
+def get_accounts_with_processor_tokens(access_token: str) -> list[AccountBase]:
+    """Get all accounts with Plaid processor-token"""
+
     accounts = get_bank_account_ids(access_token)
-    logger = logging.getLogger()
-    logger.warning(f'{accounts = }')
 
     for account in accounts:
         request = ProcessorTokenCreateRequest(
@@ -126,36 +132,54 @@ def get_accounts_with_processor_tokens(access_token: str) -> list[dict]:
 
 
 def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list:
+    """Attach and return all Dwolla payment methods to our BankAccount"""
+
     payment_methods = []
     dwolla_id = get_dwolla_id(user)
     for account in accounts:
         payment_method_id = attach_account_to_dwolla(dwolla_id, account)
         payment_methods.append(payment_method_id)
 
-    # account_names = [account["official_name"] for account in accounts]
     return payment_methods
 
 
 def attach_account_to_dwolla(dwolla_id: str, account: dict) -> str:
-    token = dwolla_client.Auth.client()
-    response = token.post(f"customers/{dwolla_id}/funding-sources",
-                          {"plaidToken": account.get("plaidToken"),
-                           "name": account.get("name")})
-    # TODO: error handling
+    """Attach one Dwolla payment method to our Tack BankAccount"""
 
-    payment_method_id = response.headers["Location"].split("/")[-1]
+    payment_method_id = get_dwolla_pm_by_plaid_token(dwolla_id, account)
+    add_dwolla_payment_method(dwolla_id, payment_method_id)
+    return payment_method_id
+
+
+def get_dwolla_pm_by_plaid_token(dwolla_customer_id, pm_account):
+    """Exchange plaidToken for Dwolla payment method"""
+
+    token = dwolla_client.Auth.client()
+    response = token.post(
+        f"customers/{dwolla_customer_id}/funding-sources",
+        {
+            "plaidToken": pm_account.get("plaidToken"),
+            "name": pm_account.get("name")
+        }
+    )
+    return response.headers["Location"].split("/")[-1]
+
+
+def add_dwolla_payment_method(dwolla_id, dwolla_pm_id):
+    """Make record in DB about Dwolla payment method"""
+
     try:
         ba = BankAccount.objects.get(dwolla_user=dwolla_id)
-        UserPaymentMethods.objects.create(bank_account=ba, dwolla_payment_method=payment_method_id)
+        UserPaymentMethods.objects.create(bank_account=ba, dwolla_payment_method=dwolla_pm_id)
     except BankAccount.DoesNotExist:
-        logging.getLogger().warning(f"Bank Account of {dwolla_id} not found")
+        logging.getLogger().warning(f"Bank Account of {dwolla_id} is not found")
         # TODO: error handling
-
-    return payment_method_id
 
 
 @transaction.atomic
 def add_money_to_bank_account(payment_intent: PaymentIntent):
+    """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
+
     try:
         ba = BankAccount.objects.get(stripe_user=payment_intent.customer)
         ba.usd_balance += payment_intent.amount
@@ -166,6 +190,8 @@ def add_money_to_bank_account(payment_intent: PaymentIntent):
 
 
 def save_dwolla_access_token(access_token: str, user: User):
+    """Save Dwolla access token to DB. It will needed for bank balance check"""
+
     try:
         ba = BankAccount.objects.get(user=user)
         ba.dwolla_access_token = access_token
@@ -182,6 +208,8 @@ def get_transfer_request(
         amount: int | Decimal,
         channel: str
 ):
+    """Form Dwolla transaction request"""
+
     if type(amount) is int:
         amount = convert_to_decimal(amount, currency)
     transfer_request = {
@@ -203,10 +231,18 @@ def get_transfer_request(
         transfer_request["processingChannel"] = {
             "destination": "real-time-payments",
         }
+    elif channel == "next-available":
+        transfer_request["clearing"] = {
+            'source': 'next-available',
+            'destination': 'next-available'
+        }
+
     return transfer_request
 
 
 def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
+    """Check """
+
     ba = BankAccount.objects.get(user=user)
     amount = convert_to_decimal(amount)
     request = AccountsBalanceGetRequest(
@@ -225,12 +261,14 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
                     return True
-    except ObjectDoesNotExist:
+    except UserPaymentMethods.DoesNotExist:
         pass
     return False
 
 
 def convert_to_decimal(amount: int, currency: str = "USD") -> Decimal:
+    """Convert int value to Decimal based on currency"""
+
     currency_cents_dict = {
         "USD": 100,
         "EUR": 100
@@ -240,56 +278,61 @@ def convert_to_decimal(amount: int, currency: str = "USD") -> Decimal:
 
 
 @transaction.atomic
-def withdraw_dwolla_money(
+def dwolla_transaction(
         user: User,
         amount: int,
         payment_method: str,
         channel: str,
+        action: str,
         currency: str = "USD",
         *args,
-        **kwargs):
-    token = dwolla_client.Auth.client()
-    transfer_request = get_transfer_request(
-        source=DWOLLA_MAIN_FUNDING_SOURCE,
-        destination=payment_method,
-        currency=currency,
-        amount=amount,
-        channel=channel
-    )
-    response = token.post('transfers', transfer_request)
-    logging.getLogger().warning(response.headers)
-    logging.getLogger().warning(response.body)
-    ba = BankAccount.objects.get(user=user)
-    ba.usd_balance -= amount
-    ba.save()
-    return response.body
+        **kwargs
+):
+    if action == "withdraw":
+        source = DWOLLA_MAIN_FUNDING_SOURCE
+        destination = payment_method
+        amount_with_fees = amount
+        if channel == "next-available":
+            amount_with_fees = calculate_amount_with_fees(amount)
+    elif action == "refill":
+        source = payment_method
+        destination = DWOLLA_MAIN_FUNDING_SOURCE
+        amount_with_fees = amount
+    else:
+        return {"error": "code", "message": f"Invalid action: {action}"}
 
-
-@transaction.atomic
-def refill_dwolla_money(
-        user: User,
-        amount: int,
-        payment_method: str,
-        channel: str,
-        currency: str = "USD",
-        *args,
-        **kwargs):
-    token = dwolla_client.Auth.client()
     transfer_request = get_transfer_request(
-        source=payment_method,
-        destination=DWOLLA_MAIN_FUNDING_SOURCE,
+        source=source,
+        destination=destination,
         currency=currency,
-        amount=amount,
+        amount=amount_with_fees,
         channel=channel
     )
 
+    token = dwolla_client.Auth.client()
     response = token.post('transfers', transfer_request)
-    logging.getLogger().warning(response.headers)
     logging.getLogger().warning(response.body)
     ba = BankAccount.objects.get(user=user)
-    ba.usd_balance += amount
-    ba.save()
+
+    if action == "withdraw":
+        ba.usd_balance -= amount
+        ba.save()
+    elif action == "refill":
+        ba.usd_balance += amount
+        ba.save()
     return response.body
+
+
+def calculate_amount_with_fees(amount: int) -> int:
+    fees = Fee.objects.all().last()
+    abs_fee = amount * fees.fee_percent / 100
+    if abs_fee < fees.fee_min:
+        abs_fee = fees.fee_min
+    elif abs_fee > fees.fee_max:
+        abs_fee = fees.fee_max
+
+    amount = int(amount + abs_fee)
+    return amount
 
 
 def get_dwolla_pms_by_id(pms_id: list):

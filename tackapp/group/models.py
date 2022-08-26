@@ -42,6 +42,7 @@ class GroupMembers(models.Model):
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
     is_muted = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "group_membership"

@@ -1,3 +1,6 @@
+import logging
+from decimal import Decimal, Context
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -56,4 +59,13 @@ def username_validator(value: str) -> bool:
         raise ValidationError(
             [ValidationError(_(message), code) for code, message in errors.items()]
         )
+    return True
+
+
+def percent_validator(value: Decimal):
+    logger = logging.getLogger()
+    logger.warning(value)
+    logger.warning(type(value))
+    if not 0 <= value <= 100:
+        raise ValidationError("Percent should be in range 0 - 100")
     return True

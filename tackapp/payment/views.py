@@ -26,7 +26,7 @@ from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PIS
     DwollaPaymentMethodSerializer, GetCardByIdSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
-    withdraw_dwolla_money, refill_dwolla_money, get_dwolla_pms_by_id, dwolla_webhook_handler
+    get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction
 from user.serializers import UserSerializer
 
 
@@ -65,9 +65,11 @@ class AddBalanceDwolla(views.APIView):
         amount = serializer.validated_data["amount"]
         payment_method = serializer.validated_data["payment_method"]
 
-        check_dwolla_balance(request.user, amount, payment_method)
+        is_enough_funds = check_dwolla_balance(request.user, amount, payment_method)
+        if not is_enough_funds:
+            return Response({"error": "code", "message": "Insufficient funds"}, status=400)
         try:
-            response_body = refill_dwolla_money(request.user, **serializer.validated_data)
+            response_body = dwolla_transaction(user=request.user, action="refill", **serializer.validated_data)
         except dwollav2.Error as e:
             return Response(e.body)
 
@@ -162,17 +164,17 @@ class DwollaMoneyWithdraw(views.APIView):
     @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return Response({"message": "User not logged in"}, status=400)
+            return Response({"error": "code", "message": "User not logged in"}, status=400)
         serializer = DwollaMoneyWithdrawSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
             ba = BankAccount.objects.get(user=request.user)
             if ba.usd_balance <= serializer.validated_data["amount"]:
-                return Response({"error": "Not enough money"})
+                return Response({"error": "code", "message": "Not enough money"}, status=400)
         except BankAccount.DoesNotExist:
             pass
-        response_body = withdraw_dwolla_money(request.user, **serializer.validated_data)
+        response_body = dwolla_transaction(user=request.user, action="withdraw", **serializer.validated_data)
         return Response(response_body)
 
 
@@ -190,7 +192,7 @@ class GetPaymentMethodById(views.APIView):
         try:
             pm = dsPaymentMethod.objects.get(id=payment_method_id, customer=ds_customer.id)
         except ObjectDoesNotExist:
-            return Response({"error": "code", "message": "Payment method not found"})
+            return Response({"error": "code", "message": "Payment method not found"}, status=400)
 
         return Response(StripePaymentMethodSerializer(pm))
 

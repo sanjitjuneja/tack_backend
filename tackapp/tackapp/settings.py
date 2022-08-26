@@ -46,7 +46,6 @@ ALLOWED_HOSTS = [
     "localhost",
     "backend.tackapp.net",
     "172.31.8.161",
-    "18.214.112.208"
 ]
 
 
@@ -251,7 +250,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': "/api/v1",
-    # 'SCHEMA_PATH_PREFIX_TRIM': True,
     'COMPONENT_SPLIT_REQUEST': True
 }
 
@@ -304,7 +302,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://44.203.217.242:8020",
     "http://backend.tackapp.net",
     "http://172.31.8.161",
-    "http://18.214.112.208"
 ]
 
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
