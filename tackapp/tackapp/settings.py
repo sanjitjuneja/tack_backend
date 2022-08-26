@@ -302,6 +302,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://44.203.217.242:8020",
     "http://backend.tackapp.net",
     "http://172.31.8.161",
+    "http://44.203.217.242",
 ]
 
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
