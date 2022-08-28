@@ -11,11 +11,11 @@ class SMSType(models.TextChoices):
 class TackStatus(models.TextChoices):
     """Choice for Tack status"""
 
-    CREATED = "created", "Just created"  # Tack created by Tacker
-    ACTIVE = "active", "Tack have active Offers"  # Someone created an offer to the Tack
-    ACCEPTED = "accepted", "Offer accepted"  # Offer accepted, waiting for Runner to start
+    CREATED = "created", "Created"  # Tack created by Tacker
+    ACTIVE = "active", "Active"  # Someone created an offer to the Tack
+    ACCEPTED = "accepted", "Accepted"  # Offer accepted, waiting for Runner to start
     IN_PROGRESS = "in_progress", "In progress"  # Runner started the Tack, Tack is in progress
-    WAITING_REVIEW = "waiting_review", "Waiting for Review"  # Tack is completed by Runner
+    WAITING_REVIEW = "waiting_review", "Waiting Review"  # Tack is completed by Runner
     FINISHED = "finished", "Finished"  # Tack is fully completed either with Review or not
 
 
