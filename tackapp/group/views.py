@@ -51,7 +51,13 @@ class GroupViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = GroupMembers.objects.filter(member=request.user).select_related("group")
+        qs = GroupMembers.active.filter(
+            member=request.user
+        ).order_by(
+            "creation_time"
+        ).select_related(
+            "group"
+        )
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
