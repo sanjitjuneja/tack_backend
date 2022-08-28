@@ -44,7 +44,10 @@ class LastObjectPagination(LimitOffsetPagination):
         return list(queryset[self.offset:self.offset + self.limit])
 
     def get_paginated_response(self, data):
-        # logging.getLogger().warning(f"{data = }")
+        objs = []
+        for obj in data:
+            objs.append(obj['id'])
+        logging.getLogger().warning(f"{objs = }")
         last_object = data[-1]['id'] if len(data) > 0 else None
         return Response(OrderedDict([
             ('count', self.count),
