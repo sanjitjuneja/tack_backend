@@ -71,4 +71,4 @@ class GroupMembersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroupMembers
-        fields = "group", "is_muted"
+        fields = "id", "group", "is_muted"

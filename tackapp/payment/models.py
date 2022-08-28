@@ -35,7 +35,7 @@ class UserPaymentMethods(models.Model):
 
 class Fee(models.Model):
     fee_percent = models.DecimalField(
-        default=15.00,
+        default=3.00,
         decimal_places=2,
         max_digits=4,
         validators=(percent_validator,)

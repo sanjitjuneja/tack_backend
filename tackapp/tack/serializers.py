@@ -176,12 +176,15 @@ class TackUserSerializer(serializers.ModelSerializer):
 
 
 class TacksOffersSerializer(serializers.Serializer):
+    id = serializers.SerializerMethodField()
     tack = TackDetailSerializer()
     offer = serializers.SerializerMethodField()
 
     def get_offer(self, obj: Offer) -> OfferSerializer:
         return OfferSerializer(obj).data
 
+    def get_id(self, obj: Offer) -> int:
+        return obj.id
 
 # class TacksOffersSerializer2(serializers.ModelSerializer):
 #     tack = TackDetailSerializer()

@@ -38,7 +38,7 @@ class Group(CoreModel):
         verbose_name_plural = "Groups"
 
 
-class GroupMembers(models.Model):
+class GroupMembers(CoreModel):
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
     is_muted = models.BooleanField(default=False)
