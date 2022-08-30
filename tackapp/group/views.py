@@ -150,9 +150,7 @@ class GroupViewset(
             "runner",
             "group",
         )
-        logging.warning(tacks.query)
         page = self.paginate_queryset(tacks)
-        # serializer = TackDetailSerializer(page, many=True)
         serializer = GroupTackSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
