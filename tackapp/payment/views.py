@@ -23,7 +23,7 @@ from dwolla_service.models import DwollaEvent
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
-    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer
+    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer, ChangeDefaultDepositMethodSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction
@@ -209,14 +209,17 @@ class DwollaWebhook(views.APIView):
 
 
 class Test(views.APIView):
-    def get(self, request):
+    @extend_schema(request=ChangeDefaultDepositMethodSerializer, responses=ChangeDefaultDepositMethodSerializer)
+    def post(self, request):
+        serializer = ChangeDefaultDepositMethodSerializer(request.data)
+        serializer.is_valid(raise_exception=True)
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
         # customer.default_payment_method = dsPaymentMethod.objects.get(id="card_1LWyhmHUDqRuKWfq9hwN15Do")
         # customer.save()
         stripe.Customer.modify(
             customer.id,
             invoice_settings={
-                "default_payment_method": "card_1LWyhmHUDqRuKWfq9hwN15Do"
+                "default_payment_method": serializer.data["payment_method"]
             }
         )
-        return Response()
+        return Response({"message": "cool"})

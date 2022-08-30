@@ -100,3 +100,7 @@ class SetupIntentSerializer(serializers.ModelSerializer):
     class Meta:
         model = stripe.SetupIntent
         fields = "__all__"
+
+
+class ChangeDefaultDepositMethodSerializer(serializers.Serializer):
+    payment_method = serializers.CharField(write_only=True)
