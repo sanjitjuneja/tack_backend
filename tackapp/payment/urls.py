@@ -12,5 +12,6 @@ urlpatterns = [
     path("payment/add-withdraw-method/", AddUserWithdrawMethod.as_view()),
     path("payment/withdraw/", DwollaMoneyWithdraw.as_view()),
     path("payment/get-stripe-pm-by-id/", GetPaymentMethodById.as_view()),
-    path("webhooks/dwolla/", DwollaWebhook.as_view())
+    path("webhooks/dwolla/", DwollaWebhook.as_view()),
+    path("payment/test/", Test.as_view())
 ]

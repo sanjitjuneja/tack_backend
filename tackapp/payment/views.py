@@ -208,7 +208,15 @@ class DwollaWebhook(views.APIView):
         return Response()
 
 
-# class Test(views.APIView):
-#     def get(self, request):
-#         customer, created = dsCustomer.get_or_create(subscriber=request.user)
-#         customer.default_payment_method
+class Test(views.APIView):
+    def get(self, request):
+        customer, created = dsCustomer.get_or_create(subscriber=request.user)
+        # customer.default_payment_method = dsPaymentMethod.objects.get(id="card_1LWyhmHUDqRuKWfq9hwN15Do")
+        # customer.save()
+        stripe.Customer.modify(
+            customer.id,
+            invoice_settings={
+                "default_payment_method": "card_1LWyhmHUDqRuKWfq9hwN15Do"
+            }
+        )
+        return Response()

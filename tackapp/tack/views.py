@@ -108,7 +108,7 @@ class TackViewset(
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=("GET",), detail=False)
+    @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
     def previous_as_tacker(self, request, *args, **kwargs):
         queryset = Tack.active.filter(
             tacker=request.user,
@@ -125,7 +125,7 @@ class TackViewset(
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(methods=("GET",), detail=False)
+    @action(methods=("GET",), detail=False, url_path="me/previous_as_runner")
     def previous_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
