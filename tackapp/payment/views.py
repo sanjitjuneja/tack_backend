@@ -196,7 +196,13 @@ class GetPaymentMethodById(views.APIView):
         try:
             pm = dsPaymentMethod.objects.get(id=payment_method_id, customer=ds_customer.id)
         except ObjectDoesNotExist:
-            return Response({"error": "code", "message": "Payment method not found"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Payment method not found"
+                },
+                status=400
+            )
 
         return Response(StripePaymentMethodSerializer(pm))
 
@@ -214,12 +220,18 @@ class Test(views.APIView):
         serializer = ChangeDefaultDepositMethodSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
-        # customer.default_payment_method = dsPaymentMethod.objects.get(id="card_1LWyhmHUDqRuKWfq9hwN15Do")
-        # customer.save()
-        stripe.Customer.modify(
-            customer.id,
-            invoice_settings={
-                "default_payment_method": serializer.validated_data["payment_method"]
+        try:
+            stripe.Customer.modify(
+                customer.id,
+                invoice_settings={
+                    "default_payment_method": None
+                }
+            )
+        except stripe.ErrorObject as e:
+            return Response(e)
+        return Response(
+            {
+                "error": None,
+                "message": "Successfully changed default Payment method"
             }
         )
-        return Response({"message": "cool"})
