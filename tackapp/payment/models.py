@@ -39,7 +39,7 @@ class UserPaymentMethods(models.Model):
                     "bank_account",
                 ),
                 condition=Q(
-                    primary=True
+                    is_primary=True
                 ),
                 name='bank_account_one_primary',
             )
