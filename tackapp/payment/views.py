@@ -219,7 +219,7 @@ class Test(views.APIView):
         stripe.Customer.modify(
             customer.id,
             invoice_settings={
-                "default_payment_method": serializer.data["payment_method"]
+                "default_payment_method": serializer.validated_data["payment_method"]
             }
         )
         return Response({"message": "cool"})
