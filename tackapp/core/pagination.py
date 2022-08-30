@@ -13,6 +13,14 @@ from rest_framework.utils.urls import replace_query_param
 
 
 class LastObjectPagination(LimitOffsetPagination):
+    """
+        Custom Pagination class that can work in 2 ways:
+        1) offset + limit = standard LimitOffsetPagination class
+        2) last_object + limit = find last_object in queryset
+            and return [last_object + 1 : last_object + 1 + limit] objects
+            * every object should have an 'id' field *
+    """
+
     last_obj_query_param = 'last_object'
     last_obj_query_description = _('The last object of current results')
 
@@ -32,6 +40,7 @@ class LastObjectPagination(LimitOffsetPagination):
         self.offset = self.get_offset(request)
         self.last_object = self.get_last_object(request)
         if self.last_object:
+            # TODO: if last_object not found in queryset
             ids = list(queryset.values_list('id', flat=True))
             self.offset = ids.index(self.last_object) + 1
 
@@ -137,9 +146,3 @@ class LastObjectPagination(LimitOffsetPagination):
         # last_object = self.last_object + self.limit + 1
         # url = replace_query_param(url, self.last_obj_query_param, last_object)
         return replace_query_param(url, self.offset_query_param, offset)
-
-
-class CursorSetPagination(CursorPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    ordering = 'creation_time'

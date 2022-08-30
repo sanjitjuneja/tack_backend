@@ -202,3 +202,9 @@ class DwollaWebhook(views.APIView):
         dwolla_webhook_handler(request)
         logging.getLogger().warning(f"{request.data = }")
         return Response()
+
+
+# class Test(views.APIView):
+#     def get(self, request):
+#         customer, created = dsCustomer.get_or_create(subscriber=request.user)
+#         customer.default_payment_method

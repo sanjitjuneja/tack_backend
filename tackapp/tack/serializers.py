@@ -34,23 +34,6 @@ class TackDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tack
         fields = "__all__"
-        # fields = (
-        #     "id",
-        #     "tacker",
-        #     "runner",
-        #     "group",
-        #     "title",
-        #     "type",
-        #     "price",
-        #     "description",
-        #     "creation_time",
-        #     "allow_counter_offer",
-        #     "is_paid",
-        #     "estimation_time_seconds",
-        #     "accepted_time",
-        #     "completion_message",
-        #     "completion_time"
-        # )
         read_only_fields = (
             "tacker",
             "runner",
@@ -215,3 +198,18 @@ class ContactsSerializer(serializers.ModelSerializer):
         model = User
         fields = "phone_number", "email"
         read_only_fields = "phone_number", "email"
+
+
+class GroupTackSerializer(serializers.Serializer):
+    id = serializers.SerializerMethodField()
+    tack = serializers.SerializerMethodField()
+    is_mine_offer_sent = serializers.SerializerMethodField()
+
+    def get_id(self, obj) -> int:
+        return obj.id
+
+    def get_tack(self, obj) -> TackDetailSerializer:
+        return TackDetailSerializer(obj, many=False).data
+
+    def get_is_mine_offer_sent(self, obj) -> bool:
+        return obj.offer_set.all().exists()

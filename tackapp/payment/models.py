@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models import CheckConstraint, Q, UniqueConstraint, Deferrable
 
 from core.validators import percent_validator
 
@@ -26,11 +27,23 @@ class BankAccount(models.Model):
 class UserPaymentMethods(models.Model):
     bank_account = models.ForeignKey("payment.BankAccount", on_delete=models.CASCADE)
     dwolla_payment_method = models.CharField(max_length=64)
+    is_primary = models.BooleanField(default=False)
 
     class Meta:
         db_table = "payment_methods"
         verbose_name = "Payment method"
         verbose_name_plural = "Payment methods"
+        constraints = [
+            UniqueConstraint(
+                fields=(
+                    "bank_account",
+                ),
+                condition=Q(
+                    primary=True
+                ),
+                name='bank_account_one_primary',
+            )
+        ]
 
 
 class Fee(models.Model):
@@ -47,3 +60,12 @@ class Fee(models.Model):
         db_table = "fees"
         verbose_name = "Fee"
         verbose_name_plural = "Fees"
+
+
+class DwollaRemovedAccount(models.Model):
+    dwolla_id = models.UUIDField()
+
+    class Meta:
+        db_table = "dwolla_removed_accounts"
+        verbose_name = "Dwolla removed account"
+        verbose_name_plural = "Dwolla removed accounts"

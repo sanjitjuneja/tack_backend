@@ -37,7 +37,8 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+# DEBUG = env("DEBUG")
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "tackapp.net",
@@ -48,7 +49,9 @@ ALLOWED_HOSTS = [
     "172.31.8.161",
 ]
 
-
+INTERNAL_IPS = [
+    "127.0.0.1"
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -234,12 +237,12 @@ REST_FRAMEWORK = {
     ),
     # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    # 'DEFAULT_RENDERER_CLASSES': (
-    #     'rest_framework.renderers.JSONRenderer',
-    # ),
-    # 'DEFAULT_PARSER_CLASSES': (
-    #     'rest_framework.parsers.JSONParser',
-    # ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+    ),
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.LastObjectPagination',
     'PAGE_SIZE': 10,
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
@@ -326,3 +329,8 @@ DWOLLA_MAIN_FUNDING_SOURCE = env('DWOLLA_MAIN_FUNDING_SOURCE')
 # CSRF_COOKIE_SECURE = False
 PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
+
+S3_BUCKET_TACKAPPSTORAGE = env("S3_BUCKET_TACKAPPSTORAGE")
+S3_BUCKET_CARDS = "payment_methods/media/cards"
+S3_BUCKET_BANKS = "payment_methods/media/banks"
+S3_BUCKET_DIGITAL_WALLETS = "payment_methods/media/digital_wallets"

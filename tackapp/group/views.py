@@ -1,7 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -14,7 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 from core.choices import TackStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
 from tack.models import Tack, PopularTack, Offer
-from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer
+from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer, GroupTackSerializer
+from user.serializers import UserListSerializer
 from .serializers import *
 from .services import get_tacks_by_group
 
@@ -130,7 +131,7 @@ class GroupViewset(
     @action(
         methods=("GET",),
         detail=True,
-        serializer_class=TackDetailSerializer,
+        serializer_class=GroupTackSerializer,
         permission_classes=(GroupMemberPermission,)
     )
     def tacks(self, request, *args, **kwargs):
@@ -139,12 +140,20 @@ class GroupViewset(
         group = self.get_object()
         tacks = Tack.active.filter(
             group=group,
-            status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
+            status__in=(TackStatus.CREATED, TackStatus.ACTIVE),
         ).exclude(
-            offer__runner=request.user
-        ).select_related("tacker", "runner", "group")
+            # offer__runner=request.user
+        ).prefetch_related(
+            Prefetch("offer_set", queryset=Offer.active.filter(runner=request.user))
+        ).select_related(
+            "tacker",
+            "runner",
+            "group",
+        )
+        logging.warning(tacks.query)
         page = self.paginate_queryset(tacks)
-        serializer = TackDetailSerializer(page, many=True)
+        # serializer = TackDetailSerializer(page, many=True)
+        serializer = GroupTackSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
     @action(
@@ -185,9 +194,13 @@ class GroupViewset(
         group = self.get_object()
         tacks = Tack.active.filter(
             group=group,
-            status__in=[TackStatus.CREATED, TackStatus.ACTIVE],
+            status__in=(TackStatus.CREATED, TackStatus.ACTIVE),
             tacker=request.user
-        ).select_related("tacker", "runner", "group")
+        ).select_related(
+            "tacker",
+            "runner",
+            "group"
+        )
         page = self.paginate_queryset(tacks)
         serializer = TackDetailSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)

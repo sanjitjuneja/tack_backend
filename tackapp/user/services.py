@@ -10,7 +10,9 @@ from djstripe.models import Customer as dsCustomer
 from django.db.models import Q
 
 from payment.dwolla_service import dwolla_client
-from payment.services import get_dwolla_id
+from payment.models import DwollaRemovedAccount
+from payment.services import get_dwolla_id, get_dwolla_payment_methods, deattach_dwolla_funding_sources, \
+    _deactivate_dwolla_account, is_user_have_dwolla_pending_transfers
 from review.models import Review
 from user.models import User
 
@@ -88,7 +90,6 @@ def create_dwolla_account(user: User):
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "email": user.email,
-                # "correlationId": user.id
             })
         dwolla_id = response.headers["Location"].split("/")[-1]
     return dwolla_id
@@ -117,21 +118,16 @@ def stripe_change_info(user: User):
 
 
 def deactivate_dwolla_customer(user: User):
-    dwolla_id = get_dwolla_id(user)
-    token = dwolla_client.Auth.client()
-    # response = token.get(f"customers/{dwolla_id}/transfers?status=pending")
-    # if response.body["total"] != 0:
-    #     #
+    dwolla_user_id = get_dwolla_id(user)
 
-    # response = token.get(f"customers/{dwolla_id}/funding-sources")
+    # Remove all Dwolla funding sources and
+    # Deactivate account if User have no pending transfers
+    if not is_user_have_dwolla_pending_transfers(dwolla_user_id):
+        deattach_dwolla_funding_sources(dwolla_user_id)
+        _deactivate_dwolla_account(dwolla_user_id)
 
-    # TODO: check pending transfers
-    # TODO: deattach all funding-sources
-
-    response = token.post(
-        f"customers/{dwolla_id}",
-        {"status": "deactivated"}
-    )
+    # If Dwolla user have pending transfers - create row with his account
+    DwollaRemovedAccount.objects.create(dwolla_id=dwolla_user_id)
 
 
 def delete_stripe_customer(user: User):

@@ -44,6 +44,8 @@ def send_payment_to_runner(tack: Tack):
 def get_dwolla_payment_methods(dwolla_user_id):
     """Get all funding-sources by Dwolla customer id"""
 
+    # payment_methods = UserPaymentMethods.objects.filter(bank_account__dwolla_user=dwolla_user_id)
+
     token = dwolla_client.Auth.client()
     response = token.get(f"customers/{dwolla_user_id}/funding-sources")
     return response.body
@@ -363,3 +365,30 @@ def dwolla_webhook_handler(request):
         customer=request.data.get("_links").get("customer"),
         created=request.data.get("created"),
     )
+
+
+def deattach_dwolla_funding_sources(dwolla_id):
+    token = dwolla_client.Auth.client()
+    funding_sources = get_dwolla_payment_methods(dwolla_id)
+
+    for funding_source in funding_sources:
+        token.post(
+            f"funding-sources/{funding_source['id']}",
+            {"removed": True}
+        )
+
+
+def _deactivate_dwolla_account(dwolla_id):
+    token = dwolla_client.Auth.client()
+    token.post(
+        f"customers/{dwolla_id}",
+        {"status": "deactivated"}
+    )
+
+
+def is_user_have_dwolla_pending_transfers(dwolla_id):
+    token = dwolla_client.Auth.client()
+    response = token.get(f"customers/{dwolla_id}/transfers?status=pending")
+    if response.body["total"] == 0:
+        return False
+    return True

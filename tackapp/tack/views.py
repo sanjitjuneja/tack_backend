@@ -79,7 +79,9 @@ class TackViewset(
         ).order_by(
             "creation_time"
         ).prefetch_related(
-            "tacker"
+            "tacker",
+            "runner",
+            "group"
         )
         queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
@@ -101,6 +103,41 @@ class TackViewset(
             "tack__tacker",
             "runner",
             "tack__group"
+        )
+        page = self.paginate_queryset(offers)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(methods=("GET",), detail=False)
+    def previous_as_tacker(self, request, *args, **kwargs):
+        queryset = Tack.active.filter(
+            tacker=request.user,
+            status=TackStatus.FINISHED
+        ).order_by(
+            "creation_time"
+        ).prefetch_related(
+            "tacker",
+            "runner",
+            "group"
+        )
+        queryset = self.filter_queryset(queryset)
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(methods=("GET",), detail=False)
+    def previous_as_runner(self, request, *args, **kwargs):
+        """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
+
+        offers = Tack.active.filter(
+            runner=request.user,
+            status=TackStatus.FINISHED
+        ).order_by(
+            "creation_time"
+        ).select_related(
+            "tacker",
+            "runner",
+            "group"
         )
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
@@ -170,7 +207,12 @@ class TackViewset(
         else:
             return Response({"error": "Tack status is not in status Waiting Review"})
 
-    @action(methods=("GET",), detail=True, permission_classes=(TackParticipantPermission,),)
+    @action(
+        methods=("GET",),
+        detail=True,
+        permission_classes=(TackParticipantPermission,),
+        serializer_class=ContactsSerializer
+    )
     def get_contacts(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):
@@ -185,7 +227,10 @@ class TackViewset(
     def runner_cancel(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status not in (TackStatus.ACCEPTED, TackStatus.IN_PROGRESS):
-            return Response({"error": "code", "message": "Cannot cancel Tack in this status"})
+            return Response(
+                {"error": "code", "message": "Cannot cancel Tack in this status"},
+                status=400
+            )
         tack.is_active = False
         tack.is_canceled = True
         tack.save()
@@ -249,11 +294,13 @@ class OfferViewset(
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
+                    "error": "code",
                     "message": "Not enough money",
                     "balance": request.user.bankaccount.usd_balance,
                     "tack_price": price
                 },
-                status=400)
+                status=400
+            )
 
         accept_offer(offer)
         serializer = OfferSerializer(offer)

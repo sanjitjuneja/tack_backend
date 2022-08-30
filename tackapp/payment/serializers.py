@@ -3,6 +3,7 @@ from rest_framework import serializers
 from djmoney.contrib.django_rest_framework import MoneyField
 from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
+from core.choices import images_dict
 from core.validators import supported_currency
 from payment.models import BankAccount
 
@@ -48,6 +49,11 @@ class StripeCardSerializer(serializers.Serializer):
     funding = serializers.CharField(read_only=True)
     exp_year = serializers.IntegerField(read_only=True)
     exp_month = serializers.IntegerField(read_only=True)
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        image = images_dict[obj["brand"]] if obj.get("brand") in images_dict else None
+        return image
 
 
 class StripePaymentMethodSerializer(serializers.ModelSerializer):
@@ -78,6 +84,11 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     created = serializers.CharField(read_only=True)
     channels = serializers.ListField(read_only=True)
     bankName = serializers.CharField(read_only=True)
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
+        return image
 
 
 class GetCardByIdSerializer(serializers.Serializer):
