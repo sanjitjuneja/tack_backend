@@ -141,8 +141,6 @@ class GroupViewset(
         tacks = Tack.active.filter(
             group=group,
             status__in=(TackStatus.CREATED, TackStatus.ACTIVE),
-        ).exclude(
-            # offer__runner=request.user
         ).prefetch_related(
             Prefetch("offer_set", queryset=Offer.active.filter(runner=request.user))
         ).select_related(

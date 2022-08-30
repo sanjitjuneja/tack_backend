@@ -267,7 +267,7 @@ class OfferViewset(
             return Response({"message": "Counter offering is not allowed to this Tack"}, status=403)
         if tack.tacker == request.user:
             return Response({"message": "You are not allowed to create Offers to your own Tacks"}, status=403)
-        if Offer.objects.filter(tack=tack, runner=request.user):
+        if Offer.active.filter(tack=tack, runner=request.user):
             return Response({"message": "You already have an offer for this Tack"}, status=409)
 
         self.perform_create(serializer)
