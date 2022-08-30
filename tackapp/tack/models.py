@@ -3,7 +3,7 @@ from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
 )
-from django.db.models import UniqueConstraint
+from django.db.models import UniqueConstraint, Q
 
 from core.abstract_models import CoreModel
 from core.choices import TackStatus, OfferType, TackType
@@ -85,7 +85,11 @@ class Offer(CoreModel):
         verbose_name = "Offer"
         verbose_name_plural = "Offers"
         constraints = [
-            UniqueConstraint(fields=('tack', 'runner'), name='unique_runner_for_tack')
+            UniqueConstraint(
+                fields=('tack', 'runner'),
+                condition=Q(is_active=True),
+                name='unique_runner_for_tack'
+            )
         ]
 
 
