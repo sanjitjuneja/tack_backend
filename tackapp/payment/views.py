@@ -211,7 +211,7 @@ class DwollaWebhook(views.APIView):
 class Test(views.APIView):
     @extend_schema(request=ChangeDefaultDepositMethodSerializer, responses=ChangeDefaultDepositMethodSerializer)
     def post(self, request):
-        serializer = ChangeDefaultDepositMethodSerializer(request.data)
+        serializer = ChangeDefaultDepositMethodSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
         # customer.default_payment_method = dsPaymentMethod.objects.get(id="card_1LWyhmHUDqRuKWfq9hwN15Do")
