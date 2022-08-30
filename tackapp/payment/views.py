@@ -23,7 +23,7 @@ from dwolla_service.models import DwollaEvent
 from payment.models import BankAccount
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
-    DwollaPaymentMethodSerializer, GetCardByIdSerializer
+    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction
@@ -77,6 +77,7 @@ class AddBalanceDwolla(views.APIView):
 
 
 class AddPaymentMethod(views.APIView):
+    @extend_schema(request=None, responses=None)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
@@ -85,11 +86,13 @@ class AddPaymentMethod(views.APIView):
         si = stripe.SetupIntent.create(
             customer=ds_customer.id
         )
+        # serializer = SetupIntentSerializer(si, many=False)
         return Response(si)
 
 
 class GetUserPaymentMethods(views.APIView):
     # TODO: add Dwolla API call
+    @extend_schema(request=None, responses=StripePaymentMethodSerializer)
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)
@@ -105,6 +108,7 @@ class GetUserWithdrawMethods(views.APIView):
     """Endpoint for getting Dwolla withdraw methods"""
 
     # TODO: get methods from DB
+    @extend_schema(request=None, responses=DwollaPaymentMethodSerializer)
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({"message": "User not logged in"}, status=400)

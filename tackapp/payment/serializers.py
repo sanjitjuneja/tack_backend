@@ -1,4 +1,5 @@
 import djstripe.models
+import stripe
 from rest_framework import serializers
 from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
@@ -93,3 +94,9 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
 class GetCardByIdSerializer(serializers.Serializer):
     pm_id = serializers.CharField(write_only=True)
     payment_method = StripePaymentMethodSerializer(read_only=True)
+
+
+class SetupIntentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = stripe.SetupIntent
+        fields = "__all__"
