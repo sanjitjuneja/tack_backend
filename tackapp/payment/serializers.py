@@ -1,6 +1,5 @@
 import djstripe.models
 from rest_framework import serializers
-from djmoney.contrib.django_rest_framework import MoneyField
 from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.choices import images_dict
