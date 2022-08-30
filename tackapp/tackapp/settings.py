@@ -331,6 +331,6 @@ PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
 
 S3_BUCKET_TACKAPPSTORAGE = env("S3_BUCKET_TACKAPPSTORAGE")
-S3_BUCKET_CARDS = "/payment_methods/media/cards"
-S3_BUCKET_BANKS = "/payment_methods/media/banks"
-S3_BUCKET_DIGITAL_WALLETS = "/payment_methods/media/digital_wallets"
+S3_BUCKET_CARDS = "/media/payment_methods/cards"
+S3_BUCKET_BANKS = "/media/payment_methods/banks"
+S3_BUCKET_DIGITAL_WALLETS = "/media/payment_methods/digital_wallets"
