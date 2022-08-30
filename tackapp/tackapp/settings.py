@@ -302,7 +302,7 @@ SIMPLE_JWT = {
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8020",
     "http://44.203.217.242:8020",
-    "http://backend.tackapp.net",
+    "https://backend.tackapp.net",
     "http://172.31.8.161",
     "http://44.203.217.242",
 ]
