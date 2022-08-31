@@ -20,10 +20,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from dwolla_service.models import DwollaEvent
-from payment.models import BankAccount
+from payment.models import BankAccount, UserPaymentMethods
 from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
     StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
-    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer, ChangeDefaultDepositMethodSerializer
+    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction
@@ -114,17 +114,33 @@ class GetUserWithdrawMethods(views.APIView):
             return Response({"message": "User not logged in"}, status=400)
         try:
             ba = BankAccount.objects.get(user=request.user)
-        except ObjectDoesNotExist:
+        except BankAccount.DoesNotExist:
             # TODO: create dwolla account and return empty list
-            return Response({"error": "can not find dwolla user"})
+            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
 
         try:
             pms = get_dwolla_payment_methods(ba.dwolla_user)
         except dwollav2.Error as e:
             return Response(e.body)
 
-        data = pms["_embedded"]["funding-sources"]
-        logging.getLogger().warning(data)
+        data: list = pms["_embedded"]["funding-sources"]
+
+        dwolla_pm_ids = [funding_source["id"] for funding_source in data]
+        upms_values = UserPaymentMethods.objects.filter(
+            dwolla_payment_method__in=dwolla_pm_ids
+        ).values(
+            "dwolla_payment_method",
+            "is_primary_deposit",
+            "is_primary_withdraw"
+        )
+
+        # TODO: too ugly will change later (31.08.2022)
+        for upm in upms_values:
+            for funding_source in data:
+                if funding_source["id"] == upm["dwolla_payment_method"]:
+                    funding_source["is_primary_deposit"] = upm["is_primary_deposit"]
+                    funding_source["is_primary_withdraw"] = upm["is_primary_withdraw"]
+
         serializer = DwollaPaymentMethodSerializer(data, many=True)
         return Response({"results": serializer.data})
 
@@ -147,7 +163,6 @@ class AddUserWithdrawMethod(views.APIView):
         serializer.is_valid(raise_exception=True)
         public_token = serializer.validated_data['public_token']
 
-        logger = logging.getLogger()
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
@@ -157,9 +172,7 @@ class AddUserWithdrawMethod(views.APIView):
             return Response(e.body, status=400)
         except plaid.ApiException as e:
             return Response(e.body, status=400)
-        logger.warning(f"{payment_methods = }")
         pms = get_dwolla_pms_by_id(payment_methods)
-        logger.warning(f"{pms = }")
         serializer = DwollaPaymentMethodSerializer(pms, many=True)
         return Response({"results": serializer.data})
 
@@ -212,26 +225,3 @@ class DwollaWebhook(views.APIView):
         dwolla_webhook_handler(request)
         logging.getLogger().warning(f"{request.data = }")
         return Response()
-
-
-class Test(views.APIView):
-    @extend_schema(request=ChangeDefaultDepositMethodSerializer, responses=ChangeDefaultDepositMethodSerializer)
-    def post(self, request):
-        serializer = ChangeDefaultDepositMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        customer, created = dsCustomer.get_or_create(subscriber=request.user)
-        try:
-            stripe.Customer.modify(
-                customer.id,
-                invoice_settings={
-                    "default_payment_method": None
-                }
-            )
-        except stripe.ErrorObject as e:
-            return Response(e)
-        return Response(
-            {
-                "error": None,
-                "message": "Successfully changed default Payment method"
-            }
-        )

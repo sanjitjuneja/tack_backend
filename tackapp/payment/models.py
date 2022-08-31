@@ -1,6 +1,8 @@
+import djstripe.models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint, Deferrable
+from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
 
@@ -27,7 +29,8 @@ class BankAccount(models.Model):
 class UserPaymentMethods(models.Model):
     bank_account = models.ForeignKey("payment.BankAccount", on_delete=models.CASCADE)
     dwolla_payment_method = models.CharField(max_length=64)
-    is_primary = models.BooleanField(default=False)
+    is_primary_deposit = models.BooleanField(default=False)
+    is_primary_withdraw = models.BooleanField(default=False)
 
     class Meta:
         db_table = "payment_methods"
@@ -39,9 +42,18 @@ class UserPaymentMethods(models.Model):
                     "bank_account",
                 ),
                 condition=Q(
-                    is_primary=True
+                    is_primary_deposit=True
                 ),
-                name='bank_account_one_primary',
+                name='bank_account_one_primary_deposit',
+            ),
+            UniqueConstraint(
+                fields=(
+                    "bank_account",
+                ),
+                condition=Q(
+                    is_primary_withdraw=True
+                ),
+                name='bank_account_one_primary_withdraw',
             )
         ]
 
@@ -69,3 +81,13 @@ class DwollaRemovedAccount(models.Model):
         db_table = "dwolla_removed_accounts"
         verbose_name = "Dwolla removed account"
         verbose_name_plural = "Dwolla removed accounts"
+
+
+class StripePaymentMethodsHolder(models.Model):
+    stripe_pm = models.ForeignKey(dsPaymentMethod, on_delete=models.CASCADE, unique=True)
+    is_primary_deposit = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "stripe_pm_holder"
+        verbose_name = "Stripe Payment method holder"
+        verbose_name_plural = "Stripe Payment methods holder"

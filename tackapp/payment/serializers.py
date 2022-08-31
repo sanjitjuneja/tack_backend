@@ -5,7 +5,7 @@ from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.choices import images_dict
 from core.validators import supported_currency
-from payment.models import BankAccount
+from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods
 
 
 class AddBalanceSerializer(serializers.Serializer):
@@ -59,10 +59,15 @@ class StripeCardSerializer(serializers.Serializer):
 class StripePaymentMethodSerializer(serializers.ModelSerializer):
     billing_details = StripeBillingDetailsSerializer(read_only=True)
     card = StripeCardSerializer(read_only=True)
+    is_primary_deposit = serializers.SerializerMethodField()
+
+    def get_is_primary_deposit(self, obj) -> bool:
+        stripe_pm_holder = StripePaymentMethodsHolder.objects.get(stripe_pm_id=obj.id)
+        return stripe_pm_holder.is_primary_deposit
 
     class Meta:
         model = dsPaymentMethod
-        fields = "id", "created", "billing_details", "type", "card",
+        fields = "id", "created", "billing_details", "type", "card", "is_primary_deposit"
 
 
 class AddWithdrawMethodSerializer(serializers.Serializer):
@@ -85,6 +90,18 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     channels = serializers.ListField(read_only=True)
     bankName = serializers.CharField(read_only=True)
     image = serializers.SerializerMethodField()
+    is_primary_deposit = serializers.BooleanField()
+    is_primary_withdraw = serializers.BooleanField()
+    # is_primary_deposit = serializers.SerializerMethodField()
+    # is_primary_withdraw = serializers.SerializerMethodField()
+
+    # def get_is_primary_deposit(self, obj):
+    #     dwolla_pm_holder = UserPaymentMethods.objects.get(dwolla_payment_method=obj.id)
+    #     return dwolla_pm_holder.is_primary_deposit
+    #
+    # def get_is_primary_withdraw(self, obj):
+    #     dwolla_pm_holder = UserPaymentMethods.objects.get(dwolla_payment_method=obj.id)
+    #     return dwolla_pm_holder.is_primary_withdraw
 
     def get_image(self, obj):
         image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
@@ -100,7 +117,3 @@ class SetupIntentSerializer(serializers.ModelSerializer):
     class Meta:
         model = stripe.SetupIntent
         fields = "__all__"
-
-
-class ChangeDefaultDepositMethodSerializer(serializers.Serializer):
-    payment_method = serializers.CharField(write_only=True)
