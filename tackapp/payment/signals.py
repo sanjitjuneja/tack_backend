@@ -9,13 +9,13 @@ from payment.models import StripePaymentMethodsHolder
 from payment.services import add_money_to_bank_account
 
 
-@receiver(signal="payment_intent.succeeded", sender=PaymentIntent)
+@receiver(signal="succeeded", sender=PaymentIntent)
 def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs):
     if instance.status == "succeeded":
         add_money_to_bank_account(instance.amount)
 
 
-@receiver(signal="payment_method.attached", sender=PaymentMethod)
+@receiver(signal="attached", sender=PaymentMethod)
 def create_pm_holder(instance: PaymentMethod, created: bool, *args, **kwargs):
     logging.getLogger().warning(f"{kwargs = }")
     if created:
