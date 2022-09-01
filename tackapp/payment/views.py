@@ -173,8 +173,31 @@ class AddUserWithdrawMethod(views.APIView):
             return Response(e.body, status=e.status)
         except plaid.ApiException as e:
             return Response(e.body, status=e.status)
-        pms = get_dwolla_pms_by_id(payment_methods)
-        serializer = DwollaPaymentMethodSerializer(pms, many=True)
+
+        try:
+            ba = BankAccount.objects.get(user=request.user)
+        except BankAccount.DoesNotExist:
+            # TODO: create dwolla account and return empty list
+            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
+        pms = get_dwolla_payment_methods(ba.dwolla_user)
+        # pms = get_dwolla_pms_by_id(payment_methods)
+        data: list = pms["_embedded"]["funding-sources"]
+        dwolla_pm_ids = [funding_source["id"] for funding_source in data]
+
+        upms_values = UserPaymentMethods.objects.filter(
+            dwolla_payment_method__in=dwolla_pm_ids
+        ).values(
+            "dwolla_payment_method",
+            "is_primary"
+        )
+
+        # TODO: too ugly will change later (31.08.2022)
+        for upm in upms_values:
+            for funding_source in data:
+                if funding_source["id"] == upm["dwolla_payment_method"]:
+                    funding_source["is_primary"] = upm["is_primary"]
+
+        serializer = DwollaPaymentMethodSerializer(data, many=True)
         return Response({"results": serializer.data})
 
 
