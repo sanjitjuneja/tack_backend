@@ -17,7 +17,7 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
         add_money_to_bank_account(instance.amount)
 
 
-@receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"), sender=PaymentMethod)
+@receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
 def create_pm_holder(instance: PaymentMethod, created: bool, *args, **kwargs):
     logging.getLogger().warning(f"{kwargs = }")
     if created:
