@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from djstripe.models import PaymentIntent, PaymentMethod
@@ -15,4 +17,5 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
 @receiver(signal=post_save, sender=PaymentMethod)
 def create_pm_holder(instance: PaymentIntent, created: bool, *args, **kwargs):
     if created:
-        StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+        spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+        logging.getLogger().warning(f"{spmh = }")
