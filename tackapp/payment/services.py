@@ -49,6 +49,7 @@ def get_dwolla_payment_methods(dwolla_user_id):
 
     token = dwolla_client.Auth.client()
     response = token.get(f"customers/{dwolla_user_id}/funding-sources")
+    logging.getLogger().warning(f"{response = }")
     return response.body
 
 
