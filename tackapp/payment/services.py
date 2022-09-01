@@ -418,7 +418,7 @@ def set_primary_method(user: User, payment_type: str, payment_method: str):
         dwolla_pm.is_primary = True
         dwolla_pm.save()
     elif payment_type == PaymentType.CARD:
-        stripe_pm = stripe_pms.get(stripe_pm=payment_method)
+        stripe_pm = stripe_pms.get(stripe_pm__id=payment_method)
         stripe_pm.is_primary = True
         stripe_pm.save()
 
