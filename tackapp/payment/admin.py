@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
-from .models import BankAccount, UserPaymentMethods, Fee
+from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder
 
 
 @admin.register(BankAccount)
@@ -17,3 +17,8 @@ class UserPaymentMethodsAdmin(ModelAdmin):
 @admin.register(Fee)
 class FeeAdmin(ModelAdmin):
     list_display = ('fee_percent', 'fee_min', 'fee_max')
+
+
+@admin.register(StripePaymentMethodsHolder)
+class StripePaymentMethodsHolderAdmin(ModelAdmin):
+    list_display = ('stripe_pm', 'is_primary')
