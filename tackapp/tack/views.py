@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from core.choices import TackStatus, OfferType
-from group.models import GroupTacks
+from group.models import GroupTacks, Group
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished
@@ -38,6 +38,16 @@ class TackViewset(
     def create(self, request, *args, **kwargs):
         serializer = TackCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        try:
+            GroupMembers.active.get(member=request.user, group=serializer.validated_data["group"])
+        except GroupMembers.DoesNotExist:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You are not a member of this Group"
+                },
+                status=400
+            )
         tack = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         output_serializer = TackDetailSerializer(tack)  # Refactor
