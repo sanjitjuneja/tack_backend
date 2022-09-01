@@ -17,13 +17,21 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
         add_money_to_bank_account(instance.amount)
 
 
-@receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
-def create_pm_holder(*args, **kwargs):
+# @receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
+# def create_pm_holder(*args, **kwargs):
+#     logging.getLogger().warning(f"{args = }")
+#     logging.getLogger().warning(f"{kwargs = }")
+#     # spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+#     # logging.getLogger().warning(f"{spmh = }")
+
+
+@receiver(signal=post_save, sender=PaymentMethod)
+def create_pm_holder(instance: PaymentMethod, created: bool, *args, **kwargs):
     logging.getLogger().warning(f"{args = }")
     logging.getLogger().warning(f"{kwargs = }")
-    # spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
-    # logging.getLogger().warning(f"{spmh = }")
-
+    if created:
+        spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+        logging.getLogger().warning(f"{spmh = }")
 
 @webhooks.handler("paymentmethod.attached")
 def charge_dispute_created(event, **kwargs):
