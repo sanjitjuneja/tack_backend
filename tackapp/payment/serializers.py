@@ -3,9 +3,9 @@ import stripe
 from rest_framework import serializers
 from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
-from core.choices import images_dict
+from core.choices import images_dict, PaymentType
 from core.validators import supported_currency
-from payment.models import BankAccount
+from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods
 
 
 class AddBalanceSerializer(serializers.Serializer):
@@ -59,10 +59,15 @@ class StripeCardSerializer(serializers.Serializer):
 class StripePaymentMethodSerializer(serializers.ModelSerializer):
     billing_details = StripeBillingDetailsSerializer(read_only=True)
     card = StripeCardSerializer(read_only=True)
+    is_primary = serializers.SerializerMethodField()
+
+    def get_is_primary(self, obj) -> bool:
+        stripe_pm_holder = StripePaymentMethodsHolder.objects.get(stripe_pm_id=obj.id)
+        return stripe_pm_holder.is_primary
 
     class Meta:
         model = dsPaymentMethod
-        fields = "id", "created", "billing_details", "type", "card",
+        fields = "id", "created", "billing_details", "type", "card", "is_primary"
 
 
 class AddWithdrawMethodSerializer(serializers.Serializer):
@@ -85,6 +90,7 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     channels = serializers.ListField(read_only=True)
     bankName = serializers.CharField(read_only=True)
     image = serializers.SerializerMethodField()
+    is_primary = serializers.BooleanField()
 
     def get_image(self, obj):
         image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
@@ -102,5 +108,11 @@ class SetupIntentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ChangeDefaultDepositMethodSerializer(serializers.Serializer):
-    payment_method = serializers.CharField(write_only=True)
+class DeletePaymentMethodSerializer(serializers.Serializer):
+    payment_type = serializers.ChoiceField(PaymentType.choices)
+    payment_method = serializers.CharField()
+
+
+class SetPrimaryPaymentMethodSerializer(serializers.Serializer):
+    payment_type = serializers.ChoiceField(PaymentType.choices)
+    payment_method = serializers.CharField()

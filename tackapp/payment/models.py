@@ -1,6 +1,8 @@
+import djstripe.models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint, Deferrable
+from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
 
@@ -69,3 +71,13 @@ class DwollaRemovedAccount(models.Model):
         db_table = "dwolla_removed_accounts"
         verbose_name = "Dwolla removed account"
         verbose_name_plural = "Dwolla removed accounts"
+
+
+class StripePaymentMethodsHolder(models.Model):
+    stripe_pm = models.OneToOneField(dsPaymentMethod, on_delete=models.CASCADE)
+    is_primary = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "stripe_pm_holder"
+        verbose_name = "Stripe Payment method holder"
+        verbose_name_plural = "Stripe Payment methods holder"

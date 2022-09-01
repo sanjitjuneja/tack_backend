@@ -11,7 +11,7 @@ from django.db.models import Q
 
 from payment.dwolla_service import dwolla_client
 from payment.models import DwollaRemovedAccount
-from payment.services import get_dwolla_id, get_dwolla_payment_methods, deattach_dwolla_funding_sources, \
+from payment.services import get_dwolla_id, get_dwolla_payment_methods, detach_dwolla_funding_sources, \
     _deactivate_dwolla_account, is_user_have_dwolla_pending_transfers
 from review.models import Review
 from user.models import User
@@ -123,11 +123,15 @@ def deactivate_dwolla_customer(user: User):
     # Remove all Dwolla funding sources and
     # Deactivate account if User have no pending transfers
     if not is_user_have_dwolla_pending_transfers(dwolla_user_id):
-        deattach_dwolla_funding_sources(dwolla_user_id)
-        _deactivate_dwolla_account(dwolla_user_id)
+        deactivate_dwolla_account(dwolla_user_id)
 
     # If Dwolla user have pending transfers - create row with his account
     DwollaRemovedAccount.objects.create(dwolla_id=dwolla_user_id)
+
+
+def deactivate_dwolla_account(dwolla_user_id):
+    detach_dwolla_funding_sources(dwolla_user_id)
+    _deactivate_dwolla_account(dwolla_user_id)
 
 
 def delete_stripe_customer(user: User):

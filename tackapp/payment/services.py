@@ -4,6 +4,7 @@ from decimal import Decimal, Context
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from djstripe.models import PaymentIntent
+from djstripe.models import PaymentMethod as dsPaymentMethod
 from plaid.model.account_base import AccountBase
 from plaid.model.account_subtype import AccountSubtype
 from plaid.model.account_type import AccountType
@@ -20,11 +21,11 @@ from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUse
 from plaid.model.processor_token_create_request import ProcessorTokenCreateRequest
 from plaid.model.products import Products
 
-from core.choices import OfferType
+from core.choices import OfferType, PaymentType
 from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client
-from payment.models import BankAccount, UserPaymentMethods, Fee
+from payment.models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder
 from tack.models import Tack
 from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
@@ -367,15 +368,26 @@ def dwolla_webhook_handler(request):
     )
 
 
-def deattach_dwolla_funding_sources(dwolla_id):
-    token = dwolla_client.Auth.client()
+def detach_dwolla_funding_sources(dwolla_id):
     funding_sources = get_dwolla_payment_methods(dwolla_id)
 
     for funding_source in funding_sources:
-        token.post(
-            f"funding-sources/{funding_source['id']}",
-            {"removed": True}
-        )
+        detach_dwolla_funding_source(funding_source['id'])
+
+
+def detach_dwolla_funding_source(funding_source_id):
+    token = dwolla_client.Auth.client()
+    token.post(
+        f"funding-sources/{funding_source_id}",
+        {"removed": True}
+    )
+
+
+def detach_stripe_payment_method(payment_method: str):
+    payment_method = dsPaymentMethod.objects.get(
+        id=payment_method
+    )
+    dsPaymentMethod.detach(payment_method)
 
 
 def _deactivate_dwolla_account(dwolla_id):
@@ -392,3 +404,28 @@ def is_user_have_dwolla_pending_transfers(dwolla_id):
     if response.body["total"] == 0:
         return False
     return True
+
+
+def set_primary_method(user: User, payment_type: str, payment_method: str):
+    dwolla_pms = UserPaymentMethods.objects.filter(bank_account__user=user)
+    dwolla_pms.update(is_primary=False)
+    stripe_pms = StripePaymentMethodsHolder.objects.filter(stripe_pm__customer__subscriber=user)
+    stripe_pms.update(is_primary=False)
+
+    if payment_type == PaymentType.BANK:
+        dwolla_pm = dwolla_pms.get(dwolla_payment_method=payment_method)
+        dwolla_pm.is_primary = True
+        dwolla_pm.save()
+    elif payment_type == PaymentType.CARD:
+        stripe_pm = stripe_pms.get(stripe_pm=payment_method)
+        stripe_pm.is_primary = True
+        stripe_pm.save()
+
+
+def detach_payment_method(user: User, payment_type: str, payment_method: str):
+    if payment_type == PaymentType.BANK:
+        UserPaymentMethods.objects.get(bank_account__user=user, dwolla_payment_method=payment_method)
+        detach_dwolla_funding_source(payment_method)
+    elif payment_type == PaymentType.CARD:
+        dsPaymentMethod.objects.get(customer__subscriber=user, id=payment_method)
+        detach_stripe_payment_method(payment_method)

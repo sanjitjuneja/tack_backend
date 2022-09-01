@@ -60,3 +60,10 @@ class TackTimeType(models.TextChoices):
 
     MINUTES = "minutes", "Minutes"
     HOURS = "hours", "Hours"
+
+
+class PaymentType(models.TextChoices):
+    """Choices for check Payment type"""
+
+    BANK = "bank", "Bank"
+    CARD = "card", "Card"
