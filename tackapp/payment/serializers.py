@@ -62,7 +62,7 @@ class StripePaymentMethodSerializer(serializers.ModelSerializer):
     is_primary = serializers.SerializerMethodField()
 
     def get_is_primary(self, obj) -> bool:
-        stripe_pm_holder = StripePaymentMethodsHolder.objects.get(stripe_pm_id=obj.id)
+        stripe_pm_holder = StripePaymentMethodsHolder.objects.get(stripe_pm__id=obj.id)
         return stripe_pm_holder.is_primary
 
     class Meta:
