@@ -2,6 +2,8 @@ import logging
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from djstripe import webhooks
+
 from djstripe.models import PaymentIntent, PaymentMethod
 from djstripe.signals import WEBHOOK_SIGNALS
 
@@ -21,3 +23,11 @@ def create_pm_holder(instance: PaymentMethod, created: bool, *args, **kwargs):
     if created:
         spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
         logging.getLogger().warning(f"{spmh = }")
+
+
+@webhooks.handler("paymentmethod.attached")
+def charge_dispute_created(event, **kwargs):
+    logging.getLogger().warning(f"{kwargs = }")
+    logging.getLogger().warning(f"{event = }")
+    # spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+    # logging.getLogger().warning(f"{spmh = }")
