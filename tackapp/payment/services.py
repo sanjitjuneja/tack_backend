@@ -430,3 +430,22 @@ def detach_payment_method(user: User, payment_type: str, payment_method: str):
     elif payment_type == PaymentType.CARD:
         dsPaymentMethod.objects.get(customer__subscriber=user, id=payment_method)
         detach_stripe_payment_method(payment_method)
+
+
+def update_dwolla_pms_with_primary(pms: dict):
+    data = pms["_embedded"]["funding-sources"]
+    dwolla_pm_ids = [funding_source["id"] for funding_source in data]
+
+    upms_values = UserPaymentMethods.objects.filter(
+        dwolla_payment_method__in=dwolla_pm_ids
+    ).values(
+        "dwolla_payment_method",
+        "is_primary"
+    )
+
+    # TODO: too ugly will change later (31.08.2022)
+    for upm in upms_values:
+        for funding_source in data:
+            if funding_source["id"] == upm["dwolla_payment_method"]:
+                funding_source["is_primary"] = upm["is_primary"]
+    return data
