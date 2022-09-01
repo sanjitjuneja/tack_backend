@@ -102,7 +102,7 @@ class GetUserPaymentMethods(views.APIView):
         ds_customer, created = djstripe.models.Customer.get_or_create(
             subscriber=request.user
         )
-        pms = dsPaymentMethod.objects.filter(customer=ds_customer)
+        pms = dsPaymentMethod.objects.filter(customer=ds_customer.subscriber)
         serializer = StripePaymentMethodSerializer(pms, many=True)
         return Response({"results": serializer.data})
 
