@@ -16,6 +16,7 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
 
 @receiver(signal=post_save, sender=PaymentMethod)
 def create_pm_holder(instance: PaymentMethod, created: bool, *args, **kwargs):
+    logging.getLogger().warning(f"{kwargs = }")
     if created:
         spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
         logging.getLogger().warning(f"{spmh = }")
