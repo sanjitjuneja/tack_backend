@@ -53,8 +53,7 @@ class Fee(models.Model):
         default=3.00,
         decimal_places=2,
         max_digits=4,
-        validators=(percent_validator,)
-    )
+        validators=(percent_validator,))
     fee_min = models.PositiveIntegerField(default=25)
     fee_max = models.PositiveIntegerField(default=1500)
 

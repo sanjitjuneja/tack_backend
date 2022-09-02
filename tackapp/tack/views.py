@@ -215,7 +215,12 @@ class TackViewset(
             confirm_complete_tack(tack)
             return Response(TackDetailSerializer(tack).data)
         else:
-            return Response({"error": "Tack status is not in status Waiting Review"})
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Tack status is not in status Waiting Review"
+                },
+                status=400)
 
     @action(
         methods=("GET",),
@@ -226,7 +231,12 @@ class TackViewset(
     def get_contacts(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):
-            return Response({"error": "You cannot get contact data for Unaccepted Offer"})
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You cannot get contact data for Unaccepted Offer"
+                },
+                status=400)
         contacts = tack.runner.get_contacts() if tack.tacker == request.user else tack.tacker.get_contacts()
         logging.getLogger().warning(contacts)
         serializer = ContactsSerializer(contacts)
@@ -238,9 +248,11 @@ class TackViewset(
         tack = self.get_object()
         if tack.status not in (TackStatus.ACCEPTED, TackStatus.IN_PROGRESS):
             return Response(
-                {"error": "code", "message": "Cannot cancel Tack in this status"},
-                status=400
-            )
+                {
+                    "error": "code",
+                    "message": "Cannot cancel Tack in this status"
+                },
+                status=400)
         tack.is_active = False
         tack.is_canceled = True
         tack.save()
@@ -309,8 +321,7 @@ class OfferViewset(
                     "balance": request.user.bankaccount.usd_balance,
                     "tack_price": price
                 },
-                status=400
-            )
+                status=400)
 
         accept_offer(offer)
         serializer = OfferSerializer(offer)
@@ -344,7 +355,12 @@ class OfferViewset(
 
         instance = self.get_object()
         if instance.is_accepted:
-            return Response({"message": "Cannot delete accepted Offers"})
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Cannot delete accepted Offers"
+                },
+                status=400)
         self.perform_destroy(instance)
         return Response(status=204)
 
