@@ -11,17 +11,17 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('review', '0002_initial'),
+        ('payment', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='review',
+            model_name='bankaccount',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='review_user', to=settings.AUTH_USER_MODEL),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddConstraint(
-            model_name='review',
-            constraint=models.UniqueConstraint(fields=('user', 'tack'), name='unique_user_for_tack'),
+            model_name='userpaymentmethods',
+            constraint=models.UniqueConstraint(condition=models.Q(('is_primary', True)), fields=('bank_account',), name='bank_account_one_primary'),
         ),
     ]
