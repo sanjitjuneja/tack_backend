@@ -246,13 +246,14 @@ def get_transfer_request(
 
 def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
     """Check """
-
+    logger = logging.getLogger()
     ba = BankAccount.objects.get(user=user)
     amount = convert_to_decimal(amount)
     request = AccountsBalanceGetRequest(
         access_token=ba.dwolla_access_token
     )
     response = plaid_client.accounts_balance_get(request)
+    logger.warning(f"plaid {response = }")
     try:
         payment_method_qs = UserPaymentMethods.objects.get(
             bank_account__user=user,
@@ -261,12 +262,12 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         dwolla_payment_id = payment_method_qs.dwolla_payment_method
         for account in response['accounts']:
             if account["account_id"] == dwolla_payment_id:
-                logging.getLogger().warning(Decimal(account["balances"]["available"]))
+                logger.warning(Decimal(account["balances"]["available"]))
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
                     return True
     except UserPaymentMethods.DoesNotExist:
-        pass
+        logger.warning("Balance check: UserPaymentMethods.DoesNotExist")
     return False
 
 
