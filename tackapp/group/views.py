@@ -151,7 +151,7 @@ class GroupViewset(
             "creation_time"
         )
         page = self.paginate_queryset(tacks)
-        serializer = GroupTackSerializer(page, many=True)
+        serializer = GroupTackSerializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(
@@ -200,7 +200,7 @@ class GroupViewset(
             "group"
         )
         page = self.paginate_queryset(tacks)
-        serializer = TackDetailSerializer(page, many=True)
+        serializer = TackDetailSerializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -234,7 +234,7 @@ class GroupViewset(
         except GroupMembers.DoesNotExist:
             return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
 
-        return Response(GroupMembersSerializer(gm).data)
+        return Response(GroupMembersSerializer(gm, context={"request": request}).data)
 
     @extend_schema(request=None)
     @action(

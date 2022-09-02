@@ -115,7 +115,7 @@ class TackViewset(
             "tack__group"
         )
         page = self.paginate_queryset(offers)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
@@ -132,7 +132,7 @@ class TackViewset(
         )
         queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
+        serializer = self.serializer_class(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_runner")
@@ -150,7 +150,7 @@ class TackViewset(
             "group"
         )
         page = self.paginate_queryset(offers)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
