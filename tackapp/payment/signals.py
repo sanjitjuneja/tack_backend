@@ -21,10 +21,10 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
 
 @receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
 def create_pm_holder(*args, **kwargs):
-    evt = djstripe.models.Event.objects.get(kwargs.get("id"))
+    evt = djstripe.models.Event.objects.get(id=kwargs.get("id"))
     logging.getLogger().warning(f"{evt = }")
     logging.getLogger().warning(f"{evt.data = }")
-    instance = djstripe.models.PaymentMethod.objects.get(evt.data.get("object").get("id"))
+    instance = djstripe.models.PaymentMethod.objects.get(id=evt.data.get("object").get("id"))
     logging.getLogger().warning(f"{instance = }")
     spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
     logging.getLogger().warning(f"{spmh = }")
