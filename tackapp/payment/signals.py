@@ -19,15 +19,26 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
         add_money_to_bank_account(instance.amount)
 
 
-@receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
-def create_pm_holder(*args, **kwargs):
-    evt = djstripe.models.Event.objects.get(id=kwargs.get("id"))
-    logging.getLogger().warning(f"{evt = }")
-    logging.getLogger().warning(f"{evt.data = }")
-    instance = djstripe.models.PaymentMethod.objects.get(id=evt.data.get("object").get("id"))
-    logging.getLogger().warning(f"{instance = }")
-    spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
-    logging.getLogger().warning(f"{spmh = }")
+from djstripe import webhooks
+
+@webhooks.handler("payment_method.attached")
+def my_handler(event, *args, **kwargs):
+    logging.getLogger().warning(f"{args = }")
+    logging.getLogger().warning(f"{kwargs = }")
+    logging.getLogger().warning(f"{event = }")
+    logging.getLogger().warning(f"{event.type = }")
+
+
+# @receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
+# def create_pm_holder(*args, **kwargs):
+#
+#     evt = djstripe.models.Event.objects.get(id=kwargs.get("id"))
+#     logging.getLogger().warning(f"{evt = }")
+#     logging.getLogger().warning(f"{evt.data = }")
+#     instance = djstripe.models.PaymentMethod.objects.get(id=evt.data.get("object").get("id"))
+#     logging.getLogger().warning(f"{instance = }")
+#     spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+#     logging.getLogger().warning(f"{spmh = }")
 
 
 # @receiver(signal=post_save, sender=PaymentMethod)
