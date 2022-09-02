@@ -27,7 +27,11 @@ def my_handler(event, *args, **kwargs):
     logging.getLogger().warning(f"{kwargs = }")
     logging.getLogger().warning(f"{event = }")
     logging.getLogger().warning(f"{event.type = }")
-
+    logging.getLogger().warning(f"{event.data = }")
+    instance = djstripe.models.PaymentMethod.objects.get(id=event.data.get("object").get("id"))
+    logging.getLogger().warning(f"{instance = }")
+    spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+    logging.getLogger().warning(f"{spmh = }")
 
 # @receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
 # def create_pm_holder(*args, **kwargs):
