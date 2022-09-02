@@ -95,7 +95,7 @@ class TackViewset(
         )
         queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
+        serializer = self.serializer_class(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
