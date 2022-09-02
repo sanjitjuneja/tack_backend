@@ -2,6 +2,8 @@ import logging
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+import djstripe.models
 from djstripe import webhooks
 
 from djstripe.models import PaymentIntent, PaymentMethod
@@ -19,10 +21,10 @@ def add_balance_to_user(instance: PaymentIntent, created: bool, *args, **kwargs)
 
 @receiver(signal=WEBHOOK_SIGNALS.get("payment_method.attached"))
 def create_pm_holder(*args, **kwargs):
-    logging.getLogger().warning(f"{args = }")
-    logging.getLogger().warning(f"{kwargs = }")
-    # spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
-    # logging.getLogger().warning(f"{spmh = }")
+    evt = djstripe.models.Event.objects.get(kwargs.get("id"))
+    instance = djstripe.models.PaymentMethod.objects.get(evt.data.get("object").get("id"))
+    spmh = StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+    logging.getLogger().warning(f"{spmh = }")
 
 
 # @receiver(signal=post_save, sender=PaymentMethod)
