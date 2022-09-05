@@ -14,3 +14,5 @@ class DwollaEventAdmin(ModelAdmin):
 @admin.register(DwollaRemovedAccount)
 class DwollaRemovedAccountAdmin(ModelAdmin):
     list_display = ('dwolla_id', 'creation_time')
+    list_filter = ('creation_time',)
+    search_fields = ('dwolla_id',)

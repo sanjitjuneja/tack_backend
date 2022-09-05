@@ -56,3 +56,5 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'amount_with_fees',
         'service_fee'
     )
+    list_filter = ('creation_time',)
+    search_fields = ('user', 'transaction_id')
