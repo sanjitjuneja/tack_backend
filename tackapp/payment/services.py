@@ -469,6 +469,8 @@ def update_dwolla_pms_with_primary(pms: dict, user: User):
         "dwolla_payment_method",
         "is_primary"
     )
+
+    # Additional check if retrieved funding-sources from Dwolla API matched our UserPaymentMethods model
     if len(data) != len(upms_values):
         # TODO: add UserPaymentMethods
         for dwolla_pm_id in dwolla_pm_ids:

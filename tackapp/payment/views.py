@@ -213,7 +213,7 @@ class AddUserWithdrawMethod(views.APIView):
             return Response({"error": "code", "message": "Can not find DB user"}, status=400)
         pms = get_dwolla_payment_methods(ba.dwolla_user)
         data = update_dwolla_pms_with_primary(pms, request.user)
-        if not UserPaymentMethods.objects.filter(bank_account=ba).exists():
+        if len(UserPaymentMethods.objects.filter(bank_account=ba)) == 1:
             set_primary_method(
                 user=request.user,
                 payment_type=PaymentType.BANK,
