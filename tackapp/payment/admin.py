@@ -1,7 +1,15 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
-from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee
+from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee, Transaction
+
+
+class ReadOnlyMixin:
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BankAccount)
@@ -35,3 +43,16 @@ class StripePaymentMethodsHolderAdmin(ModelAdmin):
 @admin.register(ServiceFee)
 class ServiceFeeAdmin(ModelAdmin):
     list_display = ('stripe_percent', 'stripe_const_sum', 'dwolla_percent', 'dwolla_const_sum')
+
+
+@admin.register(Transaction)
+class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
+    list_display = (
+        'user',
+        'is_stripe',
+        'is_dwolla',
+        'transaction_id',
+        'amount_requested',
+        'amount_with_fees',
+        'service_fee'
+    )
