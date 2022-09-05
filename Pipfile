@@ -39,6 +39,7 @@ dwollav2 = "*"
 plaid-python = "*"
 aiohttp = "*"
 django-celery-beat = "*"
+channels = "*"
 
 [dev-packages]
 

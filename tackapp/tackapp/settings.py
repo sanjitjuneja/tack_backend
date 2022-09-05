@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djstripe",
     "django_celery_beat",
+    "channels",
 ]
 
 
@@ -117,8 +118,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "tackapp.wsgi.application"
-# ASGI_APPLICATION = 'tackapp.asgi.application'
+# WSGI_APPLICATION = "tackapp.wsgi.application"
+ASGI_APPLICATION = "tackapp.asgi.application"
 # AUTHENTICATION_BACKENDS = (
 #     # "social_core.backends.google.GoogleOAuth2",
 #     # "social_core.backends.facebook.FacebookOAuth2",

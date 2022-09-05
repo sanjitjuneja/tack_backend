@@ -6,6 +6,7 @@ import debug_toolbar
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView, TokenBlacklistView
 
+from tackapp import consumers
 from user.auth_backend import CustomJWTSerializer
 
 urlpatterns = [
@@ -30,6 +31,10 @@ urlpatterns = [
     # Optional UI:
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/v1/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+]
+
+websocket_urlpatterns = [
+    re_path(r'ws/(?P<user_id>\d+)/', consumers.ChatConsumer.as_asgi()),
 ]
 
 if settings.DEBUG:
