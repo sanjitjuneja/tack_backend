@@ -198,7 +198,7 @@ def add_money_to_bank_account(payment_intent: PaymentIntent):
 
 
 def save_dwolla_access_token(access_token: str, user: User):
-    """Save Dwolla access token to DB. It will needed for bank balance check"""
+    """Save Dwolla access token to DB. It will be needed for bank balance check"""
 
     try:
         ba = BankAccount.objects.get(user=user)

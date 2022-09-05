@@ -51,7 +51,6 @@ class AddBalanceStripe(views.APIView):
             service=PaymentService.STRIPE
         )
 
-        # TODO: check 24h Transactions
         sum24h = get_sum24h_transactions(user=request.user)
         current_transaction_loss = calculate_transaction_loss(
             amount=serializer.validated_data["amount"],
@@ -307,10 +306,10 @@ class DetachPaymentMethod(views.APIView):
             return Response(
                 {
                     "error": "code",
-                    "message": "Payment method doesn't exist"
+                    "message": "Payment method doesn't exist",
+                    "payment_method": serializer.data["payment_method"]
                 },
-                status=400
-            )
+                status=400)
         return Response(
             {
                 "error": None,
