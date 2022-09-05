@@ -173,7 +173,7 @@ class GetUserWithdrawMethods(views.APIView):
         except dwollav2.Error as e:
             return Response(e.body)
 
-        data = update_dwolla_pms_with_primary(pms)
+        data = update_dwolla_pms_with_primary(pms, request.user)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
         return Response({"results": serializer.data})
 
@@ -212,7 +212,7 @@ class AddUserWithdrawMethod(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response({"error": "code", "message": "Can not find DB user"}, status=400)
         pms = get_dwolla_payment_methods(ba.dwolla_user)
-        data = update_dwolla_pms_with_primary(pms)
+        data = update_dwolla_pms_with_primary(pms, request.user)
         if not UserPaymentMethods.objects.filter(bank_account=ba).exists():
             set_primary_method(
                 user=request.user,

@@ -459,7 +459,7 @@ def detach_payment_method(user: User, payment_type: str, payment_method: str):
         detach_stripe_payment_method(payment_method)
 
 
-def update_dwolla_pms_with_primary(pms: dict):
+def update_dwolla_pms_with_primary(pms: dict, user: User):
     data = pms["_embedded"]["funding-sources"]
     dwolla_pm_ids = [funding_source["id"] for funding_source in data]
 
@@ -469,6 +469,18 @@ def update_dwolla_pms_with_primary(pms: dict):
         "dwolla_payment_method",
         "is_primary"
     )
+    if len(data) != len(upms_values):
+        # TODO: add UserPaymentMethods
+        for dwolla_pm_id in dwolla_pm_ids:
+            if dwolla_pm_id not in upms_values.values_list("dwolla_payment_method", flat=True):
+                dwolla_id = BankAccount.objects.get(user=user).dwolla_user
+                add_dwolla_payment_method(dwolla_id, dwolla_pm_id)
+        upms_values = UserPaymentMethods.objects.filter(
+            dwolla_payment_method__in=dwolla_pm_ids
+        ).values(
+            "dwolla_payment_method",
+            "is_primary"
+        )
 
     # TODO: too ugly will change later (31.08.2022)
     for upm in upms_values:
