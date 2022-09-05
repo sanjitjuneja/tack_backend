@@ -1,8 +1,7 @@
-from celery import shared_task
-
-from payment.models import DwollaRemovedAccount
-from user.services import is_user_have_dwolla_pending_transfers
-
+# from celery import shared_task
+#
+# from user.services import is_user_have_dwolla_pending_transfers
+#
 
 # @shared_task
 # def check_removed_dwolla_accounts():
