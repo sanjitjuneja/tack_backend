@@ -20,6 +20,9 @@ class BankAccount(models.Model):
     dwolla_user = models.CharField(max_length=64, null=True, blank=True, default=None)
     dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
 
+    def __str__(self):
+        return f"{str(self.user)}: {self.usd_balance / 100:.2f} $"
+
     class Meta:
         db_table = "bank_account"
         verbose_name = "Bank Account"

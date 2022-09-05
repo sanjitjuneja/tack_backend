@@ -451,8 +451,9 @@ def set_primary_method(user: User, payment_type: str, payment_method: str):
 
 def detach_payment_method(user: User, payment_type: str, payment_method: str):
     if payment_type == PaymentType.BANK:
-        UserPaymentMethods.objects.get(bank_account__user=user, dwolla_payment_method=payment_method)
+        upm = UserPaymentMethods.objects.get(bank_account__user=user, dwolla_payment_method=payment_method)
         detach_dwolla_funding_source(payment_method)
+        upm.delete()
     elif payment_type == PaymentType.CARD:
         dsPaymentMethod.objects.get(customer__subscriber=user, id=payment_method)
         detach_stripe_payment_method(payment_method)
