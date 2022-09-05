@@ -199,6 +199,20 @@ class AddUserWithdrawMethod(views.APIView):
         access_token = get_access_token(public_token)
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
+
+        try:
+            ba = BankAccount.objects.get(user=request.user)
+        except BankAccount.DoesNotExist:
+            # TODO: create dwolla account and return empty list
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Can not find DB user"
+                },
+                status=400)
+
+        adding_first_bank = False if UserPaymentMethods.objects.filter(bank_account=ba).exists() else True
+
         try:
             attach_all_accounts_to_dwolla(request.user, accounts)
         except dwollav2.Error as e:
@@ -206,14 +220,9 @@ class AddUserWithdrawMethod(views.APIView):
         except plaid.ApiException as e:
             return Response(e.body, status=e.status)
 
-        try:
-            ba = BankAccount.objects.get(user=request.user)
-        except BankAccount.DoesNotExist:
-            # TODO: create dwolla account and return empty list
-            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
         pms = get_dwolla_payment_methods(ba.dwolla_user)
         data = update_dwolla_pms_with_primary(pms, request.user)
-        if len(UserPaymentMethods.objects.filter(bank_account=ba)) == 1:
+        if adding_first_bank:
             set_primary_method(
                 user=request.user,
                 payment_type=PaymentType.BANK,
