@@ -17,6 +17,16 @@ class DwollaEvent(models.Model):
         verbose_name_plural = "Dwolla events"
 
 
+class DwollaRemovedAccount(models.Model):
+    dwolla_id = models.UUIDField()
+    creation_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "dwolla_removed_accounts"
+        verbose_name = "Dwolla removed account"
+        verbose_name_plural = "Dwolla removed accounts"
+
+
 # class DwollaPaymentMethod(models.Model):
 #     bank_account_type = models.CharField(max_length=64)
 #     bank_name = models.CharField(max_length=128)

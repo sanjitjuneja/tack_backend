@@ -86,8 +86,7 @@ class UsersViewset(
                     "error": "code",
                     "message": "You have active Tacks"
                 },
-                status=400
-            )
+                status=400)
 
         ba = BankAccount.objects.get(user=request.user)
         min_withdraw_amount = 100

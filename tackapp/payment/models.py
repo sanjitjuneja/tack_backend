@@ -71,15 +71,6 @@ class Fee(models.Model):
         verbose_name_plural = "Fees"
 
 
-class DwollaRemovedAccount(models.Model):
-    dwolla_id = models.UUIDField()
-
-    class Meta:
-        db_table = "dwolla_removed_accounts"
-        verbose_name = "Dwolla removed account"
-        verbose_name_plural = "Dwolla removed accounts"
-
-
 class StripePaymentMethodsHolder(models.Model):
     stripe_pm = models.OneToOneField(dsPaymentMethod, on_delete=models.CASCADE)
     is_primary = models.BooleanField(default=False)
