@@ -8,7 +8,13 @@ from core.validators import supported_currency
 from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods
 
 
-class AddBalanceSerializer(serializers.Serializer):
+class AddBalanceStripeSerializer(serializers.Serializer):
+    amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
+    currency = serializers.CharField(default="USD", validators=(supported_currency,))
+    payment_method = serializers.CharField(min_length=6, required=False)
+
+
+class AddBalanceDwollaSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
     payment_method = serializers.CharField(min_length=6, required=False)

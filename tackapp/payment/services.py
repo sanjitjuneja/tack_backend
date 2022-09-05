@@ -1,8 +1,13 @@
 import logging
+from datetime import timedelta
 from decimal import Decimal, Context
+from typing import Optional
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q, F, Sum
+from django.utils import timezone
+
 from djstripe.models import PaymentIntent
 from djstripe.models import PaymentMethod as dsPaymentMethod
 from plaid.model.account_base import AccountBase
@@ -21,11 +26,11 @@ from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUse
 from plaid.model.processor_token_create_request import ProcessorTokenCreateRequest
 from plaid.model.products import Products
 
-from core.choices import OfferType, PaymentType
+from core.choices import OfferType, PaymentType, PaymentService, PaymentAction
 from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client
-from payment.models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder
+from payment.models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, Transaction, ServiceFee
 from tack.models import Tack
 from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
@@ -68,7 +73,6 @@ def get_link_token(dwolla_id_user):
                 account_subtypes=DepositoryAccountSubtypes(
                     [
                         DepositoryAccountSubtype('checking'),
-                        # DepositoryAccountSubtype('savings')
                     ]
                 )
             )
@@ -293,13 +297,13 @@ def dwolla_transaction(
         *args,
         **kwargs
 ):
-    if action == "withdraw":
+    if action == PaymentAction.WITHDRAW:
         source = DWOLLA_MAIN_FUNDING_SOURCE
         destination = payment_method
         amount_with_fees = amount
         if channel == "next-available":
-            amount_with_fees = calculate_amount_with_fees(amount)
-    elif action == "refill":
+            amount_with_fees = calculate_amount_with_fees(amount, service=PaymentService.DWOLLA)
+    elif action == PaymentAction.DEPOSIT:
         source = payment_method
         destination = DWOLLA_MAIN_FUNDING_SOURCE
         amount_with_fees = amount
@@ -316,25 +320,46 @@ def dwolla_transaction(
 
     token = dwolla_client.Auth.client()
     response = token.post('transfers', transfer_request)
+    transaction_id = response.headers["Location"].split("/")[-1]
+    service_fee = calculate_service_fee(amount=amount, service=PaymentService.DWOLLA)
     logging.getLogger().warning(response.body)
     ba = BankAccount.objects.get(user=user)
 
-    if action == "withdraw":
-        ba.usd_balance -= amount
-        ba.save()
-    elif action == "refill":
-        ba.usd_balance += amount
-        ba.save()
+    Transaction.objects.create(
+        user=user,
+        transaction_id=transaction_id,
+        is_dwolla=True,
+        amount_requested=amount,
+        amount_with_fees=amount_with_fees,
+        service_fee=service_fee,
+    )
+    match action:
+        case PaymentAction.WITHDRAW:
+            ba.usd_balance -= amount
+            ba.save()
+        case PaymentAction.DEPOSIT:
+            ba.usd_balance += amount
+            ba.save()
+
     return response.body
 
 
-def calculate_amount_with_fees(amount: int) -> int:
+def calculate_amount_with_fees(amount: int, service: str) -> int:
     fees = Fee.objects.all().last()
-    abs_fee = amount * fees.fee_percent / 100
-    if abs_fee < fees.fee_min:
-        abs_fee = fees.fee_min
-    elif abs_fee > fees.fee_max:
-        abs_fee = fees.fee_max
+    abs_fee = 0
+    match service:
+        case PaymentService.STRIPE:
+            abs_fee = amount * fees.fee_percent_stripe / 100
+            if abs_fee < fees.fee_min_stripe:
+                abs_fee = fees.fee_min_stripe
+            elif abs_fee > fees.fee_max_stripe:
+                abs_fee = fees.fee_max_stripe
+        case PaymentService.DWOLLA:
+            abs_fee = amount * fees.fee_percent_dwolla / 100
+            if abs_fee < fees.fee_min_dwolla:
+                abs_fee = fees.fee_min_dwolla
+            elif abs_fee > fees.fee_max_dwolla:
+                abs_fee = fees.fee_max_dwolla
 
     amount = int(amount + abs_fee)
     return amount
@@ -450,3 +475,33 @@ def update_dwolla_pms_with_primary(pms: dict):
             if funding_source["id"] == upm["dwolla_payment_method"]:
                 funding_source["is_primary"] = upm["is_primary"]
     return data
+
+
+def calculate_service_fee(amount: int, service: str):
+    service_fee = ServiceFee.objects.last()
+    match service:
+        case PaymentService.DWOLLA:
+            return int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum)
+        case PaymentService.STRIPE:
+            return int(amount * service_fee.stripe_percent + service_fee.stripe_const_sum)
+
+
+def get_sum24h_transactions(user: User) -> int:
+    sum24h = Transaction.objects.filter(
+                Q(is_stripe=True, is_succeeded=True) | Q(is_dwolla=True),
+                user=user,
+                creation_time__gt=timezone.now() - timedelta(hours=24)
+            ).aggregate(
+                sum24h=Sum(
+                    F('service_fee') - (
+                            F('amount_with_fees') - F('amount_requested')
+                    )
+                )
+            )['sum24h']
+    return sum24h if sum24h else 0
+
+
+def calculate_transaction_loss(amount: int, service: str):
+    service_fee = calculate_service_fee(amount=amount, service=service)
+    amount_with_fees = calculate_amount_with_fees(amount=amount, service=service)
+    return service_fee - (amount_with_fees - amount)

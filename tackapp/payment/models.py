@@ -49,13 +49,21 @@ class UserPaymentMethods(models.Model):
 
 
 class Fee(models.Model):
-    fee_percent = models.DecimalField(
+    fee_percent_stripe = models.DecimalField(
         default=3.00,
         decimal_places=2,
         max_digits=4,
         validators=(percent_validator,))
-    fee_min = models.PositiveIntegerField(default=25)
-    fee_max = models.PositiveIntegerField(default=1500)
+    fee_min_stripe = models.PositiveIntegerField(default=25)
+    fee_max_stripe = models.PositiveIntegerField(default=1500)
+    fee_percent_dwolla = models.DecimalField(
+        default=0,
+        decimal_places=2,
+        max_digits=4,
+        validators=(percent_validator,))
+    fee_min_dwolla = models.PositiveIntegerField(default=0)
+    fee_max_dwolla = models.PositiveIntegerField(default=1500)
+    max_loss = models.PositiveIntegerField(default=4000)
 
     class Meta:
         db_table = "fees"
@@ -80,3 +88,30 @@ class StripePaymentMethodsHolder(models.Model):
         db_table = "stripe_pm_holder"
         verbose_name = "Stripe Payment method holder"
         verbose_name_plural = "Stripe Payment methods holder"
+
+
+class Transaction(models.Model):
+    user = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    amount_requested = models.PositiveIntegerField()
+    amount_with_fees = models.PositiveIntegerField()
+    service_fee = models.PositiveIntegerField()
+    is_dwolla = models.BooleanField(default=False)
+    is_stripe = models.BooleanField(default=False)
+    transaction_id = models.CharField(max_length=255)
+    creation_time = models.DateTimeField(auto_now_add=True)
+    is_succeeded = models.BooleanField(default=False)
+
+
+class ServiceFee(models.Model):
+    stripe_percent = models.DecimalField(
+        default=2.90,
+        decimal_places=2,
+        max_digits=4,
+        validators=(percent_validator,))
+    stripe_const_sum = models.PositiveIntegerField(default=30)
+    dwolla_percent = models.DecimalField(
+        default=5.00,
+        decimal_places=2,
+        max_digits=4,
+        validators=(percent_validator,))
+    dwolla_const_sum = models.PositiveIntegerField(default=0)

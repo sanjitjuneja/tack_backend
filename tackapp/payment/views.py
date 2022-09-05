@@ -1,7 +1,8 @@
-import json
 import logging
-from decimal import Decimal, Context
+from datetime import timedelta
 
+from django.db.models import Sum, Q, F
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 
 import djstripe.models
@@ -9,30 +10,25 @@ import dwollav2
 import plaid
 import stripe
 from django.core.exceptions import ObjectDoesNotExist
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.views.decorators.http import require_POST
 
-from core.choices import PaymentType
-from djstripe import webhooks
+from core.choices import PaymentType, PaymentService, PaymentAction
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
-from djmoney.money import Money
 from drf_spectacular.utils import extend_schema
 from rest_framework import views
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from dwolla_service.models import DwollaEvent
-from payment.models import BankAccount, UserPaymentMethods
-from payment.serializers import AddBalanceSerializer, BankAccountSerializer, PISerializer, \
-    StripePaymentMethodSerializer, AddWithdrawMethodSerializer, DwollaMoneyWithdrawSerializer, \
-    DwollaPaymentMethodSerializer, GetCardByIdSerializer, SetupIntentSerializer, DeletePaymentMethodSerializer, \
-    SetPrimaryPaymentMethodSerializer
+from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
+from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
+    DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
+    DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
+    AddBalanceStripeSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
-    detach_payment_method, update_dwolla_pms_with_primary
+    detach_payment_method, update_dwolla_pms_with_primary, calculate_amount_with_fees, get_sum24h_transactions, \
+    calculate_transaction_loss
 
 
 class AddBalanceStripe(views.APIView):
@@ -40,40 +36,91 @@ class AddBalanceStripe(views.APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
+    @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
     def post(self, request):
 
-        serializer = AddBalanceSerializer(data=request.data)
+        serializer = AddBalanceStripeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        logger = logging.getLogger()
 
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
 
+        # Calculate new amount because we charge fees
+        amount_with_fees = calculate_amount_with_fees(
+            serializer.validated_data["amount"],
+            service=PaymentService.STRIPE
+        )
+
+        # TODO: check 24h Transactions
+        sum24h = get_sum24h_transactions(user=request.user)
+        current_transaction_loss = calculate_transaction_loss(
+            amount=serializer.validated_data["amount"],
+            service=PaymentService.STRIPE
+        )
+        total_loss = sum24h + current_transaction_loss
+        if total_loss >= Fee.objects.all().last().max_loss:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You reached your 24h transaction limit"
+                },
+                status=400)
+
+        # TODO: try-except block
         pi = stripe.PaymentIntent.create(
             customer=customer.id,
             receipt_email=customer.email,
-            **serializer.validated_data
+            amount=amount_with_fees,
+            currency=serializer.validated_data["currency"],
+            payment_method=serializer.validated_data["payment_method"]
         )
-
+        Transaction.objects.create(
+            user=request.user,
+            is_stripe=True,
+            amount_requested=serializer.validated_data["amount"],
+            amount_with_fees=amount_with_fees,
+            transaction_id=pi["id"]
+        )
+        logger.warning(f"{pi = }")
+        logger.warning(f"{type(pi) = }")
         return Response(pi)
 
 
 class AddBalanceDwolla(views.APIView):
-    """Endpoint for money refill from Dwolla"""
+    """Endpoint for money deposit from Dwolla"""
 
     permission_classes = (IsAuthenticated,)
 
-    @extend_schema(request=AddBalanceSerializer, responses=AddBalanceSerializer)
+    @extend_schema(request=AddBalanceDwollaSerializer, responses=AddBalanceDwollaSerializer)
     def post(self, request):
-        serializer = AddBalanceSerializer(data=request.data)
+        serializer = AddBalanceDwollaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         amount = serializer.validated_data["amount"]
         payment_method = serializer.validated_data["payment_method"]
+
+        sum24h = get_sum24h_transactions(user=request.user)
+        current_transaction_loss = calculate_transaction_loss(
+            amount=serializer.validated_data["amount"],
+            service=PaymentService.DWOLLA
+        )
+        total_loss = sum24h + current_transaction_loss
+        if total_loss >= Fee.objects.all().last().max_loss:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You reached your 24h transaction limit"
+                },
+                status=400)
 
         is_enough_funds = check_dwolla_balance(request.user, amount, payment_method)
         if not is_enough_funds:
             return Response({"error": "code", "message": "Insufficient funds"}, status=400)
         try:
-            response_body = dwolla_transaction(user=request.user, action="refill", **serializer.validated_data)
+            response_body = dwolla_transaction(
+                user=request.user,
+                action=PaymentAction.DEPOSIT,
+                **serializer.validated_data
+            )
         except dwollav2.Error as e:
             return Response(e.body)
 
@@ -90,7 +137,6 @@ class AddPaymentMethod(views.APIView):
         si = stripe.SetupIntent.create(
             customer=ds_customer.id
         )
-        # serializer = SetupIntentSerializer(si, many=False)
         return Response(si)
 
 
@@ -193,7 +239,26 @@ class DwollaMoneyWithdraw(views.APIView):
                 return Response({"error": "code", "message": "Not enough money"}, status=400)
         except BankAccount.DoesNotExist:
             pass
-        response_body = dwolla_transaction(user=request.user, action="withdraw", **serializer.validated_data)
+
+        sum24h = get_sum24h_transactions(user=request.user)
+        current_transaction_loss = calculate_transaction_loss(
+            amount=serializer.validated_data["amount"],
+            service=PaymentService.DWOLLA
+        )
+        total_loss = sum24h + current_transaction_loss
+        if total_loss >= Fee.objects.all().last().max_loss:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You reached your 24h transaction limit"
+                },
+                status=400)
+
+        response_body = dwolla_transaction(
+            user=request.user,
+            action=PaymentAction.WITHDRAW,
+            **serializer.validated_data
+        )
         return Response(response_body)
 
 

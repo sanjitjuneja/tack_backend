@@ -67,3 +67,17 @@ class PaymentType(models.TextChoices):
 
     BANK = "bank", "Bank"
     CARD = "card", "Card"
+
+
+class PaymentService(models.TextChoices):
+    """Choices for Payment services (Stripe, Dwolla)"""
+
+    STRIPE = "stripe", "Stripe"
+    DWOLLA = "dwolla", "Dwolla"
+
+
+class PaymentAction(models.TextChoices):
+    """Choices for Payment Action"""
+
+    DEPOSIT = "deposit", "Deposit"
+    WITHDRAW = "withdraw", "Withdraw"
