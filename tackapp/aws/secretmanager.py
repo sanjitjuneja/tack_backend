@@ -9,4 +9,3 @@ def receive_setting_secrets(aws_access_key_id: str, aws_secret_access_key: str, 
         SecretId='dev/tackapp/django'
     )
     return json.loads(response.get('SecretString'))
-

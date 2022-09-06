@@ -8,36 +8,43 @@ services:
     entrypoint: ["/app/docker-entrypoint.sh"]
     volumes:
       - .:/app/
-    environment:
-      - app=dev
+    env_file:
+      - tackapp/dev.env
+#    environment:
+#      - APP=prod
+#      - AWS_ACCESS_KEY_ID=AKIAV64RMXYGINNIHWWS
+#      - AWS_SECRET_ACCESS_KEY=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
+#      - AWS_REGION=us-east-1
 #    volumes:
 #      - static_volume:/app/tackapp/staticfiles
 #      - media_volume:/app/tackapp/media
     command: ["python3", "manage.py", "runserver", "0.0.0.0:8020"]
     ports:
       - "8020:8020"
-    depends_on:
-      - postgres
+#    depends_on:
+#      - postgres
 
-  postgres:
-    image: postgres:14.4-alpine
-    container_name: 'postgres'
-    restart: always
-    env_file:
-      - tackapp/dev.env
-    ports:
-      - "5432:5432"
-
-#  nginx:
-#    container_name: 'nginx'
-#    build: ./nginx
+#  postgres:
+#    image: postgres:14.4-alpine
+#    container_name: 'postgres'
+#    restart: always
+#    env_file:
+#      - tackapp/dev.env
 #    ports:
-#      - "80:80"
+#      - "5432:5432"
+
+  nginx:
+    container_name: 'nginx'
+    build: ./nginx
+    ports:
+      - "80:80"
 #    volumes:
 #      - static_volume:/app/tackapp/staticfiles
 #      - media_volume:/app/tackapp/media
-#    depends_on:
-#      - web
+    env_file:
+      - tackapp/dev.env
+    depends_on:
+      - web
 
   celery:
     build: .
@@ -52,7 +59,7 @@ services:
       - redis
 
   redis:
-    container_name: 'redis'
+    container_name: 'rediser'
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -69,7 +76,7 @@ services:
       - web
       - redis
       - celery
-      - postgres
+#      - postgres
 #
 #volumes:
 #  static_volume:
