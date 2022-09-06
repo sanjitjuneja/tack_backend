@@ -40,6 +40,7 @@ plaid-python = "*"
 aiohttp = "*"
 django-celery-beat = "*"
 channels = "*"
+channels-redis = "*"
 
 [dev-packages]
 

@@ -120,6 +120,14 @@ TEMPLATES = [
 
 # WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 # AUTHENTICATION_BACKENDS = (
 #     # "social_core.backends.google.GoogleOAuth2",
 #     # "social_core.backends.facebook.FacebookOAuth2",

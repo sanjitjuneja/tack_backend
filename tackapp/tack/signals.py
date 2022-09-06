@@ -1,3 +1,7 @@
+import logging
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -5,6 +9,7 @@ from django.dispatch import receiver
 from core.choices import TackStatus
 from group.models import GroupTacks
 from tack.models import Offer, Tack
+from .serializers import TackDetailSerializer
 from .tasks import delete_offer_task
 
 
@@ -28,3 +33,17 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
     if Offer.active.filter(tack=instance.tack).count() == 0:
         instance.tack.change_status(TackStatus.CREATED)
+
+
+@receiver(signal=post_save, sender=Tack)
+def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    logging.getLogger().warning(f"in signal: {channel_layer.__dict__ = }")
+
+    # async_to_sync\
+    async_to_sync(channel_layer.group_send)(
+        f"group_{instance.group}",
+        {
+            'type': 'tack.add',
+            'message': TackDetailSerializer(instance).data
+        })
