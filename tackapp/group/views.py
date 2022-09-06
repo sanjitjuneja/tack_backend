@@ -1,7 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -118,6 +118,19 @@ class GroupViewset(
         group = self.get_object()
         try:
             gm = GroupMembers.objects.get(member=request.user, group=group)
+
+            # check if User have ongoing Tacks right now
+            if Tack.active.filter(
+                Q(tacker=request.user) | Q(runner=request.user),
+                status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
+            ).exists():
+                return Response(
+                    {
+                        "error": "code",
+                        "message": "You can't leave this group. You have ongoing Tacks"
+                    },
+                    status=400)
+
             if request.user.active_group == group:
                 request.user.active_group = None
                 request.user.save()
@@ -217,7 +230,7 @@ class GroupViewset(
             gm.save()
         except GroupMembers.DoesNotExist:
             return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
-        return Response(GroupMembersSerializer(gm).data)
+        return Response(GroupMembersSerializer(gm, context={"request": request}).data)
 
     @extend_schema(request=None)
     @action(
