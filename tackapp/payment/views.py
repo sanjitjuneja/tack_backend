@@ -358,6 +358,8 @@ class SetPrimaryPaymentMethod(views.APIView):
 
 
 class GetFees(views.APIView):
+    permission_classes = (IsAuthenticated,)
+
     @extend_schema(request=None, responses=FeeSerializer)
     def get(self, request, *args, **kwargs):
         fees = Fee.objects.all().last()
