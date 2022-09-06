@@ -23,7 +23,7 @@ from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
 from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
-    AddBalanceStripeSerializer
+    AddBalanceStripeSerializer, FeeSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
@@ -355,6 +355,14 @@ class SetPrimaryPaymentMethod(views.APIView):
                 "payment_method": serializer.validated_data["payment_method"]
             }
         )
+
+
+class GetFees(views.APIView):
+    @extend_schema(request=None, responses=FeeSerializer)
+    def get(self, request, *args, **kwargs):
+        fees = Fee.objects.all().last()
+        serializer = FeeSerializer(fees)
+        return Response(serializer.data)
 
 
 class DwollaWebhook(views.APIView):

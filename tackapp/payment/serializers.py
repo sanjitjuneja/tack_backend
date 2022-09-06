@@ -5,7 +5,7 @@ from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.choices import images_dict, PaymentType
 from core.validators import supported_currency
-from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods
+from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods, Fee
 
 
 class AddBalanceStripeSerializer(serializers.Serializer):
@@ -122,3 +122,22 @@ class DeletePaymentMethodSerializer(serializers.Serializer):
 class SetPrimaryPaymentMethodSerializer(serializers.Serializer):
     payment_type = serializers.ChoiceField(PaymentType.choices)
     payment_method = serializers.CharField()
+
+
+class FeeSerializer(serializers.Serializer):
+    stripe = serializers.SerializerMethodField()
+    dwolla = serializers.SerializerMethodField()
+
+    def get_stripe(self, obj: Fee) -> dict:
+        return {
+            "fee_percent": obj.fee_percent_stripe,
+            "fee_min": obj.fee_min_stripe,
+            "fee_max": obj.fee_max_stripe
+        }
+
+    def get_dwolla(self, obj: Fee):
+        return {
+            "fee_percent": obj.fee_percent_dwolla,
+            "fee_min": obj.fee_min_dwolla,
+            "fee_max": obj.fee_max_dwolla
+        }
