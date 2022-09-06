@@ -115,9 +115,12 @@ class GroupViewset(
     def leave(self, request, *args, **kwargs):
         """Endpoint for leaving Group"""
 
+        logger = logging.getLogger()
         group = self.get_object()
+        logger.warning(f"{group = }")
         try:
             gm = GroupMembers.objects.get(member=request.user, group=group)
+            logger.warning(f"{gm = }")
 
             # check if User have ongoing Tacks right now
             if Tack.active.filter(
@@ -134,7 +137,10 @@ class GroupViewset(
             if request.user.active_group == group:
                 request.user.active_group = None
                 request.user.save()
+            logger.warning(f"Before gm.delete")
+            logger.warning(f"{gm = }")
             gm.delete()
+            logger.warning(f"After gm.delete()")
         except ObjectDoesNotExist:
             return Response({"message": "You are not a member of this group"}, status=400)
 
