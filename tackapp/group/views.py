@@ -52,7 +52,7 @@ class GroupViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for get all User's groups he is member of"""
 
-        qs = GroupMembers.active.filter(
+        qs = GroupMembers.objects.filter(
             member=request.user
         ).order_by(
             "creation_time"
