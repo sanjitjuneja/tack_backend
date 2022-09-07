@@ -184,6 +184,14 @@ class TackViewset(
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
+    @extend_schema(request=None, responses={
+        200: inline_serializer(
+            name="Test",
+            fields={
+                "error": serializers.CharField(),
+                "is_ongoing_runner_tack": serializers.CharField()
+            }
+        )})
     @action(
         methods=("GET",),
         detail=False,
