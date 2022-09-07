@@ -1,4 +1,6 @@
 import json
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.db.models import Q
@@ -87,6 +89,7 @@ class MainConsumer(WebsocketConsumer):
 
     def balance_update(self, event):
         message = event['message']
+        logging.getLogger().warning(f"In balance_update : {event = }")
         async_to_sync(self.send)(
             text_data=json.dumps(
                 {
