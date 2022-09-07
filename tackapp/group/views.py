@@ -171,7 +171,7 @@ class GroupViewset(
         methods=("GET",),
         detail=True,
         serializer_class=UserListSerializer,
-        permission_classes=(GroupMemberPermission,)
+        permission_classes=(IsAuthenticated,)
     )
     def members(self, request, *args, **kwargs):
         group = self.get_object()
