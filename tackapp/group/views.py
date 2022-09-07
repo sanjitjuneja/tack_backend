@@ -119,11 +119,14 @@ class GroupViewset(
         try:
             gm = GroupMembers.objects.get(member=request.user, group=group)
 
-            # check if User have ongoing Tacks right now
-            if Tack.active.filter(
+            ongoing_tacks = Tack.active.filter(
                 Q(tacker=request.user) | Q(runner=request.user),
                 status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
-            ).exists():
+            )
+            logging.getLogger().warning(f"{ongoing_tacks = }")
+
+            # check if User have ongoing Tacks right now
+            if ongoing_tacks.exists():
                 return Response(
                     {
                         "error": "code",

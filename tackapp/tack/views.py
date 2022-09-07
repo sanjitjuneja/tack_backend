@@ -39,7 +39,7 @@ class TackViewset(
         serializer = TackCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            GroupMembers.active.get(member=request.user, group=serializer.validated_data["group"])
+            GroupMembers.objects.get(member=request.user, group=serializer.validated_data["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
