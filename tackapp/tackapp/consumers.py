@@ -29,7 +29,7 @@ class MainConsumer(WebsocketConsumer):
 
         logger.warning(f"{self.room_group_name = }")
         # Join user_id room group
-        async_to_sync(self.channel_layer.group_add)(
+        self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
@@ -67,7 +67,7 @@ class MainConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # Leave room group
-        async_to_sync(self.channel_layer.group_discard)(
+        self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
@@ -81,7 +81,7 @@ class MainConsumer(WebsocketConsumer):
             self.channel_name
         )
 
-        async_to_sync(self.send)(
+        self.send(
             text_data=json.dumps(
                 {
                     'model': 'Tack',
@@ -93,7 +93,7 @@ class MainConsumer(WebsocketConsumer):
     def balance_update(self, event):
         message = event['message']
         logging.getLogger().warning(f"In balance_update : {event = }")
-        async_to_sync(self.send)(
+        self.send(
             text_data=json.dumps(
                 {
                     'model': 'Balance',
