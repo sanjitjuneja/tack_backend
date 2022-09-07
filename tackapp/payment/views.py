@@ -353,23 +353,11 @@ class SetPrimaryPaymentMethod(views.APIView):
 class TestChangeBankAccount(views.APIView):
     @extend_schema(request=TestChangeBankAccountSerializer, responses=TestChangeBankAccountSerializer)
     def post(self, request, *args, **kwargs):
-        logger = logging.getLogger()
-
         serializer = TestChangeBankAccountSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ba = BankAccount.objects.get(user=serializer.validated_data["user"])
         ba.usd_balance = serializer.validated_data["usd_balance"]
         ba.save()
-
-        group = f"user_{request.user.id}"
-        logger.warning(f"{group = }")
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            group,
-            {
-                'type': 'balance_update',
-                'message': BankAccountSerializer(ba).data
-            })
 
         return Response({"message": "good"})
 

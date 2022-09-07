@@ -35,12 +35,12 @@ class MainConsumer(WebsocketConsumer):
         )
 
         # async _ to sync
-        # groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
-        # for group in groups:
-        #     async_to_sync(self.channel_layer.group_add)(
-        #         f"group_{group.id}",
-        #         self.channel_name
-        #     )
+        groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
+        for group in groups:
+            async_to_sync(self.channel_layer.group_add)(
+                f"group_{group.id}",
+                self.channel_name
+            )
 
         # tacks_tacker = Tack.active.filter(
         #     tacker=self.scope['url_route']['kwargs']['user_id']
@@ -65,15 +65,6 @@ class MainConsumer(WebsocketConsumer):
         #     )
 
         self.accept()
-        self.send(
-            text_data=json.dumps(
-                {
-                    'event': 'test_added',
-                    'model': 'Balance',
-                    'action': 'update',
-                    'message': "test"
-                }
-            ))
 
     def disconnect(self, close_code):
         # Leave room group
@@ -81,7 +72,6 @@ class MainConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        # self.disconnect()
 
     def tack_create(self, event):
         message = event['message']
@@ -107,7 +97,6 @@ class MainConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    'event': 'test_added',
                     'model': 'Balance',
                     'action': 'update',
                     'message': message
