@@ -6,7 +6,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.db.models import Q
 
 from core.choices import TackStatus
-from group.models import Group
+from group.models import Group, GroupMembers
 from tack.models import Tack
 
 
@@ -35,10 +35,10 @@ class MainConsumer(WebsocketConsumer):
         )
 
         # async _ to sync
-        groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
-        for group in groups:
+        group_members = GroupMembers.objects.filter(member=self.scope['url_route']['kwargs']['user_id'])
+        for gm in group_members:
             async_to_sync(self.channel_layer.group_add)(
-                f"group_{group.id}",
+                f"group_{gm.group.id}",
                 self.channel_name
             )
 
