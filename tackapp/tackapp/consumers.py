@@ -29,7 +29,7 @@ class MainConsumer(WebsocketConsumer):
 
         logger.warning(f"{self.room_group_name = }")
         # Join user_id room group
-        self.channel_layer.group_add(
+        async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
         )
@@ -77,7 +77,7 @@ class MainConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # Leave room group
-        self.channel_layer.group_discard(
+        async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
         )
