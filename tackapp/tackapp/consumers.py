@@ -33,34 +33,34 @@ class MainConsumer(WebsocketConsumer):
         )
 
         # async _ to sync
-        groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
-        for group in groups:
-            async_to_sync(self.channel_layer.group_add)(
-                f"group_{group.id}",
-                self.channel_name
-            )
+        # groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
+        # for group in groups:
+        #     async_to_sync(self.channel_layer.group_add)(
+        #         f"group_{group.id}",
+        #         self.channel_name
+        #     )
 
-        tacks_tacker = Tack.active.filter(
-            tacker=self.scope['url_route']['kwargs']['user_id']
-        ).exclude(
-            status=TackStatus.FINISHED
-        )
-        for tack in tacks_tacker:
-            async_to_sync(self.channel_layer.group_add)(
-                f"tack_{tack.id}_tacker",
-                self.channel_name
-            )
+        # tacks_tacker = Tack.active.filter(
+        #     tacker=self.scope['url_route']['kwargs']['user_id']
+        # ).exclude(
+        #     status=TackStatus.FINISHED
+        # )
+        # for tack in tacks_tacker:
+        #     async_to_sync(self.channel_layer.group_add)(
+        #         f"tack_{tack.id}_tacker",
+        #         self.channel_name
+        #     )
 
-        tacks_runner = Tack.active.filter(
-            tacker=self.scope['url_route']['kwargs']['user_id']
-        ).exclude(
-            status=TackStatus.FINISHED
-        )
-        for tack in tacks_runner:
-            async_to_sync(self.channel_layer.group_add)(
-                f"tack_{tack.id}_runner",
-                self.channel_name
-            )
+        # tacks_runner = Tack.active.filter(
+        #     tacker=self.scope['url_route']['kwargs']['user_id']
+        # ).exclude(
+        #     status=TackStatus.FINISHED
+        # )
+        # for tack in tacks_runner:
+        #     async_to_sync(self.channel_layer.group_add)(
+        #         f"tack_{tack.id}_runner",
+        #         self.channel_name
+        #     )
         self.accept()
 
     def disconnect(self, close_code):
