@@ -98,7 +98,10 @@ class MainConsumer(WebsocketConsumer):
             text_data=json.dumps(
                 {
                     'model': 'Balance',
-                    'action': 'update',
-                    'message': message
+                    'message': {
+                        "action": "update",
+                        "id": message.id,
+                        "object": message
+                    }
                 }
             ))

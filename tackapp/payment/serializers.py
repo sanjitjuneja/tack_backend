@@ -24,8 +24,8 @@ class AddBalanceDwollaSerializer(serializers.Serializer):
 class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = "usd_balance",
-        read_only_fields = "usd_balance",
+        fields = "id", "usd_balance"
+        read_only_fields = "id", "usd_balance"
 
 
 class PISerializer(serializers.ModelSerializer):
