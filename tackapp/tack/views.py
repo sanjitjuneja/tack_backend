@@ -46,8 +46,7 @@ class TackViewset(
                     "error": "code",
                     "message": "You are not a member of this Group"
                 },
-                status=400
-            )
+                status=400)
         tack = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         output_serializer = TackDetailSerializer(tack, context={"request": request})  # Refactor
@@ -174,7 +173,12 @@ class TackViewset(
 
         tack = self.get_object()
         if tack.status != TackStatus.IN_PROGRESS:
-            return Response({"detail": "Current Tack status is not In Progress"})
+            return Response(
+                {
+                    "error": "code",
+                    "detail": "Current Tack status is not In Progress"
+                },
+                status=400)
 
         complete_tack(tack, "")
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
@@ -297,12 +301,33 @@ class OfferViewset(
         tack = serializer.validated_data["tack"]
 
         if serializer.validated_data.get("price") and (not tack.allow_counter_offer):
-            return Response({"message": "Counter offering is not allowed to this Tack"}, status=403)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Counter offering is not allowed to this Tack"
+                },
+                status=403)
         if tack.tacker == request.user:
-            return Response({"message": "You are not allowed to create Offers to your own Tacks"}, status=403)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You are not allowed to create Offers to your own Tacks"
+                },
+                status=403)
         if Offer.active.filter(tack=tack, runner=request.user):
-            return Response({"message": "You already have an offer for this Tack"}, status=409)
-
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You already have an offer for this Tack"
+                },
+                status=409)
+        if tack.status not in (TackStatus.ACTIVE,):
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You can create Offers only on Active Tacks"
+                },
+                status=400)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 

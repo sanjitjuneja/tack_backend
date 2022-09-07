@@ -64,8 +64,7 @@ class UsersViewset(
                     "error": "code",
                     "message": "You don't have Dwolla Bank Accounts"
                 },
-                status=400
-            )
+                status=400)
         try:
             primary_pm = dwolla_pms.get(primary=True)
         except UserPaymentMethods.DoesNotExist:
@@ -74,8 +73,7 @@ class UsersViewset(
                     "error": "code",
                     "message": "You don't have Dwolla primary Bank Account"
                 },
-                status=400
-            )
+                status=400)
         active_tacks = Tack.active.filter(
             Q(tacker=request.user) | Q(runner=request.user),
             status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
@@ -104,8 +102,7 @@ class UsersViewset(
                 "error": None,
                 "message": "Successfuly deleted"
             },
-            status=200
-        )
+            status=204)
 
     @action(methods=("GET",), detail=True)
     def reviews_as_reviewed(self, request, *args, **kwargs):

@@ -166,7 +166,12 @@ class GetUserWithdrawMethods(views.APIView):
             ba = BankAccount.objects.get(user=request.user)
         except BankAccount.DoesNotExist:
             # TODO: create dwolla account and return empty list
-            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Can not find DB user"
+                },
+                status=400)
 
         try:
             pms = get_dwolla_payment_methods(ba.dwolla_user)
@@ -289,8 +294,7 @@ class GetPaymentMethodById(views.APIView):
                     "error": "code",
                     "message": "Payment method not found"
                 },
-                status=400
-            )
+                status=400)
 
         return Response(StripePaymentMethodSerializer(pm))
 
@@ -347,7 +351,8 @@ class SetPrimaryPaymentMethod(views.APIView):
                     "error": "code",
                     "message": "Payment method does not exist",
                     "payment_method": serializer.validated_data["payment_method"]
-                })
+                },
+                status=400)
         return Response(
             {
                 "error": None,
