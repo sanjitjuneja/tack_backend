@@ -361,7 +361,7 @@ class TestChangeBankAccount(views.APIView):
         ba.usd_balance = serializer.validated_data["usd_balance"]
         ba.save()
 
-        group = f"user_{request.user.id}",
+        group = f"user_{request.user.id}"
         logger.warning(f"{group = }")
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
