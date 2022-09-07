@@ -15,4 +15,5 @@ urlpatterns = [
     path("payment/set-primary-method/", SetPrimaryPaymentMethod.as_view()),
     path("payment/detach-payment-method/", DetachPaymentMethod.as_view()),
     path("webhooks/dwolla/", DwollaWebhook.as_view()),
+    path("payment/test-change-balance", TestChangeBankAccount.as_view())
 ]

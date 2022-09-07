@@ -1,6 +1,8 @@
 import logging
 from datetime import timedelta
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db.models import Sum, Q, F
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -23,7 +25,7 @@ from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
 from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
-    AddBalanceStripeSerializer
+    AddBalanceStripeSerializer, TestChangeBankAccountSerializer, BankAccountSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
@@ -346,6 +348,26 @@ class SetPrimaryPaymentMethod(views.APIView):
                 "payment_method": serializer.validated_data["payment_method"]
             }
         )
+
+
+class TestChangeBankAccount(views.APIView):
+    @extend_schema(request=TestChangeBankAccountSerializer, responses=TestChangeBankAccountSerializer)
+    def post(self, request, *args, **kwargs):
+        serializer = TestChangeBankAccountSerializer(request.data)
+        serializer.is_valid(raise_exception=True)
+        ba = BankAccount.objects.get(user=serializer.validated_data["user"])
+        ba.usd_balance = serializer.validated_data["usd_balance"]
+        ba.save()
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{request.user.id}",
+            {
+                'type': 'balance.update',
+                'message': BankAccountSerializer(ba).data
+            })
+
+        return Response({"message": "good"})
 
 
 class DwollaWebhook(views.APIView):

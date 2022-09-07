@@ -122,3 +122,8 @@ class DeletePaymentMethodSerializer(serializers.Serializer):
 class SetPrimaryPaymentMethodSerializer(serializers.Serializer):
     payment_type = serializers.ChoiceField(PaymentType.choices)
     payment_method = serializers.CharField()
+
+
+class TestChangeBankAccountSerializer(serializers.Serializer):
+    user = serializers.IntegerField
+    usd_balance = serializers.IntegerField
