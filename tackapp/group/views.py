@@ -142,7 +142,7 @@ class GroupViewset(
             return Response({"message": "You are not a member of this group"}, status=400)
 
         return Response({"message": "Leaved Successfully",
-                         "group": GroupSerializer(group).data}, status=200)
+                         "group": GroupSerializer(group, context={"request": request}).data}, status=200)
 
     @action(
         methods=("GET",),

@@ -50,7 +50,7 @@ class TackViewset(
             )
         tack = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        output_serializer = TackDetailSerializer(tack)  # Refactor
+        output_serializer = TackDetailSerializer(tack, context={"request": request})  # Refactor
         return Response(output_serializer.data, status=201, headers=headers)
 
     def update(self, request, *args, **kwargs):
