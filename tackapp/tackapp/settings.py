@@ -42,10 +42,8 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = [
     "tackapp.net",
     "127.0.0.1",
-    "44.203.217.242",
+    "54.158.0.200",
     "localhost",
-    "backend.tackapp.net",
-    "172.31.8.161",
 ]
 
 INTERNAL_IPS = [
