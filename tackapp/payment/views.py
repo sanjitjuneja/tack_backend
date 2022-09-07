@@ -364,10 +364,10 @@ class TestChangeBankAccount(views.APIView):
         group = f"user_{request.user.id}"
         logger.warning(f"{group = }")
         channel_layer = get_channel_layer()
-        channel_layer.group_send(
+        async_to_sync(channel_layer.group_send)(
             group,
             {
-                'type': 'balance.update',
+                'type': 'balance_update',
                 'message': BankAccountSerializer(ba).data
             })
 
