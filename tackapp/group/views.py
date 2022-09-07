@@ -121,7 +121,11 @@ class GroupViewset(
 
             ongoing_tacks = Tack.active.filter(
                 Q(tacker=request.user) | Q(runner=request.user),
-                status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS),
+                status__in=(
+                    TackStatus.ACCEPTED,
+                    TackStatus.IN_PROGRESS,
+                    TackStatus.WAITING_REVIEW
+                ),
                 group=group
             )
             logging.getLogger().warning(f"{ongoing_tacks = }")
