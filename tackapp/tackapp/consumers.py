@@ -100,7 +100,7 @@ class MainConsumer(WebsocketConsumer):
                     'model': 'Balance',
                     'message': {
                         "action": "update",
-                        "id": message.id,
+                        "id": message["id"],
                         "object": message
                     }
                 }
