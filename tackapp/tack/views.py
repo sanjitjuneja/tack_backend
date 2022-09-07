@@ -188,8 +188,8 @@ class TackViewset(
         200: inline_serializer(
             name="Test",
             fields={
-                "error": serializers.CharField(),
-                "is_ongoing_runner_tack": serializers.CharField()
+                "error": serializers.CharField(allow_null=True),
+                "is_ongoing_runner_tack": serializers.BooleanField()
             }
         )})
     @action(
