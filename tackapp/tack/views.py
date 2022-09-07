@@ -184,6 +184,23 @@ class TackViewset(
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
+    @action(
+        methods=("GET",),
+        detail=False,
+        url_path="me/ongoing-runner-tacks"
+    )
+    def ongoing_runner_tacks(self, request, *args, **kwargs):
+        ongoing_runner_tacks = Tack.active.filter(
+            runner=request.user,
+            status=TackStatus.IN_PROGRESS
+        )
+        return Response(
+            {
+                "error": None,
+                "is_ongoing_runner_tack": ongoing_runner_tacks.exists()
+            },
+            status=200)
+
     @extend_schema(request=None)
     @action(
         methods=["POST"],
@@ -194,6 +211,17 @@ class TackViewset(
         """Endpoint for Runner to start doing the Tack"""
 
         tack = self.get_object()
+        ongoing_runner_tacks = Tack.active.filter(
+            runner=request.user,
+            status=TackStatus.IN_PROGRESS
+        )
+        if ongoing_runner_tacks.exists():
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You already have ongoing Tack"
+                },
+                status=400)
         tack.change_status(TackStatus.IN_PROGRESS)
         return Response(self.get_serializer(tack).data)
 
