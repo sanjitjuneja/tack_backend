@@ -93,7 +93,7 @@ class MainConsumer(WebsocketConsumer):
     def balance_update(self, event):
         message = event['message']
         logging.getLogger().warning(f"In balance_update : {event = }")
-        self.send(
+        await self.send(
             text_data=json.dumps(
                 {
                     'model': 'Balance',
