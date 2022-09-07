@@ -19,13 +19,15 @@ class MainConsumer(WebsocketConsumer):
         # self.channel_name = self.scope['url_route']['kwargs']['user_id']
         # user = self.scope['user']
         # print(f"{user = }")
-        print(f"{self.channel_name = }")
+        logger = logging.getLogger()
+        logger.warning(f"{self.channel_name = }")
         # if user.is_anonymous:
         #     self.close()
 
         self.user_id = self.scope['url_route']['kwargs']['user_id']
         self.room_group_name = f'user_{self.user_id}'
 
+        logger.warning(f"{self.room_group_name = }")
         # Join user_id room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
@@ -69,6 +71,7 @@ class MainConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        self.disconnect()
 
     def tack_create(self, event):
         message = event['message']
