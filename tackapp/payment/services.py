@@ -185,16 +185,11 @@ def add_dwolla_payment_method(dwolla_id, dwolla_pm_id):
 
 
 @transaction.atomic
-def add_money_to_bank_account(payment_intent: PaymentIntent):
+def add_money_to_bank_account(bank_account: BankAccount, payment_intent: PaymentIntent):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
 
-    try:
-        ba = BankAccount.objects.get(stripe_user=payment_intent.customer)
-        ba.usd_balance += payment_intent.amount
-        ba.save()
-    except BankAccount.DoesNotExist:
-        # TODO: Error handling/create BA
-        logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")
+    bank_account.usd_balance += payment_intent.amount
+    bank_account.save()
 
 
 def save_dwolla_access_token(access_token: str, user: User):

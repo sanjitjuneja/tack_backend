@@ -208,7 +208,7 @@ class GroupTackSerializer(serializers.Serializer):
     def get_id(self, obj) -> int:
         return obj.id
 
-    def get_tack(self, obj) -> TackDetailSerializer:
+    def get_tack(self, obj: Tack) -> TackDetailSerializer:
         return TackDetailSerializer(obj, many=False).data
 
     def get_is_mine_offer_sent(self, obj) -> bool:

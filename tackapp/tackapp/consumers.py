@@ -32,24 +32,33 @@ class MainConsumer(WebsocketConsumer):
 
         # async _ to sync
         groups = Group.objects.filter(groupmembers__user=self.scope['url_route']['kwargs']['user_id'])
-        print(f"{groups = }")
         for group in groups:
             async_to_sync(self.channel_layer.group_add)(
                 f"group_{group.id}",
                 self.channel_name
             )
-        # tacks = Tack.active.filter(
-        #     Q(tacker=self.scope['url_route']['kwargs']['user_id']) |
-        #     Q(runner=self.scope['url_route']['kwargs']['user_id']),
-        # ).exclude(
-        #     status=TackStatus.FINISHED
-        # )
-        # for tack in tacks:
-        #     async_to_sync(self.channel_layer.group_add)(
-        #         f"tack_{tack.id}",
-        #         self.channel_name
-        #     )
 
+        tacks_tacker = Tack.active.filter(
+            tacker=self.scope['url_route']['kwargs']['user_id']
+        ).exclude(
+            status=TackStatus.FINISHED
+        )
+        for tack in tacks_tacker:
+            async_to_sync(self.channel_layer.group_add)(
+                f"tack_{tack.id}_tacker",
+                self.channel_name
+            )
+
+        tacks_runner = Tack.active.filter(
+            tacker=self.scope['url_route']['kwargs']['user_id']
+        ).exclude(
+            status=TackStatus.FINISHED
+        )
+        for tack in tacks_runner:
+            async_to_sync(self.channel_layer.group_add)(
+                f"tack_{tack.id}_runner",
+                self.channel_name
+            )
         self.accept()
 
     def disconnect(self, close_code):
@@ -60,19 +69,29 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def tack_add(self, event):
-        print(f"{event = }")
         message = event['message']
 
-        # self.channel_layer.group_add(
-        #     f"tacker_{message['tacker']}",
-        #     self.channel_name
-        # )
+        self.channel_layer.group_add(
+            f"tack_{message['id']}_tacker",
+            self.channel_name
+        )
 
         async_to_sync(self.send)(
             text_data=json.dumps(
                 {
                     'model': 'Tack',
                     'event': 'add',
+                    'message': message
+                }
+            ))
+
+    def balance_update(self, event):
+        message = event['message']
+        async_to_sync(self.send)(
+            text_data=json.dumps(
+                {
+                    'model': 'Balance',
+                    'event': 'update',
                     'message': message
                 }
             ))
