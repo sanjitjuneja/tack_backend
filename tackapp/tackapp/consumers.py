@@ -63,7 +63,17 @@ class MainConsumer(WebsocketConsumer):
         #         f"tack_{tack.id}_runner",
         #         self.channel_name
         #     )
+
         self.accept()
+        self.send(
+            text_data=json.dumps(
+                {
+                    'event': 'test_added',
+                    'model': 'Balance',
+                    'action': 'update',
+                    'message': "test"
+                }
+            ))
 
     def disconnect(self, close_code):
         # Leave room group

@@ -56,7 +56,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     # )
 
     async_to_sync(channel_layer.group_send)(
-        f"group_{instance.group}",
+        f"group_{instance.group.id}",
         {
             'type': 'tack.create',
             'message': TackDetailSerializer(instance).data
