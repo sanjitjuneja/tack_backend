@@ -353,7 +353,7 @@ class SetPrimaryPaymentMethod(views.APIView):
 class TestChangeBankAccount(views.APIView):
     @extend_schema(request=TestChangeBankAccountSerializer, responses=TestChangeBankAccountSerializer)
     def post(self, request, *args, **kwargs):
-        serializer = TestChangeBankAccountSerializer(request.data)
+        serializer = TestChangeBankAccountSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         ba = BankAccount.objects.get(user=serializer.validated_data["user"])
         ba.usd_balance = serializer.validated_data["usd_balance"]
