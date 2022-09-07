@@ -1,5 +1,9 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from core.choices import PaymentService
 from djstripe.enums import PaymentIntentStatus
@@ -44,3 +48,16 @@ def add_balance_to_user(event, *args, **kwargs):
 def create_pm_holder(event, *args, **kwargs):
     instance = PaymentMethod.objects.get(id=event.data.get("object").get("id"))
     StripePaymentMethodsHolder.objects.create(stripe_pm=instance)
+
+
+@receiver(signal=post_save, sender=BankAccount)
+def ba_save(instance: BankAccount, *args, **kwargs):
+    logger = logging.getLogger()
+    logger.warning(f"{instance = }")
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{instance.user.id}",
+        {
+            'type': 'balance.update',
+            'message': BankAccountSerializer(instance).data
+        })

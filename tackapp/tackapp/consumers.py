@@ -68,7 +68,7 @@ class MainConsumer(WebsocketConsumer):
             self.channel_name
         )
 
-    def tack_add(self, event):
+    def tack_create(self, event):
         message = event['message']
 
         self.channel_layer.group_add(
@@ -80,7 +80,7 @@ class MainConsumer(WebsocketConsumer):
             text_data=json.dumps(
                 {
                     'model': 'Tack',
-                    'event': 'add',
+                    'action': 'create',
                     'message': message
                 }
             ))
@@ -91,7 +91,7 @@ class MainConsumer(WebsocketConsumer):
             text_data=json.dumps(
                 {
                     'model': 'Balance',
-                    'event': 'update',
+                    'action': 'update',
                     'message': message
                 }
             ))
