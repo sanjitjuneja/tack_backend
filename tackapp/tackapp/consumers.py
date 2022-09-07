@@ -76,6 +76,7 @@ class MainConsumer(WebsocketConsumer):
     def tack_create(self, event):
         message = event['message']
 
+        logging.getLogger().warning(f"In tack_create : {event = }")
         self.channel_layer.group_add(
             f"tack_{message['id']}_tacker",
             self.channel_name
@@ -96,7 +97,7 @@ class MainConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    'event': 'test',
+                    'event': 'test_added',
                     'model': 'Balance',
                     'action': 'update',
                     'message': message
