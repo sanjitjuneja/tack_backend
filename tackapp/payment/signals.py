@@ -12,7 +12,7 @@ from payment.services import add_money_to_bank_account, calculate_service_fee
 def add_balance_to_user(event, *args, **kwargs):
     pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
     if pi.status != PaymentIntentStatus.succeeded:
-        add_money_to_bank_account(pi.amount)
+        add_money_to_bank_account(pi)
         service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
         Transaction.objects.create(
             transaction_id=pi.id,
