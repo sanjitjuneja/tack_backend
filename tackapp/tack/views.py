@@ -60,7 +60,12 @@ class TackViewset(
         serializer.is_valid(raise_exception=True)
 
         if tack.status != TackStatus.CREATED:
-            return Response({"error": "You cannot change Tack with active offers"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You cannot change Tack with active offers"
+                },
+                status=400)
 
         self.perform_update(serializer)
 
@@ -74,7 +79,12 @@ class TackViewset(
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
-            return Response({"message": "You can not delete tacks when you accepted Offer"})
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You can not delete tacks when you accepted an Offer"
+                },
+                status=400)
         self.perform_destroy(tack)
         return Response(status=204)
 
@@ -183,7 +193,8 @@ class TackViewset(
         tack.change_status(TackStatus.IN_PROGRESS)
         return Response(self.get_serializer(tack).data)
 
-    @action(methods=["GET"], detail=True, serializer_class=OfferSerializer, permission_classes=(StrictTackOwnerPermission,))
+    @action(methods=["GET"], detail=True, serializer_class=OfferSerializer,
+            permission_classes=(StrictTackOwnerPermission,))
     def offers(self, request, *args, **kwargs):
         """Endpoint to display Offers related to specific Tack"""
 
