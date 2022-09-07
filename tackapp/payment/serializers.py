@@ -125,5 +125,5 @@ class SetPrimaryPaymentMethodSerializer(serializers.Serializer):
 
 
 class TestChangeBankAccountSerializer(serializers.Serializer):
-    user = serializers.IntegerField
-    usd_balance = serializers.IntegerField
+    user = serializers.IntegerField()
+    usd_balance = serializers.IntegerField()
