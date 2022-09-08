@@ -58,7 +58,7 @@ class MainConsumer(WebsocketConsumer):
             logger.warning(f"tack_{tack.id}_tacker")
 
         tacks_runner = Tack.active.filter(
-            tacker=self.scope['url_route']['kwargs']['user_id']
+            runner=self.scope['url_route']['kwargs']['user_id']
         ).exclude(
             status=TackStatus.FINISHED
         )
