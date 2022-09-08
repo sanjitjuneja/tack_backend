@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from .models import Group, GroupMembers, GroupInvitations
@@ -33,5 +33,16 @@ def post_save_group_members(instance: GroupMembers, *args, **kwargs):
         f"user_{instance.member}",
         {
             'type': 'group.create',
+            'message': GroupSerializer(instance.group).data
+        })
+
+
+@receiver(signal=post_delete, sender=GroupMembers)
+def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{instance.member}",
+        {
+            'type': 'group.delete',
             'message': GroupSerializer(instance.group).data
         })

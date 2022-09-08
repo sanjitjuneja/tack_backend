@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from core.choices import TackStatus
 from group.models import Group, GroupMembers
+from group.serializers import GroupSerializer
 from tack.models import Tack
 from tackapp.services import form_websocket_message
 
@@ -118,5 +119,17 @@ class MainConsumer(WebsocketConsumer):
         self.send(
             text_data=form_websocket_message(
                 model='Group', action='create', obj=message
+            )
+        )
+
+    def group_delete(self, event):
+        message = event['message']
+        async_to_sync(self.channel_layer.group_discard)(
+            f"group_{message.id}",
+            self.channel_name)
+
+        self.send(
+            text_data=form_websocket_message(
+                model='Group', action='delete', obj=message
             )
         )

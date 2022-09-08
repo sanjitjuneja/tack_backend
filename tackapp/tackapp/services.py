@@ -2,8 +2,7 @@ import json
 
 
 def form_websocket_message(*, model: str, action: str, obj: dict) -> str:
-    return json.dumps(
-        {
+    template = {
             'model': model,
             'message': {
                 'action': action,
@@ -11,4 +10,8 @@ def form_websocket_message(*, model: str, action: str, obj: dict) -> str:
                 'object': obj
             }
         }
-    )
+    if action == 'delete':
+        del template['object']
+
+    response = json.dumps(template)
+    return response
