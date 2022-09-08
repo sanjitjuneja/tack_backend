@@ -105,9 +105,9 @@ class GroupViewset(
             return Response({"error": "code", "message": "Group not found"}, status=404)
         except GroupMembers.DoesNotExist:
             invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
-            invite_serializer = GroupInvitationsSerializer(invite)
+            invite_serializer = GroupInvitationsSerializer(invite, context={"request": request})
             return Response({"invitation": invite_serializer.data})
-        return Response({"group": GroupMembersSerializer(gm).data})
+        return Response({"group": GroupMembersSerializer(gm, context={"request": request}).data})
 
     @extend_schema(responses={"message"})
     @action(methods=("POST",), detail=True, permission_classes=(GroupMemberPermission,),
@@ -315,7 +315,7 @@ class InvitesView(
 
         qs = GroupInvitations.objects.filter(invitee=request.user).select_related("group")
         page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -326,7 +326,7 @@ class InvitesView(
         invite = self.get_object()
         GroupMembers.objects.create(group=invite.group, member=invite.invitee)
         invite.delete()
-        return Response({"accepted group": GroupSerializer(invite.group).data})
+        return Response({"accepted group": GroupSerializer(invite.group, context={"request": request}).data})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
