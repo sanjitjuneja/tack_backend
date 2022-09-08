@@ -7,7 +7,7 @@ from django.db.models import Q
 from core.choices import TackStatus
 from group.models import Group, GroupMembers
 from group.serializers import GroupSerializer
-from tack.models import Tack
+from tack.models import Tack, Offer
 from tackapp.services import form_websocket_message
 
 
@@ -43,29 +43,43 @@ class MainConsumer(WebsocketConsumer):
                 self.channel_name
             )
             logger.warning(f"{gm = }")
-            logger.warning(f"group_{gm.group.id = }")
+            logger.warning(f"group_{gm.group.id}")
 
-        # tacks_tacker = Tack.active.filter(
-        #     tacker=self.scope['url_route']['kwargs']['user_id']
-        # ).exclude(
-        #     status=TackStatus.FINISHED
-        # )
-        # for tack in tacks_tacker:
-        #     async_to_sync(self.channel_layer.group_add)(
-        #         f"tack_{tack.id}_tacker",
-        #         self.channel_name
-        #     )
+        tacks_tacker = Tack.active.filter(
+            tacker=self.scope['url_route']['kwargs']['user_id']
+        ).exclude(
+            status=TackStatus.FINISHED
+        )
+        for tack in tacks_tacker:
+            async_to_sync(self.channel_layer.group_add)(
+                f"tack_{tack.id}_tacker",
+                self.channel_name
+            )
+            logger.warning(f"tack_{tack.id}_tacker")
 
-        # tacks_runner = Tack.active.filter(
-        #     tacker=self.scope['url_route']['kwargs']['user_id']
-        # ).exclude(
-        #     status=TackStatus.FINISHED
-        # )
-        # for tack in tacks_runner:
-        #     async_to_sync(self.channel_layer.group_add)(
-        #         f"tack_{tack.id}_runner",
-        #         self.channel_name
-        #     )
+        tacks_runner = Tack.active.filter(
+            tacker=self.scope['url_route']['kwargs']['user_id']
+        ).exclude(
+            status=TackStatus.FINISHED
+        )
+        for tack in tacks_runner:
+            async_to_sync(self.channel_layer.group_add)(
+                f"tack_{tack.id}_runner",
+                self.channel_name
+            )
+            logger.warning(f"tack_{tack.id}_runner")
+
+        offers = Offer.active.filter(
+            runner=self.scope['url_route']['kwargs']['user_id']
+        ).select_related(
+            "tack"
+        )
+        for offer in offers:
+            async_to_sync(self.channel_layer.group_add)(
+                f"tack_{offer.tack.id}_offer",
+                self.channel_name
+            )
+            logger.warning(f"tack_{offer.tack.id}_offer")
 
         self.accept()
 
