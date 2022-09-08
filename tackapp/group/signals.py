@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from .models import Group, GroupMembers, GroupInvitations
-from .serializers import GroupInvitationsSerializer
+from .serializers import GroupInvitationsSerializer, GroupSerializer
 
 
 @receiver(signal=post_save, sender=Group)
@@ -23,4 +23,15 @@ def post_save_invitations(instance: GroupInvitations, *args, **kwargs):
         {
             'type': 'invitation.create',
             'message': GroupInvitationsSerializer(instance).data
+        })
+
+
+@receiver(signal=post_save, sender=GroupMembers)
+def post_save_group_members(instance: GroupMembers, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{instance.member}",
+        {
+            'type': 'group.create',
+            'message': GroupSerializer(instance.group).data
         })

@@ -108,3 +108,15 @@ class MainConsumer(WebsocketConsumer):
             text_data=form_websocket_message(
                 model='User', action='update', obj=message
             ))
+
+    def group_create(self, event):
+        message = event['message']
+        async_to_sync(self.channel_layer.group_add)(
+            f"group_{message.id}",
+            self.channel_name)
+
+        self.send(
+            text_data=form_websocket_message(
+                model='Group', action='create', obj=message
+            )
+        )
