@@ -153,13 +153,13 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     else:
         logging.getLogger().warning(f"else:")
         async_to_sync(channel_layer.group_send)(
-            f"tack_{instance.id}_tacker",
+            f"user_{instance.tacker.id}",
             {
                 'type': 'tack.update',
                 'message': TackDetailSerializer(instance).data
             })
         async_to_sync(channel_layer.group_send)(
-            f"tack_{instance.id}_runner",
+            f"user_{instance.runner.id}",
             {
                 'type': 'runnertack.update',
                 'message': TacksOffersSerializer(instance.accepted_offer).data
