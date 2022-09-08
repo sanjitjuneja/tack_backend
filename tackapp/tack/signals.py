@@ -103,11 +103,39 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
         async_to_sync(channel_layer.group_send)(
             f"group_{instance.group.id}",
             {
-                'type': 'tack.create',
+                'type': 'grouptack.create',
                 'message': {
                     'id': instance.id,
                     'tack': TackDetailSerializer(instance).data,
                     'is_mine_offer_sent': False
                 }
             })
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.id}_tacker",
+            {
+                'type': 'tack.create',
+                'message': TackDetailSerializer(instance).data
+            })
 
+
+@receiver(signal=post_delete, sender=Tack)
+def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.id}_tacker",
+        {
+            'type': 'tack.delete',
+            'message': instance.id
+        })
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.id}_offer",
+        {
+            'type': 'runnertack.delete',
+            'message': instance.id
+        })
+    async_to_sync(channel_layer.group_send)(
+        f"group_{instance.group.id}",
+        {
+            'type': 'grouptack.delete',
+            'message': instance.id
+        })

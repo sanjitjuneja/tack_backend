@@ -84,11 +84,36 @@ class MainConsumer(WebsocketConsumer):
 
         self.send(
             text_data=form_websocket_message(
-                model='GroupTack', action='create', obj=message
+                model='Tack', action='create', obj=message
             ))
+
+    def tack_delete(self, event):
+        message = event['message']
+        async_to_sync(self.channel_layer.group_discard)(
+            f"tack_{message}_tacker",
+            self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            f"tack_{message}_offer",
+            self.channel_name)
+
         self.send(
             text_data=form_websocket_message(
-                model='Tack', action='create', obj=message['tack']
+                model='Tack', action='delete', obj=message
+            )
+        )
+
+    def grouptack_create(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='GroupTack', action='create', obj=message
+            ))
+
+    def grouptack_delete(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='GroupTack', action='delete', obj=message
             ))
 
     def balance_update(self, event):
