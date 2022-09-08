@@ -19,9 +19,14 @@ def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
+    related_offers = Offer.active.filter(
+        tack=instance.tack
+    ).select_related(
+        "tack"
+    )
     if not instance.is_accepted:
-        if Offer.active.filter(tack=instance.tack).count() == 1:
+        if related_offers.count() == 1:
             instance.tack.change_status(TackStatus.ACTIVE)
-    if instance.is_active:
-        instance.tack.change_status(TackStatus.CREATED)
+        if related_offers.count() == 0:
+            instance.tack.change_status(TackStatus.CREATED)
 
