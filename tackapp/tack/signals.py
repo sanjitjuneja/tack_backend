@@ -22,9 +22,6 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     if not instance.is_accepted:
         if Offer.active.filter(tack=instance.tack).count() == 1:
             instance.tack.change_status(TackStatus.ACTIVE)
-
-
-@receiver(signal=post_delete, sender=Offer)
-def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
-    if Offer.active.filter(tack=instance.tack).count() == 0:
+    if instance.is_active:
         instance.tack.change_status(TackStatus.CREATED)
+
