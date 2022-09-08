@@ -38,14 +38,22 @@ def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=GroupMembers)
-def post_save_group_members(instance: GroupMembers, *args, **kwargs):
+def post_save_group_members(instance: GroupMembers, created: bool, *args, **kwargs):
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"user_{instance.member.id}",
-        {
-            'type': 'group.create',
-            'message': GroupMembersSerializer(instance).data
-        })
+    if created:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{instance.member.id}",
+            {
+                'type': 'groupdetails.create',
+                'message': GroupMembersSerializer(instance).data
+            })
+    else:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{instance.member.id}",
+            {
+                'type': 'groupdetails.update',
+                'message': GroupMembersSerializer(instance).data
+            })
 
 
 @receiver(signal=post_delete, sender=GroupMembers)
@@ -54,6 +62,6 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
     async_to_sync(channel_layer.group_send)(
         f"user_{instance.member.id}",
         {
-            'type': 'group.delete',
+            'type': 'groupdetails.delete',
             'message': instance.group.id
         })

@@ -119,7 +119,7 @@ class GroupViewset(
         try:
             gm = GroupMembers.objects.get(member=request.user, group=group)
             if request.user.active_group == group:
-                recent_group = GroupMembers.objects.filter(member=request.user).last()
+                recent_group = GroupMembers.objects.filter(member=request.user).last().group
                 request.user.active_group = recent_group
                 request.user.save()
             gm.delete()

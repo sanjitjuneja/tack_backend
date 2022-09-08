@@ -188,7 +188,7 @@ class MainConsumer(WebsocketConsumer):
                 model='User', action='update', obj=message
             ))
 
-    def group_create(self, event):
+    def groupdetails_create(self, event):
         logger.warning("inside")
         message = event['message']
         async_to_sync(self.channel_layer.group_add)(
@@ -198,11 +198,21 @@ class MainConsumer(WebsocketConsumer):
 
         self.send(
             text_data=form_websocket_message(
-                model='Group', action='create', obj=message
+                model='GroupDetails', action='create', obj=message
             )
         )
 
-    def group_delete(self, event):
+    def groupdetails_update(self, event):
+        logger.warning("inside")
+        message = event['message']
+
+        self.send(
+            text_data=form_websocket_message(
+                model='GroupDetails', action='update', obj=message
+            )
+        )
+
+    def groupdetails_delete(self, event):
         logger.warning("inside")
         message = event['message']
         async_to_sync(self.channel_layer.group_discard)(
@@ -211,7 +221,7 @@ class MainConsumer(WebsocketConsumer):
 
         self.send(
             text_data=form_websocket_message(
-                model='Group', action='delete', obj=message
+                model='GroupDetails', action='delete', obj=message
             )
         )
 
