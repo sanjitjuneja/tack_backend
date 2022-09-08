@@ -42,6 +42,8 @@ class MainConsumer(WebsocketConsumer):
                 f"group_{gm.group.id}",
                 self.channel_name
             )
+            logger.warning(f"{gm = }")
+            logger.warning(f"group_{gm.group.id = }")
 
         # tacks_tacker = Tack.active.filter(
         #     tacker=self.scope['url_route']['kwargs']['user_id']
@@ -149,6 +151,7 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             f"group_{message['id']}",
             self.channel_name)
+        logging.getLogger().warning(f"Added to group_{message['id']}")
 
         self.send(
             text_data=form_websocket_message(
@@ -161,6 +164,7 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             f"group_{message}",
             self.channel_name)
+        logging.getLogger().warning(f"Added to group_{message['id']}")
 
         self.send(
             text_data=form_websocket_message(

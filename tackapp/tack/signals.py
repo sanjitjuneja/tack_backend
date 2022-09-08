@@ -100,6 +100,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     # Workaround on a problem to fly-calculate data for every User of the Group
     # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
     if created:
+        logging.getLogger().warning(f"Tack created")
         async_to_sync(channel_layer.group_send)(
             f"group_{instance.group.id}",
             {
@@ -119,7 +120,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
 
 
 @receiver(signal=post_delete, sender=Tack)
-def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
+def tack_post_delete(instance: Tack, created: bool, *args, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f"tack_{instance.id}_tacker",
