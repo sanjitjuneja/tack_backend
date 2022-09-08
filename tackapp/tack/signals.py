@@ -34,19 +34,34 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 @receiver(signal=post_save, sender=Offer)
 def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"tack_{instance.tack.id}_tacker",
-        {
-            'type': 'offer.create',
-            'message': OfferSerializer(instance).data
-        })
+    if instance.is_active:
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.tack.id}_tacker",
+            {
+                'type': 'offer.create',
+                'message': OfferSerializer(instance).data
+            })
 
-    async_to_sync(channel_layer.group_send)(
-        f"tack_{instance.tack.id}_runner",
-        {
-            'type': 'runnertack.create',
-            'message': TacksOffersSerializer(instance).data
-        })
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.tack.id}_runner",
+            {
+                'type': 'runnertack.create',
+                'message': TacksOffersSerializer(instance).data
+            })
+    else:
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.tack.id}_tacker",
+            {
+                'type': 'offer.delete',
+                'message': instance.id
+            })
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.tack.id}_runner",
+            {
+                'type': 'runnertack.delete',
+                'message': instance.id
+            })
+
     logging.getLogger().warning(f"in send_websocket_message_on_offer_save")
 
 
@@ -56,21 +71,21 @@ def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
         instance.tack.change_status(TackStatus.CREATED)
 
 
-@receiver(signal=post_delete, sender=Offer)
-def send_websocket_message_on_offer_delete(instance: Offer, *args, **kwargs):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"tack_{instance.tack.id}_tacker",
-        {
-            'type': 'offer.delete',
-            'message': instance.id
-        })
-    async_to_sync(channel_layer.group_send)(
-        f"tack_{instance.tack.id}_runner",
-        {
-            'type': 'runnertack.delete',
-            'message': instance.id
-        })
+# @receiver(signal=post_delete, sender=Offer)
+# def send_websocket_message_on_offer_delete(instance: Offer, *args, **kwargs):
+#     channel_layer = get_channel_layer()
+#     async_to_sync(channel_layer.group_send)(
+#         f"tack_{instance.tack.id}_tacker",
+#         {
+#             'type': 'offer.delete',
+#             'message': instance.id
+#         })
+#     async_to_sync(channel_layer.group_send)(
+#         f"tack_{instance.tack.id}_runner",
+#         {
+#             'type': 'runnertack.delete',
+#             'message': instance.id
+#         })
 
 
 @receiver(signal=post_save, sender=Tack)
