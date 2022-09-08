@@ -11,7 +11,7 @@ from core.choices import TackStatus
 from group.models import GroupTacks
 from tack.models import Offer, Tack
 from user.models import User
-from .serializers import TackDetailSerializer, OfferSerializer
+from .serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from .tasks import delete_offer_task
 
 
@@ -41,6 +41,21 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             'message': OfferSerializer(instance).data
         })
 
+    instance = Offer.active.get(
+        pk=instance.id
+    ).select_related(
+        "tack",
+        "tack__tacker",
+        "runner",
+        "tack__group"
+    )
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.tack.id}_runner",
+        {
+            'type': 'runnertack.create',
+            'message': TacksOffersSerializer(instance).data
+        })
+
 
 @receiver(signal=post_delete, sender=Offer)
 def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
@@ -55,14 +70,19 @@ def send_websocket_message_on_offer_delete(instance: Offer, *args, **kwargs):
         f"tack_{instance.tack.id}_tacker",
         {
             'type': 'offer.delete',
-            'message': OfferSerializer(instance).data
+            'message': instance.id
+        })
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.tack.id}_runner",
+        {
+            'type': 'runnertack.delete',
+            'message': instance.id
         })
 
 
 @receiver(signal=post_save, sender=Tack)
 def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     channel_layer = get_channel_layer()
-    logging.getLogger().warning(f"in signal: {channel_layer.__dict__ = }")
 
     # tacks = Tack.active.filter(
     #     group=instance.group,
@@ -77,9 +97,17 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     #     "creation_time"
     # )
 
-    async_to_sync(channel_layer.group_send)(
-        f"group_{instance.group.id}",
-        {
-            'type': 'tack.create',
-            'message': TackDetailSerializer(instance).data
-        })
+    # Workaround on a problem to fly-calculate data for every User of the Group
+    # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
+    if created:
+        async_to_sync(channel_layer.group_send)(
+            f"group_{instance.group.id}",
+            {
+                'type': 'tack.create',
+                'message': {
+                    'id': instance.id,
+                    'tack': TackDetailSerializer(instance).data,
+                    'is_mine_offer_sent': False
+                }
+            })
+

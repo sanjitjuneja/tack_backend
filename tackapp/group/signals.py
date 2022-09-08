@@ -26,6 +26,17 @@ def post_save_invitations(instance: GroupInvitations, *args, **kwargs):
         })
 
 
+@receiver(signal=post_delete, sender=GroupInvitations)
+def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{instance.invitee.id}",
+        {
+            'type': 'invitation.delete',
+            'message': instance.id
+        })
+
+
 @receiver(signal=post_save, sender=GroupMembers)
 def post_save_group_members(instance: GroupMembers, *args, **kwargs):
     channel_layer = get_channel_layer()
@@ -44,5 +55,5 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
         f"user_{instance.member}",
         {
             'type': 'group.delete',
-            'message': GroupSerializer(instance.group).data
+            'message': instance.group.id
         })

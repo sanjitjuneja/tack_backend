@@ -77,8 +77,6 @@ class MainConsumer(WebsocketConsumer):
 
     def tack_create(self, event):
         message = event['message']
-
-        logging.getLogger().warning(f"In tack_create : {event = }")
         self.channel_layer.group_add(
             f"tack_{message['id']}_tacker",
             self.channel_name
@@ -86,7 +84,11 @@ class MainConsumer(WebsocketConsumer):
 
         self.send(
             text_data=form_websocket_message(
-                model='Tack', action='create', obj=message
+                model='GroupTack', action='create', obj=message
+            ))
+        self.send(
+            text_data=form_websocket_message(
+                model='Tack', action='create', obj=message['tack']
             ))
 
     def balance_update(self, event):
@@ -101,6 +103,13 @@ class MainConsumer(WebsocketConsumer):
         self.send(
             text_data=form_websocket_message(
                 model='GroupInvitation', action='create', obj=message
+            ))
+
+    def invitation_delete(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='GroupInvitation', action='delete', obj=message
             ))
 
     def user_update(self, event):
@@ -125,7 +134,7 @@ class MainConsumer(WebsocketConsumer):
     def group_delete(self, event):
         message = event['message']
         async_to_sync(self.channel_layer.group_discard)(
-            f"group_{message.id}",
+            f"group_{message}",
             self.channel_name)
 
         self.send(
@@ -147,5 +156,29 @@ class MainConsumer(WebsocketConsumer):
         self.send(
             text_data=form_websocket_message(
                 model='Offer', action='delete', obj=message
+            )
+        )
+
+    def runnertack_create(self, event):
+        message = event['message']
+        async_to_sync(self.channel_layer.group_add)(
+            f"tack_{message.id}_offer",
+            self.channel_name)
+
+        self.send(
+            text_data=form_websocket_message(
+                model='RunnerTack', action='create', obj=message
+            )
+        )
+
+    def runnertack_delete(self, event):
+        message = event['message']
+        async_to_sync(self.channel_layer.group_discard)(
+            f"tack_{message}_offer",
+            self.channel_name)
+
+        self.send(
+            text_data=form_websocket_message(
+                model='RunnerTack', action='delete', obj=message
             )
         )

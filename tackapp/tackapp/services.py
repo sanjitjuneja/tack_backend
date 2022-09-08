@@ -11,7 +11,8 @@ def form_websocket_message(*, model: str, action: str, obj: dict) -> str:
             }
         }
     if action == 'delete':
-        del template['object']
+        template['id'] = obj
+        template['object'] = None
 
     response = json.dumps(template)
     return response
