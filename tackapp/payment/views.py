@@ -362,6 +362,16 @@ class TestChangeBankAccount(views.APIView):
         return Response({"message": "good"})
 
 
+class DisconnectWS(views.APIView):
+    def get(self, request, *args, **kwargs):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_2",
+            {
+                'type': 'disconnect',
+                'message': ""
+            })
+
 class DwollaWebhook(views.APIView):
     def post(self, request, *args, **kwargs):
         dwolla_webhook_handler(request)

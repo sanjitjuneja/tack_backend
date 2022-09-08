@@ -131,19 +131,37 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'type': 'grouptack.delete',
                 'message': instance.id
             })
-    async_to_sync(channel_layer.group_send)(
-        f"group_{instance.group.id}",
-        {
-            'type': 'grouptack.update',
-            'message': {
-                'id': instance.id,
-                'tack': TackDetailSerializer(instance).data,
-                'is_mine_offer_sent': False
-            }
-        })
-    async_to_sync(channel_layer.group_send)(
-        f"user_{instance.tacker.id}",
-        {
-            'type': 'tack.update',
-            'message': TackDetailSerializer(instance).data
-        })
+    if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
+        async_to_sync(channel_layer.group_send)(
+            f"group_{instance.group.id}",
+            {
+                'type': 'grouptack.update',
+                'message': {
+                    'id': instance.id,
+                    'tack': TackDetailSerializer(instance).data,
+                    'is_mine_offer_sent': False
+                }
+            })
+        async_to_sync(channel_layer.group_send)(
+            f"user_{instance.tacker.id}",
+            {
+                'type': 'tack.update',
+                'message': TackDetailSerializer(instance).data
+            })
+    else:
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.id}_tacker",
+            {
+                'type': 'tack.update',
+                'message': {
+                    'id': instance.id,
+                    'tack': TackDetailSerializer(instance).data,
+                    'is_mine_offer_sent': False
+                }
+            })
+        async_to_sync(channel_layer.group_send)(
+            f"tack_{instance.id}_runner",
+            {
+                'type': 'runnertack.update',
+                'message': TacksOffersSerializer(instance).data
+            })

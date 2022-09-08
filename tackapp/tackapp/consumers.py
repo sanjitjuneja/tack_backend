@@ -246,6 +246,19 @@ class MainConsumer(WebsocketConsumer):
             )
         )
 
+    def runnertack_update(self, event):
+        logger.warning("inside")
+        message = event['message']
+        async_to_sync(self.channel_layer.group_add)(
+            f"tack_{message['id']}_offer",
+            self.channel_name)
+
+        self.send(
+            text_data=form_websocket_message(
+                model='RunnerTack', action='update', obj=message
+            )
+        )
+
     def runnertack_delete(self, event):
         logger.warning("inside")
         message = event['message']
