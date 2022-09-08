@@ -113,6 +113,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'message': TackDetailSerializer(instance).data
             })
     if not instance.is_active:
+        logging.getLogger().warning(f"if not instance.is_active:")
         async_to_sync(channel_layer.group_send)(
             f"tack_{instance.id}_tacker",
             {
@@ -132,6 +133,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'message': instance.id
             })
     if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
+        logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
         async_to_sync(channel_layer.group_send)(
             f"group_{instance.group.id}",
             {
@@ -149,6 +151,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'message': TackDetailSerializer(instance).data
             })
     else:
+        logging.getLogger().warning(f"else:")
         async_to_sync(channel_layer.group_send)(
             f"tack_{instance.id}_tacker",
             {
