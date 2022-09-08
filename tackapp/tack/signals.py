@@ -166,5 +166,5 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             f"tack_{instance.id}_runner",
             {
                 'type': 'runnertack.update',
-                'message': TacksOffersSerializer(instance).data
+                'message': TacksOffersSerializer(instance.accepted_offer).data
             })
