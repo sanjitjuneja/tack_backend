@@ -220,6 +220,8 @@ def get_transfer_request(
 
     if type(amount) is int:
         amount = convert_to_decimal(amount, currency)
+    logging.getLogger().warning(f"get_transfer_request {amount = }")
+    logging.getLogger().warning(f"{str(amount) = }")
     transfer_request = {
         '_links': {
             'source': {
