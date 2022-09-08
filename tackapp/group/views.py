@@ -148,7 +148,7 @@ class GroupViewset(
             "runner",
             "group",
         ).order_by(
-            "creation_time"
+            "-creation_time"
         )
         page = self.paginate_queryset(tacks)
         serializer = GroupTackSerializer(page, many=True, context={"request": request})
