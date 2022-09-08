@@ -1,3 +1,4 @@
+import logging
 from uuid import uuid4
 
 from asgiref.sync import async_to_sync
@@ -65,3 +66,13 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
             'type': 'groupdetails.delete',
             'message': instance.group.id
         })
+    if instance.member.active_group == instance.group:
+        recent_gm = GroupMembers.objects.filter(
+            member=instance.member
+        ).exclude(
+            id=instance.id
+        ).last()
+        logging.getLogger(f"{recent_gm = }")
+        recent_group = recent_gm.group if recent_gm else None
+        instance.member.active_group = recent_group
+        instance.member.save()

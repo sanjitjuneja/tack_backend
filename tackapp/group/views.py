@@ -117,17 +117,8 @@ class GroupViewset(
 
         group = self.get_object()
         try:
+            # TODO: 1 query
             gm = GroupMembers.objects.get(member=request.user, group=group)
-            if request.user.active_group == group:
-                recent_gm = GroupMembers.objects.filter(
-                    member=request.user
-                ).exclude(
-                    id=gm.id
-                ).last()
-                logging.getLogger(f"{recent_gm = }")
-                recent_group = recent_gm.group if recent_gm else None
-                request.user.active_group = recent_group
-                request.user.save()
             gm.delete()
         except ObjectDoesNotExist:
             return Response({"message": "You are not a member of this group"}, status=400)
