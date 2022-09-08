@@ -10,6 +10,8 @@ from group.serializers import GroupSerializer
 from tack.models import Tack, Offer
 from tackapp.services import form_websocket_message
 
+logger = logging.getLogger()
+
 
 class MainConsumer(WebsocketConsumer):
     # def __init__(self, *args, **kwargs):
@@ -86,12 +88,14 @@ class MainConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         # Leave room group
         # TODO: leave all groups
+        logger.warning(__name__)
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
         )
 
     def tack_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.channel_layer.group_add(
             f"tack_{message['id']}_tacker",
@@ -105,6 +109,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def tack_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         async_to_sync(self.channel_layer.group_discard)(
             f"tack_{message}_tacker",
@@ -120,6 +125,7 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def grouptack_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -127,6 +133,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def grouptack_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -134,6 +141,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def balance_update(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -141,6 +149,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def invitation_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -148,6 +157,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def invitation_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -155,6 +165,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def user_update(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -162,6 +173,7 @@ class MainConsumer(WebsocketConsumer):
             ))
 
     def group_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         async_to_sync(self.channel_layer.group_add)(
             f"group_{message['id']}",
@@ -175,11 +187,11 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def group_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         async_to_sync(self.channel_layer.group_discard)(
             f"group_{message}",
             self.channel_name)
-        logging.getLogger().warning(f"Added to group_{message['id']}")
 
         self.send(
             text_data=form_websocket_message(
@@ -188,6 +200,7 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def offer_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -196,6 +209,7 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def offer_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         self.send(
             text_data=form_websocket_message(
@@ -204,6 +218,7 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def runnertack_create(self, event):
+        logger.warning(__name__)
         message = event['message']
         async_to_sync(self.channel_layer.group_add)(
             f"tack_{message['id']}_offer",
@@ -216,6 +231,7 @@ class MainConsumer(WebsocketConsumer):
         )
 
     def runnertack_delete(self, event):
+        logger.warning(__name__)
         message = event['message']
         async_to_sync(self.channel_layer.group_discard)(
             f"tack_{message}_offer",
