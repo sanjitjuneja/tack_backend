@@ -357,7 +357,7 @@ class OfferViewset(
                     "message": "You already have an offer for this Tack"
                 },
                 status=409)
-        if tack.status not in (TackStatus.ACTIVE,):
+        if tack.status not in (TackStatus.ACTIVE, TackStatus.CREATED):
             return Response(
                 {
                     "error": "code",
