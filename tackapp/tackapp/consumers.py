@@ -98,6 +98,7 @@ class MainConsumer(WebsocketConsumer):
             self.channel_name
         )
 
+        logging.getLogger().warning(f"in tack_create: tack_{message['id']}_tacker",)
         self.send(
             text_data=form_websocket_message(
                 model='Tack', action='create', obj=message

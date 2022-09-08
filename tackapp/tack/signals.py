@@ -47,6 +47,7 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             'type': 'runnertack.create',
             'message': TacksOffersSerializer(instance).data
         })
+    logging.getLogger().warning(f"in send_websocket_message_on_offer_save")
 
 
 @receiver(signal=post_delete, sender=Offer)
