@@ -40,12 +40,11 @@ def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
 @receiver(signal=post_save, sender=GroupMembers)
 def post_save_group_members(instance: GroupMembers, *args, **kwargs):
     channel_layer = get_channel_layer()
-    gm = GroupMembers.objects.get(group=instance)
     async_to_sync(channel_layer.group_send)(
         f"user_{instance.member.id}",
         {
             'type': 'group.create',
-            'message': GroupMembersSerializer(gm).data
+            'message': GroupMembersSerializer(instance).data
         })
 
 
