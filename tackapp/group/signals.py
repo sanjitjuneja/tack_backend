@@ -72,7 +72,7 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
         ).exclude(
             id=instance.id
         ).last()
-        logging.getLogger(f"{recent_gm = }")
+        logging.getLogger().warning(f"{recent_gm = }")
         recent_group = recent_gm.group if recent_gm else None
         instance.member.active_group = recent_group
         instance.member.save()
