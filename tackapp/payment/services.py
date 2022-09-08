@@ -513,6 +513,7 @@ def get_sum24h_transactions(user: User) -> int:
                     )
                 )
             )['sum24h']
+    logging.getLogger().warning(f"{sum24h = }")
     return sum24h if sum24h else 0
 
 

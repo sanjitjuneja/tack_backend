@@ -56,6 +56,8 @@ class AddBalanceStripe(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.STRIPE
         )
+
+        logging.getLogger().warning(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
@@ -102,6 +104,7 @@ class AddBalanceDwolla(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.DWOLLA
         )
+        logging.getLogger().warning(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
