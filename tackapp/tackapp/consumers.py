@@ -133,3 +133,19 @@ class MainConsumer(WebsocketConsumer):
                 model='Group', action='delete', obj=message
             )
         )
+
+    def offer_create(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='Offer', action='create', obj=message
+            )
+        )
+
+    def offer_delete(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='Offer', action='delete', obj=message
+            )
+        )

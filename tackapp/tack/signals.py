@@ -11,7 +11,7 @@ from core.choices import TackStatus
 from group.models import GroupTacks
 from tack.models import Offer, Tack
 from user.models import User
-from .serializers import TackDetailSerializer
+from .serializers import TackDetailSerializer, OfferSerializer
 from .tasks import delete_offer_task
 
 
@@ -31,10 +31,32 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
             instance.tack.change_status(TackStatus.ACTIVE)
 
 
+@receiver(signal=post_save, sender=Offer)
+def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.tack.id}_tacker",
+        {
+            'type': 'offer.create',
+            'message': OfferSerializer(instance).data
+        })
+
+
 @receiver(signal=post_delete, sender=Offer)
 def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
     if Offer.active.filter(tack=instance.tack).count() == 0:
         instance.tack.change_status(TackStatus.CREATED)
+
+
+@receiver(signal=post_delete, sender=Offer)
+def send_websocket_message_on_offer_delete(instance: Offer, *args, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tack_{instance.tack.id}_tacker",
+        {
+            'type': 'offer.delete',
+            'message': OfferSerializer(instance).data
+        })
 
 
 @receiver(signal=post_save, sender=Tack)
