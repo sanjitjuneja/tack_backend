@@ -147,7 +147,7 @@ class MainConsumer(WebsocketConsumer):
     def group_create(self, event):
         message = event['message']
         async_to_sync(self.channel_layer.group_add)(
-            f"group_{message.id}",
+            f"group_{message['id']}",
             self.channel_name)
 
         self.send(
@@ -187,7 +187,7 @@ class MainConsumer(WebsocketConsumer):
     def runnertack_create(self, event):
         message = event['message']
         async_to_sync(self.channel_layer.group_add)(
-            f"tack_{message.id}_offer",
+            f"tack_{message['id']}_offer",
             self.channel_name)
 
         self.send(
