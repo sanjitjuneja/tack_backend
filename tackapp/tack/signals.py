@@ -41,14 +41,6 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             'message': OfferSerializer(instance).data
         })
 
-    instance = Offer.active.get(
-        pk=instance.id
-    ).select_related(
-        "tack",
-        "tack__tacker",
-        "runner",
-        "tack__group"
-    )
     async_to_sync(channel_layer.group_send)(
         f"tack_{instance.tack.id}_runner",
         {
