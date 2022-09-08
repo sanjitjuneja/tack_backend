@@ -156,11 +156,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             f"tack_{instance.id}_tacker",
             {
                 'type': 'tack.update',
-                'message': {
-                    'id': instance.id,
-                    'tack': TackDetailSerializer(instance).data,
-                    'is_mine_offer_sent': False
-                }
+                'message': TackDetailSerializer(instance).data
             })
         async_to_sync(channel_layer.group_send)(
             f"tack_{instance.id}_runner",
