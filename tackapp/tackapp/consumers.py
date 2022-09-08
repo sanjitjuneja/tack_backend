@@ -1,4 +1,3 @@
-import json
 import logging
 
 from asgiref.sync import async_to_sync
@@ -8,6 +7,7 @@ from django.db.models import Q
 from core.choices import TackStatus
 from group.models import Group, GroupMembers
 from tack.models import Tack
+from tackapp.services import form_websocket_message
 
 
 class MainConsumer(WebsocketConsumer):
@@ -68,6 +68,7 @@ class MainConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # Leave room group
+        # TODO: leave all groups
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
@@ -83,25 +84,27 @@ class MainConsumer(WebsocketConsumer):
         )
 
         self.send(
-            text_data=json.dumps(
-                {
-                    'model': 'Tack',
-                    'action': 'create',
-                    'message': message
-                }
+            text_data=form_websocket_message(
+                model='Tack', action='create', obj=message
             ))
 
     def balance_update(self, event):
         message = event['message']
-        logging.getLogger().warning(f"In balance_update : {event = }")
         self.send(
-            text_data=json.dumps(
-                {
-                    'model': 'Balance',
-                    'message': {
-                        "action": "update",
-                        "id": message["id"],
-                        "object": message
-                    }
-                }
+            text_data=form_websocket_message(
+                model='Balance', action='update', obj=message
+            ))
+
+    def invitation_create(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='GroupInvitation', action='create', obj=message
+            ))
+
+    def user_update(self, event):
+        message = event['message']
+        self.send(
+            text_data=form_websocket_message(
+                model='User', action='update', obj=message
             ))

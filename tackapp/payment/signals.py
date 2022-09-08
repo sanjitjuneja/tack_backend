@@ -35,14 +35,6 @@ def add_balance_to_user(event, *args, **kwargs):
             # TODO: Something happened because Transaction should be created on AddBalanceStripe
             pass
 
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"user_{pi.customer.subscriber.id}",
-            {
-                'type': 'balance.update',
-                'message': BankAccountSerializer(ba).data
-            })
-
 
 @webhooks.handler("payment_method.attached")
 def create_pm_holder(event, *args, **kwargs):

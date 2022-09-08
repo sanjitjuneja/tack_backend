@@ -1,8 +1,11 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from payment.models import BankAccount
 from user.models import User
+from user.serializers import UserDetailSerializer
 from user.services import create_api_accounts, deactivate_dwolla_customer, delete_stripe_customer
 
 
@@ -17,6 +20,13 @@ def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs)
             # stripe_user=stripe_id,
             # dwolla_user=dwolla_id
         )
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{instance.id}",
+        {
+            'type': 'user.update',
+            'message': UserDetailSerializer(instance).data
+        })
 
 
 @receiver(signal=pre_delete, sender=User)
