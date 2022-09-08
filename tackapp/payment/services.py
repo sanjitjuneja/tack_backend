@@ -500,11 +500,11 @@ def calculate_service_fee(amount: int, service: str):
         case PaymentService.DWOLLA:
             logging.getLogger().warning("calculate_service_fee, DWOLLA")
             logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
-            return int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum)
+            return int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
             logging.getLogger().warning("calculate_service_fee, STRIPE")
             logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
-            return int(amount * service_fee.stripe_percent + service_fee.stripe_const_sum)
+            return int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum)
 
 
 def get_sum24h_transactions(user: User) -> int:
