@@ -361,7 +361,9 @@ def calculate_amount_with_fees(amount: int, service: str) -> int:
             elif abs_fee > fees.fee_max_dwolla:
                 abs_fee = fees.fee_max_dwolla
 
+    logging.getLogger().warning(f"{abs_fee = }")
     amount = int(amount + abs_fee)
+    logging.getLogger().warning(f"{amount = }")
     return amount
 
 
@@ -496,8 +498,12 @@ def calculate_service_fee(amount: int, service: str):
     service_fee = ServiceFee.objects.last()
     match service:
         case PaymentService.DWOLLA:
+            logging.getLogger().warning("calculate_service_fee, DWOLLA")
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
             return int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
+            logging.getLogger().warning("calculate_service_fee, STRIPE")
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
             return int(amount * service_fee.stripe_percent + service_fee.stripe_const_sum)
 
 
