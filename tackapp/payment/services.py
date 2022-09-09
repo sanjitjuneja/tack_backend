@@ -299,8 +299,8 @@ def dwolla_transaction(
         user: User,
         amount: int,
         payment_method: str,
-        channel: str,
         action: str,
+        channel: str = "ach",
         currency: str = "USD",
         *args,
         **kwargs
