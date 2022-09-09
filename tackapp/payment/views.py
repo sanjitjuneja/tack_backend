@@ -28,7 +28,7 @@ from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
     detach_payment_method, update_dwolla_pms_with_primary, calculate_amount_with_fees, get_sum24h_transactions, \
-    calculate_transaction_loss
+    calculate_transaction_loss, calculate_service_fee
 
 
 class AddBalanceStripe(views.APIView):
@@ -80,6 +80,9 @@ class AddBalanceStripe(views.APIView):
             is_stripe=True,
             amount_requested=serializer.validated_data["amount"],
             amount_with_fees=amount_with_fees,
+            service_fee=calculate_service_fee(
+                amount=amount_with_fees,
+                service=PaymentService.STRIPE),
             transaction_id=pi["id"]
         )
         logger.warning(f"{pi = }")
@@ -205,6 +208,7 @@ class AddUserWithdrawMethod(views.APIView):
         public_token = serializer.validated_data['public_token']
 
         access_token = get_access_token(public_token)
+        # TODO: WRONG?
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
 
@@ -222,7 +226,7 @@ class AddUserWithdrawMethod(views.APIView):
         adding_first_bank = False if UserPaymentMethods.objects.filter(bank_account=ba).exists() else True
 
         try:
-            attach_all_accounts_to_dwolla(request.user, accounts)
+            attach_all_accounts_to_dwolla(request.user, accounts, access_token)
         except dwollav2.Error as e:
             return Response(e.body, status=e.status)
         except plaid.ApiException as e:
