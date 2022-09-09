@@ -38,7 +38,6 @@ class AddBalanceStripe(views.APIView):
 
     @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
     def post(self, request):
-
         serializer = AddBalanceStripeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         logger = logging.getLogger()
@@ -68,13 +67,16 @@ class AddBalanceStripe(views.APIView):
                 status=400)
 
         # TODO: try-except block
-        pi = stripe.PaymentIntent.create(
-            customer=customer.id,
-            receipt_email=customer.email,
-            amount=amount_with_fees,
-            currency=serializer.validated_data["currency"],
-            payment_method=serializer.validated_data["payment_method"]
-        )
+        payment_method = serializer.validated_data["payment_method"] or None
+        pi_request = {
+            "customer": customer.id,
+            "receipt_email": customer.email,
+            "amount": amount_with_fees,
+            "currency": serializer.validated_data["currency"]
+        }
+        if payment_method:
+            pi_request["payment_method"] = payment_method
+        pi = stripe.PaymentIntent.create(*pi_request)
         Transaction.objects.create(
             user=request.user,
             is_stripe=True,

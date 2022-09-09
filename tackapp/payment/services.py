@@ -197,6 +197,7 @@ def add_money_to_bank_account(payment_intent: PaymentIntent):
         ba = BankAccount.objects.get(stripe_user=payment_intent.customer)
         ba.usd_balance += payment_intent.amount
         ba.save()
+        logging.getLogger().warning(f"{ba = }")
     except BankAccount.DoesNotExist:
         # TODO: Error handling/create BA
         logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")

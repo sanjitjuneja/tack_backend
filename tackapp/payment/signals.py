@@ -1,3 +1,5 @@
+import logging
+
 from core.choices import PaymentService
 from djstripe.enums import PaymentIntentStatus
 
@@ -10,17 +12,20 @@ from payment.services import add_money_to_bank_account, calculate_service_fee
 
 @webhooks.handler("payment_intent.succeeded")
 def add_balance_to_user(event, *args, **kwargs):
+    logger = logging.getLogger()
+    logger.warning("add_balance_to_user")
     pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
-    if pi.status != PaymentIntentStatus.succeeded:
-        add_money_to_bank_account(pi)
-        service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
-        Transaction.objects.create(
-            transaction_id=pi.id,
-            is_stripe=True,
-            amount_with_fees=pi.amount,
-            service_fee=service_fee,
-            is_succeeded=True
-        )
+    logger.warning(f"{pi =}")
+    add_money_to_bank_account(pi)
+    service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
+    logger.warning(f"{service_fee =}")
+    Transaction.objects.create(
+        transaction_id=pi.id,
+        is_stripe=True,
+        amount_with_fees=pi.amount,
+        service_fee=service_fee,
+        is_succeeded=True
+    )
 
 
 @webhooks.handler("payment_method.attached")
