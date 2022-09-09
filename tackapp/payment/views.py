@@ -78,7 +78,7 @@ class AddBalanceStripe(views.APIView):
         if payment_method:
             pi_request["payment_method"] = payment_method
         logger.warning(f"{pi_request = }")
-        pi = stripe.PaymentIntent.create(*pi_request)
+        pi = stripe.PaymentIntent.create(**pi_request)
         Transaction.objects.create(
             user=request.user,
             is_stripe=True,
