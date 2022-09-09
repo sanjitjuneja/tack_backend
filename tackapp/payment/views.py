@@ -68,6 +68,7 @@ class AddBalanceStripe(views.APIView):
 
         # TODO: try-except block
         payment_method = serializer.validated_data["payment_method"] or None
+        logger.warning(f"{payment_method = }")
         pi_request = {
             "customer": customer.id,
             "receipt_email": customer.email,
@@ -76,6 +77,7 @@ class AddBalanceStripe(views.APIView):
         }
         if payment_method:
             pi_request["payment_method"] = payment_method
+        logger.warning(f"{pi_request = }")
         pi = stripe.PaymentIntent.create(*pi_request)
         Transaction.objects.create(
             user=request.user,
