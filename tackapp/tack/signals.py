@@ -72,117 +72,48 @@ def tack_status_on_offer_delete(instance: Offer, *args, **kwargs):
         instance.tack.change_status(TackStatus.CREATED)
 
 
-# @receiver(signal=post_delete, sender=Offer)
-# def send_websocket_message_on_offer_delete(instance: Offer, *args, **kwargs):
-#     channel_layer = get_channel_layer()
-#     async_to_sync(channel_layer.group_send)(
-#         f"tack_{instance.tack.id}_tacker",
-#         {
-#             'type': 'offer.delete',
-#             'message': instance.id
-#         })
-#     async_to_sync(channel_layer.group_send)(
-#         f"tack_{instance.tack.id}_runner",
-#         {
-#             'type': 'runnertack.delete',
-#             'message': instance.id
-#         })
-
-
 @receiver(signal=post_save, sender=Tack)
 def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
-    channel_layer = get_channel_layer()
     ws_sender = WSSender()
-    # Workaround on a problem to fly-calculate data for every User of the Group
-    # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
-    if created:
-        logging.getLogger().warning(f"Tack created")
-        tack_serializer = TackDetailSerializer(instance)
-        message = {
-                    'id': instance.id,
-                    'tack': tack_serializer.data,
-                    'is_mine_offer_sent': False
-                }
-        ws_sender.send_message(f"group_{instance.group.id}", 'grouptack.create', message)
-        ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.create', tack_serializer.data)
-        # async_to_sync(channel_layer.group_send)(
-        #     f"group_{instance.group.id}",
-        #     {
-        #         'type': 'grouptack.create',
-        #         'message': {
-        #             'id': instance.id,
-        #             'tack': TackDetailSerializer(instance).data,
-        #             'is_mine_offer_sent': False
-        #         }
-        #     })
-        # async_to_sync(channel_layer.group_send)(
-        #     f"user_{instance.tacker.id}",
-        #     {
-        #         'type': 'tack.create',
-        #         'message': TackDetailSerializer(instance).data
-        #     })
+
     if not instance.is_active:
+        # Tack deletion process
         logging.getLogger().warning(f"if not instance.is_active:")
         ws_sender.send_message(f"tack_{instance.id}_tacker", 'tack.delete', instance.id)
         ws_sender.send_message(f"tack_{instance.id}_offer", 'runnertack.delete', instance.id)
         ws_sender.send_message(f"group_{instance.group.id}", 'grouptack.delete', instance.id)
-        # async_to_sync(channel_layer.group_send)(
-        #     f"tack_{instance.id}_tacker",
-        #     {
-        #         'type': 'tack.delete',
-        #         'message': instance.id
-        #     })
-        # async_to_sync(channel_layer.group_send)(
-        #     f"tack_{instance.id}_offer",
-        #     {
-        #         'type': 'runnertack.delete',
-        #         'message': instance.id
-        #     })
-        # async_to_sync(channel_layer.group_send)(
-        #     f"group_{instance.group.id}",
-        #     {
-        #         'type': 'grouptack.delete',
-        #         'message': instance.id
-        #     })
-    if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
-        tack_serializer = TackDetailSerializer(instance)
-        logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
-        message = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': False
-        }
-        ws_sender.send_message(f"group_{instance.group.id}", 'grouptack.update', message)
-        ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.update', tack_serializer.data)
-        # async_to_sync(channel_layer.group_send)(
-        #     f"group_{instance.group.id}",
-        #     {
-        #         'type': 'grouptack.update',
-        #         'message': {
-        #             'id': instance.id,
-        #             'tack': TackDetailSerializer(instance).data,
-        #             'is_mine_offer_sent': False
-        #         }
-        #     })
-        # async_to_sync(channel_layer.group_send)(
-        #     f"user_{instance.tacker.id}",
-        #     {
-        #         'type': 'tack.update',
-        #         'message': TackDetailSerializer(instance).data
-        #     })
     else:
-        logging.getLogger().warning(f"else:")
-        ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.update', TackDetailSerializer(instance).data)
-        ws_sender.send_message(f"user_{instance.runner.id}", 'runnertack.update', TacksOffersSerializer(instance.accepted_offer).data)
-        # async_to_sync(channel_layer.group_send)(
-        #     f"user_{instance.tacker.id}",  # change to tack_id_tacker
-        #     {
-        #         'type': 'tack.update',
-        #         'message': TackDetailSerializer(instance).data
-        #     })
-        # async_to_sync(channel_layer.group_send)(
-        #     f"user_{instance.runner.id}",  # change to tack_id_runner
-        #     {
-        #         'type': 'runnertack.update',
-        #         'message': TacksOffersSerializer(instance.accepted_offer).data
-        #     })
+        # else Tack change process
+        if created:
+            # Tack creation process
+            logging.getLogger().warning(f"Tack created")
+            tack_serializer = TackDetailSerializer(instance)
+
+            # Workaround on a problem to fly-calculate data for every User of the Group
+            # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
+            message = {
+                        'id': instance.id,
+                        'tack': tack_serializer.data,
+                        'is_mine_offer_sent': False
+                      }
+            ws_sender.send_message(f"group_{instance.group.id}", 'grouptack.create', message)
+            ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.create', tack_serializer.data)
+        elif instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
+            # Tack info change on TackStatus.CREATED and
+            # Tack status change on TackStatus.ACTIVE
+            tack_serializer = TackDetailSerializer(instance)
+            logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
+            message = {
+                'id': instance.id,
+                'tack': tack_serializer.data,
+                'is_mine_offer_sent': False
+            }
+            ws_sender.send_message(f"group_{instance.group.id}", 'grouptack.update', message)
+            ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.update', tack_serializer.data)
+        else:
+            # Tack status changes for Tacker and Runner
+            logging.getLogger().warning(f"else:")
+            # ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.update', TackDetailSerializer(instance).data)
+            # ws_sender.send_message(f"user_{instance.tacker.id}", 'tack.update', TackDetailSerializer(instance).data)
+            ws_sender.send_message(f"tack_{instance.tacker.id}_tacker", 'tack.update', TackDetailSerializer(instance).data)
+            ws_sender.send_message(f"tack_{instance.runner.id}_runner", 'runnertack.update', TacksOffersSerializer(instance.accepted_offer).data)
