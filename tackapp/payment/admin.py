@@ -51,7 +51,7 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'user',
         'amount_requested',
         'amount_with_fees',
-        'service_fee'
+        'service_fee',
         'is_stripe',
         'is_dwolla',
         'is_succeeded',
