@@ -1,5 +1,7 @@
 import logging
 
+from django.db import transaction
+
 from core.choices import PaymentService
 from djstripe.enums import PaymentIntentStatus
 
@@ -19,13 +21,10 @@ def add_balance_to_user(event, *args, **kwargs):
     add_money_to_bank_account(pi)
     service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
     logger.warning(f"{service_fee =}")
-    Transaction.objects.create(
-        transaction_id=pi.id,
-        is_stripe=True,
-        amount_with_fees=pi.amount,
-        service_fee=service_fee,
-        is_succeeded=True
-    )
+    tr = Transaction.objects.get(transaction_id=pi.id)
+    logger.warning(f"{tr =}")
+    tr.is_succeeded = True
+    tr.save()
 
 
 @webhooks.handler("payment_method.attached")
