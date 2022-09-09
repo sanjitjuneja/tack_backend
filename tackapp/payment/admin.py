@@ -49,12 +49,13 @@ class ServiceFeeAdmin(ModelAdmin):
 class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
     list_display = (
         'user',
-        'is_stripe',
-        'is_dwolla',
-        'transaction_id',
         'amount_requested',
         'amount_with_fees',
         'service_fee'
+        'is_stripe',
+        'is_dwolla',
+        'is_succeeded',
+        'transaction_id',
     )
     list_filter = ('creation_time',)
     search_fields = ('user', 'transaction_id')
