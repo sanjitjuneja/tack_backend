@@ -40,6 +40,8 @@ plaid-python = "*"
 aiohttp = "*"
 boto3 = "*"
 django-storages = "*"
+fcm-django = "*"
+firebase-admin = "*"
 
 [dev-packages]
 

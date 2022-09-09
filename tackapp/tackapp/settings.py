@@ -16,6 +16,8 @@ import environ
 import django
 import stripe
 from django.utils.encoding import force_str
+from firebase_admin import initialize_app
+
 from .servises import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
@@ -84,6 +86,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djstripe",
     "storages",
+    "fcm_django"
 ]
 
 
@@ -137,11 +140,11 @@ WSGI_APPLICATION = "tackapp.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": read_secrets(app, env, "POSTGRES_DB"),
-        "USER": read_secrets(app, env, "POSTGRES_USER"),
-        "PASSWORD": read_secrets(app, env, "POSTGRES_PASSWORD"),
-        "HOST": read_secrets(app, env, "POSTGRES_HOST"),
-        "PORT": read_secrets(app, env, "POSTGRES_PORT"),
+        "NAME": "tackappdev",
+        "USER": "tackapp_admin",
+        "PASSWORD": "Tackapp28122019",
+        "HOST": "postgres",
+        "PORT": "5432",
     }
 }
 
@@ -352,3 +355,20 @@ DWOLLA_MAIN_FUNDING_SOURCE = read_secrets(app, env, 'DWOLLA_MAIN_FUNDING_SOURCE'
 # CSRF_COOKIE_SECURE = False
 PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
+
+
+FIREBASE_APP = initialize_app()
+
+FCM_DJANGO_SETTINGS = {
+     # default: _('FCM Django')
+    "APP_VERBOSE_NAME": "[tackapp]",
+     # true if you want to have only one active device per registered user at a time
+     # default: False
+    "ONE_DEVICE_PER_USER": False,
+     # devices to which notifications cannot be sent,
+     # are deleted upon receiving error response from FCM
+     # default: False
+    "DELETE_INACTIVE_DEVICES": True,
+}
+
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR, 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
