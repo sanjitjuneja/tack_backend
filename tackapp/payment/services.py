@@ -190,14 +190,14 @@ def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id, access_token)
 
 
 @transaction.atomic
-def add_money_to_bank_account(payment_intent: PaymentIntent):
+def add_money_to_bank_account(payment_intent: PaymentIntent, cur_transaction: Transaction):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
     logger = logging.getLogger()
     try:
         logger.warning(f"{payment_intent.customer.id = }")
         ba = BankAccount.objects.get(stripe_user=payment_intent.customer.id)
         logger.warning(f"{ba = }")
-        ba.usd_balance += payment_intent.amount
+        ba.usd_balance += cur_transaction.amount_requested
         logger.warning(f"{ba = }")
         ba.save()
         logging.getLogger().warning(f"{ba = }")

@@ -17,11 +17,12 @@ def add_balance_to_user(event, *args, **kwargs):
     logger = logging.getLogger()
     logger.warning("add_balance_to_user")
     pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
+    tr = Transaction.objects.get(transaction_id=pi.id)
     logger.warning(f"{pi =}")
-    add_money_to_bank_account(pi)
+    add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
     service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
     logger.warning(f"{service_fee =}")
-    tr = Transaction.objects.get(transaction_id=pi.id)
+
     logger.warning(f"{tr =}")
     tr.is_succeeded = True
     tr.save()
