@@ -82,13 +82,12 @@ class MainConsumer(WebsocketConsumer):
                 self.channel_name
             )
             logger.warning(f"tack_{offer.tack.id}_offer")
-
         self.accept()
 
     def disconnect(self, close_code):
         # Leave room group
         # TODO: leave all groups
-        logger.warning(f"{event = }")
+        logger.warning(f"{close_code = }")
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
@@ -101,7 +100,6 @@ class MainConsumer(WebsocketConsumer):
             f"tack_{message['id']}_tacker",
             self.channel_name
         )
-
         logging.getLogger().warning(f"in tack_create: tack_{message['id']}_tacker",)
         self.send(
             text_data=form_websocket_message(
@@ -125,7 +123,6 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             f"tack_{message}_offer",
             self.channel_name)
-
         self.send(
             text_data=form_websocket_message(
                 model='Tack', action='delete', obj=message
@@ -195,7 +192,6 @@ class MainConsumer(WebsocketConsumer):
             f"group_{message['id']}",
             self.channel_name)
         logging.getLogger().warning(f"Added to group_{message['id']}")
-
         self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='create', obj=message
@@ -205,7 +201,6 @@ class MainConsumer(WebsocketConsumer):
     def groupdetails_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-
         self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='update', obj=message
@@ -218,7 +213,6 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             f"group_{message}",
             self.channel_name)
-
         self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='delete', obj=message
@@ -249,7 +243,6 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             f"tack_{message['id']}_offer",
             self.channel_name)
-
         self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='create', obj=message
@@ -262,7 +255,6 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             f"tack_{message['id']}_offer",
             self.channel_name)
-
         self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='update', obj=message
@@ -275,7 +267,6 @@ class MainConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             f"tack_{message}_offer",
             self.channel_name)
-
         self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='delete', obj=message
