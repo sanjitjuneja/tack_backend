@@ -44,6 +44,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "54.158.0.200",
     "localhost",
+    "34.236.154.0"
 ]
 
 INTERNAL_IPS = [
@@ -313,6 +314,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://backend.tackapp.net",
     "http://172.31.8.161",
     "http://54.158.0.200",
+    "http://34.236.154.0:8020"
 ]
 
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
