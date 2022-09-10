@@ -56,7 +56,7 @@ class Tack(CoreModel):
     # runner rating
 
     def __str__(self):
-        return f"{self.pk}: {self.title}"
+        return f"Tack {self.pk}: {self.title}"
 
     class Meta:
         db_table = "tacks"
@@ -79,6 +79,9 @@ class Offer(CoreModel):
     is_accepted = models.BooleanField(default=False)
     lifetime_seconds = models.PositiveIntegerField(default=900)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Offer {self.id}: on {self.tack} from {self.runner}"
 
     class Meta:
         db_table = "offers"
