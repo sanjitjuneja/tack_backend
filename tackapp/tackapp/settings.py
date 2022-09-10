@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework",
     "debug_toolbar",
-    # "social_django",
     "sslserver",
     "phonenumber_field",
     "django_filters",
@@ -91,7 +90,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "tackapp.urls"
@@ -119,13 +117,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "tackapp.wsgi.application"
-# ASGI_APPLICATION = 'tackapp.asgi.application'
-# AUTHENTICATION_BACKENDS = (
-#     # "social_core.backends.google.GoogleOAuth2",
-#     # "social_core.backends.facebook.FacebookOAuth2",
-#     "django.contrib.auth.backends.ModelBackend",
-# )
-
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
@@ -191,52 +182,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "user.User"
-# SOCIAL_AUTH_USER_MODEL = "user.User"
-
-# LOGIN_REDIRECT_URL = "api/v1/accounts/profile/"
-# LOGIN_URL = "api/v1/accounts/login/"
-# LOGOUT_URL = "api/v1/accounts/logout/"
-
-# SOCIAL_AUTH_PIPELINE = (
-#     "social_core.pipeline.social_auth.social_details",
-#     "social_core.pipeline.social_auth.social_uid",
-#     "social_core.pipeline.social_auth.auth_allowed",
-#     "social_core.pipeline.social_auth.social_user",
-#     "social_core.pipeline.user.get_username",
-#     # 'social_core.pipeline.social_auth.associate_by_email',
-#     "social_core.pipeline.user.create_user",
-#     "social_core.pipeline.social_auth.associate_user",
-#     "social_core.pipeline.social_auth.load_extra_data",
-#     "social_core.pipeline.user.user_details",
-#     "user.pipeline.get_profile_image",
-# )
-
-
-# # Google
-# SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", default="")
-# SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", default="")
-# SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-#     "https://www.googleapis.com/auth/userinfo.email",
-#     "https://www.googleapis.com/auth/userinfo.profile",
-# ]
-#
-# # Facebook
-# SOCIAL_AUTH_FACEBOOK_API_VERSION = "13.0"
-# SOCIAL_AUTH_FACEBOOK_KEY = env("SOCIAL_AUTH_FACEBOOK_KEY", default="")
-# SOCIAL_AUTH_FACEBOOK_SECRET = env("SOCIAL_AUTH_FACEBOOK_SECRET", default="")
-# SOCIAL_AUTH_FACEBOOK_SCOPE = ["email", "public_profile"]
-# SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-#     "locale": "en_US",
-#     "fields": "id, name, email, age_range",
-# }
-
-# AUTHENTICATION_BACKENDS = ('user.auth_backend.AuthBackend',)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -262,13 +212,6 @@ TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
 
-
-# def show_toolbar(request):
-#     return True
-# DEBUG_TOOLBAR_CONFIG = {
-#     "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-#     "INTERCEPT_REDIRECTS": False,
-# }
 
 CELERY_BROKER_URL = env("CELERY_BROKER")
 
@@ -317,7 +260,6 @@ stripe.api_key = STRIPE_SECRET_KEY
 # STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
 STRIPE_TEST_SECRET_KEY = env("STRIPE_SECRET_KEY")
 STRIPE_LIVE_MODE = False  # Change to True in production
-# DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"  # Get it from the section in the Stripe dashboard where you added the webhook endpoint
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
@@ -328,7 +270,6 @@ DWOLLA_APP_KEY = env('DWOLLA_APP_KEY')
 DWOLLA_APP_SECRET = env('DWOLLA_APP_SECRET')
 DWOLLA_WEBHOOK_SECRET = env('DWOLLA_WEBHOOK_SECRET')
 DWOLLA_MAIN_FUNDING_SOURCE = env('DWOLLA_MAIN_FUNDING_SOURCE')
-# CSRF_COOKIE_SECURE = False
 PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
 
