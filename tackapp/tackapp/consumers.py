@@ -18,27 +18,23 @@ class MainConsumer(WebsocketConsumer):
     #     super().__init__(*args, **kwargs)
 
     def connect(self):
-        # Logic to add all groups to User websocket
-        # self.channel_name = self.scope['url_route']['kwargs']['user_id']
-        # user = self.scope['user']
-        # print(f"{user = }")
+        self.user = self.scope['user']
         logger = logging.getLogger()
+        logger.warning(f"WS connected {self.user}")
         logger.warning(f"{self.channel_name = }")
-        # if user.is_anonymous:
-        #     self.close()
+        if self.user.is_anonymous:
+            self.close()
 
-        self.user_id = self.scope['url_route']['kwargs']['user_id']
-        self.room_group_name = f'user_{self.user_id}'
+        self.room_group_name = f'user_{self.user.id}'
 
         logger.warning(f"{self.room_group_name = }")
         # Join user_id room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
-            self.channel_name
-        )
+            self.channel_name)
 
         # async _ to sync
-        group_members = GroupMembers.objects.filter(member=self.scope['url_route']['kwargs']['user_id'])
+        group_members = GroupMembers.objects.filter(member=self.user)
         for gm in group_members:
             async_to_sync(self.channel_layer.group_add)(
                 f"group_{gm.group.id}",
@@ -48,7 +44,7 @@ class MainConsumer(WebsocketConsumer):
             logger.warning(f"group_{gm.group.id}")
 
         tacks_tacker = Tack.active.filter(
-            tacker=self.scope['url_route']['kwargs']['user_id']
+            tacker=self.user
         ).exclude(
             status=TackStatus.FINISHED
         )
@@ -60,7 +56,7 @@ class MainConsumer(WebsocketConsumer):
             logger.warning(f"tack_{tack.id}_tacker")
 
         tacks_runner = Tack.active.filter(
-            runner=self.scope['url_route']['kwargs']['user_id']
+            runner=self.user
         ).exclude(
             status=TackStatus.FINISHED
         )
@@ -72,7 +68,7 @@ class MainConsumer(WebsocketConsumer):
             logger.warning(f"tack_{tack.id}_runner")
 
         offers = Offer.active.filter(
-            runner=self.scope['url_route']['kwargs']['user_id']
+            runner=self.user
         ).select_related(
             "tack"
         )
