@@ -60,3 +60,4 @@ media/
 tackapp/core/serializers
 tackapp/core/populate_database.py
 tackapp/core/test.py
+/tackapp/djstripe_1/
