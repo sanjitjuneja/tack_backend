@@ -14,7 +14,7 @@ class ReadOnlyMixin:
 
 @admin.register(BankAccount)
 class BankAccountAdmin(ModelAdmin):
-    list_display = ('user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
 
 
 @admin.register(UserPaymentMethods)

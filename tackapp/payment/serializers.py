@@ -57,7 +57,7 @@ class StripeCardSerializer(serializers.Serializer):
     exp_month = serializers.IntegerField(read_only=True)
     image = serializers.SerializerMethodField()
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str:
         image = images_dict[obj["brand"]] if obj.get("brand") in images_dict else None
         return image
 

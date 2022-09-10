@@ -41,6 +41,7 @@ aiohttp = "*"
 django-celery-beat = "*"
 channels = "*"
 channels-redis = "*"
+hypercorn = "*"
 
 [dev-packages]
 

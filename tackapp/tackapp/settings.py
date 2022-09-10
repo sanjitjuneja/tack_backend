@@ -117,7 +117,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = "tackapp.wsgi.application"
+WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
 CHANNEL_LAYERS = {
     'default': {

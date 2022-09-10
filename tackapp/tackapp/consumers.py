@@ -1,95 +1,89 @@
+import json
 import logging
 
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
-from django.db.models import Q
+from channels.generic.websocket import AsyncWebsocketConsumer
 
-from core.choices import TackStatus
-from group.models import Group, GroupMembers
-from group.serializers import GroupSerializer
-from tack.models import Tack, Offer
-from tackapp.services import form_websocket_message
+from tackapp.services import form_websocket_message, get_user_groups, get_tacks_tacker, get_user_offers, \
+    get_tacks_runner
 
 logger = logging.getLogger()
 
 
-class MainConsumer(WebsocketConsumer):
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-
-    def connect(self):
+class MainConsumer(AsyncWebsocketConsumer):
+    async def websocket_connect(self, event):
+        logger.warning(f"async def websocket_connect: ")
+        logger.warning(f"{self.scope = }")
+        # if 'user' not in self.scope:
+        #     logger.warning(f"if not hasattr(self.scope, 'user'):")
+        #     raise
+            # await self.disconnect(close_code=3000)
+            # await self.close(code=3000)
         self.user = self.scope['user']
-        logger = logging.getLogger()
-        logger.warning(f"WS connected {self.user}")
+        # logger = logging.getLogger()
+        logger.warning(f"Inside websocket_connect")
+        logger.warning(f"WS connected {self.user.id}")
         logger.warning(f"{self.channel_name = }")
         if self.user.is_anonymous:
-            self.close()
+            await self.close()
 
         self.room_group_name = f'user_{self.user.id}'
 
         logger.warning(f"{self.room_group_name = }")
         # Join user_id room group
-        async_to_sync(self.channel_layer.group_add)(
+        await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name)
 
-        # async _ to sync
-        group_members = GroupMembers.objects.filter(member=self.user)
+        # group_members = await self.get_user_groups(self.user)
+        group_members = await get_user_groups(self.user)
         for gm in group_members:
-            async_to_sync(self.channel_layer.group_add)(
+            await self.channel_layer.group_add(
                 f"group_{gm.group.id}",
                 self.channel_name
             )
             logger.warning(f"{gm = }")
             logger.warning(f"group_{gm.group.id}")
 
-        tacks_tacker = Tack.active.filter(
-            tacker=self.user
-        ).exclude(
-            status=TackStatus.FINISHED
-        )
+        tacks_tacker = await get_tacks_tacker(self.user)
         for tack in tacks_tacker:
-            async_to_sync(self.channel_layer.group_add)(
+            await self.channel_layer.group_add(
                 f"tack_{tack.id}_tacker",
                 self.channel_name
             )
             logger.warning(f"tack_{tack.id}_tacker")
 
-        tacks_runner = Tack.active.filter(
-            runner=self.user
-        ).exclude(
-            status=TackStatus.FINISHED
-        )
+        tacks_runner = await get_tacks_runner(self.user)
         for tack in tacks_runner:
-            async_to_sync(self.channel_layer.group_add)(
+            await self.channel_layer.group_add(
                 f"tack_{tack.id}_runner",
                 self.channel_name
             )
             logger.warning(f"tack_{tack.id}_runner")
 
-        offers = Offer.active.filter(
-            runner=self.user
-        ).select_related(
-            "tack"
-        )
+        offers = await get_user_offers(self.user)
         for offer in offers:
-            async_to_sync(self.channel_layer.group_add)(
+            await self.channel_layer.group_add(
                 f"tack_{offer.tack.id}_offer",
                 self.channel_name
             )
             logger.warning(f"tack_{offer.tack.id}_offer")
-        self.accept()
+        await self.accept()
 
-    def disconnect(self, close_code):
+    async def disconnect(self, close_code):
         # Leave room group
         # TODO: leave all groups
-        logger.warning(f"{close_code = }")
-        async_to_sync(self.channel_layer.group_discard)(
+        logger.warning(f"disconnect {close_code = }")
+        await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    def tack_create(self, event):
+    async def receive(self, text_data=None, bytes_data=None):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+        logger.warning(f"{message = }")
+
+    async def tack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
         self.channel_layer.group_add(
@@ -97,173 +91,173 @@ class MainConsumer(WebsocketConsumer):
             self.channel_name
         )
         logging.getLogger().warning(f"in tack_create: tack_{message['id']}_tacker",)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Tack', action='create', obj=message
             ))
 
-    def tack_update(self, event):
+    async def tack_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Tack', action='update', obj=message
             ))
 
-    def tack_delete(self, event):
+    async def tack_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_discard)(
+        await self.channel_layer.group_discard(
             f"tack_{message}_tacker",
             self.channel_name)
-        async_to_sync(self.channel_layer.group_discard)(
+        await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Tack', action='delete', obj=message
             )
         )
 
-    def grouptack_create(self, event):
+    async def grouptack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupTack', action='create', obj=message
             ))
 
-    def grouptack_update(self, event):
+    async def grouptack_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupTack', action='update', obj=message
             ))
 
-    def grouptack_delete(self, event):
+    async def grouptack_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupTack', action='delete', obj=message
             ))
 
-    def balance_update(self, event):
+    async def balance_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Balance', action='update', obj=message
             ))
 
-    def invitation_create(self, event):
+    async def invitation_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupInvitation', action='create', obj=message
             ))
 
-    def invitation_delete(self, event):
+    async def invitation_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupInvitation', action='delete', obj=message
             ))
 
-    def user_update(self, event):
+    async def user_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='User', action='update', obj=message
             ))
 
-    def groupdetails_create(self, event):
+    async def groupdetails_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_add)(
+        await self.channel_layer.group_add(
             f"group_{message['id']}",
             self.channel_name)
         logging.getLogger().warning(f"Added to group_{message['id']}")
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='create', obj=message
             )
         )
 
-    def groupdetails_update(self, event):
+    async def groupdetails_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='update', obj=message
             )
         )
 
-    def groupdetails_delete(self, event):
+    async def groupdetails_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_discard)(
+        await self.channel_layer.group_discard(
             f"group_{message}",
             self.channel_name)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='delete', obj=message
             )
         )
 
-    def offer_create(self, event):
+    async def offer_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Offer', action='create', obj=message
             )
         )
 
-    def offer_delete(self, event):
+    async def offer_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='Offer', action='delete', obj=message
             )
         )
 
-    def runnertack_create(self, event):
+    async def runnertack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_add)(
+        await self.channel_layer.group_add(
             f"tack_{message['id']}_offer",
             self.channel_name)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='create', obj=message
             )
         )
 
-    def runnertack_update(self, event):
+    async def runnertack_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_add)(
+        await self.channel_layer.group_add(
             f"tack_{message['id']}_offer",
             self.channel_name)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='update', obj=message
             )
         )
 
-    def runnertack_delete(self, event):
+    async def runnertack_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        async_to_sync(self.channel_layer.group_discard)(
+        await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-        self.send(
+        await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='delete', obj=message
             )

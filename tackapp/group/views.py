@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Prefetch
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -17,7 +17,6 @@ from tack.models import Tack, PopularTack, Offer
 from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer, GroupTackSerializer
 from user.serializers import UserListSerializer
 from .serializers import *
-from .services import get_tacks_by_group
 
 
 class GroupViewset(
@@ -109,7 +108,24 @@ class GroupViewset(
             return Response({"invitation": invite_serializer.data})
         return Response({"group": GroupMembersSerializer(gm).data})
 
-    @extend_schema(responses={"message"})
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name="leave_200",
+                fields={
+                    "message": serializers.CharField(),
+                    "group": GroupSerializer()
+                }
+            ),
+            400: inline_serializer(
+                name="leave_400",
+                fields={
+                    "error": serializers.CharField(),
+                    "message": serializers.CharField()
+                }
+            )
+        }
+    )
     @action(methods=("POST",), detail=True, permission_classes=(GroupMemberPermission,),
             serializer_class=serializers.Serializer)
     def leave(self, request, *args, **kwargs):

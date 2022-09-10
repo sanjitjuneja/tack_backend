@@ -45,6 +45,7 @@ def create_pm_holder(event, *args, **kwargs):
 @receiver(signal=post_save, sender=BankAccount)
 def ba_save(instance: BankAccount, *args, **kwargs):
     channel_layer = get_channel_layer()
+    logging.getLogger().warning(f"{instance = }")
     async_to_sync(channel_layer.group_send)(
         f"user_{instance.user.id}",
         {

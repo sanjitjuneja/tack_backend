@@ -9,7 +9,8 @@ services:
     volumes:
       - static_volume:/app/tackapp/staticfiles
       - media_volume:/app/tackapp/media
-    command: ["gunicorn", "tackapp.wsgi:application", "--bind", "0.0.0.0:8000"]
+#    command: ["gunicorn", "tackapp.wsgi:application", "--bind", "0.0.0.0:8000"]
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
     expose:
       - 8000
     depends_on:
