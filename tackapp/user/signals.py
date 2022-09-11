@@ -4,9 +4,13 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from payment.models import BankAccount
+from tackapp.websocket_messages import WSSender
 from user.models import User
 from user.serializers import UserDetailSerializer
 from user.services import create_api_accounts, deactivate_dwolla_customer, delete_stripe_customer
+
+
+ws_sender = WSSender()
 
 
 @receiver(signal=post_save, sender=User)
@@ -20,13 +24,10 @@ def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs)
             # stripe_user=stripe_id,
             # dwolla_user=dwolla_id
         )
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
+    ws_sender.send_message(
         f"user_{instance.id}",
-        {
-            'type': 'user.update',
-            'message': UserDetailSerializer(instance).data
-        })
+        'user.update',
+        UserDetailSerializer(instance).data)
 
 
 @receiver(signal=pre_delete, sender=User)

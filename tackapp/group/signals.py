@@ -6,8 +6,12 @@ from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
+from tackapp.websocket_messages import WSSender
 from .models import Group, GroupMembers, GroupInvitations
 from .serializers import GroupInvitationsSerializer, GroupSerializer, GroupMembersSerializer
+
+
+ws_sender = WSSender()
 
 
 @receiver(signal=post_save, sender=Group)
@@ -18,54 +22,41 @@ def set_owner_as_group_member(instance: Group, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=GroupInvitations)
 def post_save_invitations(instance: GroupInvitations, *args, **kwargs):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
+    ws_sender.send_message(
         f"user_{instance.invitee.id}",
-        {
-            'type': 'invitation.create',
-            'message': GroupInvitationsSerializer(instance).data
-        })
+        'invitation.create',
+        GroupInvitationsSerializer(instance).data)
 
 
 @receiver(signal=post_delete, sender=GroupInvitations)
 def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
+    ws_sender.send_message(
         f"user_{instance.invitee.id}",
-        {
-            'type': 'invitation.delete',
-            'message': instance.id
-        })
+        'invitation.delete',
+        instance.id)
 
 
 @receiver(signal=post_save, sender=GroupMembers)
 def post_save_group_members(instance: GroupMembers, created: bool, *args, **kwargs):
-    channel_layer = get_channel_layer()
     if created:
-        async_to_sync(channel_layer.group_send)(
+        ws_sender.send_message(
             f"user_{instance.member.id}",
-            {
-                'type': 'groupdetails.create',
-                'message': GroupMembersSerializer(instance).data
-            })
+            'groupdetails.create',
+            GroupMembersSerializer(instance).data)
     else:
-        async_to_sync(channel_layer.group_send)(
+        ws_sender.send_message(
             f"user_{instance.member.id}",
-            {
-                'type': 'groupdetails.update',
-                'message': GroupMembersSerializer(instance).data
-            })
+            'groupdetails.update',
+            GroupMembersSerializer(instance).data)
 
 
 @receiver(signal=post_delete, sender=GroupMembers)
 def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
+    ws_sender.send_message(
         f"user_{instance.member.id}",
-        {
-            'type': 'groupdetails.delete',
-            'message': instance.group.id
-        })
+        'groupdetails.delete',
+        instance.group.id)
+    # set another active group if user leaving his current active group
     if instance.member.active_group == instance.group:
         recent_gm = GroupMembers.objects.filter(
             member=instance.member

@@ -14,6 +14,9 @@ from djstripe.models import PaymentIntent, PaymentMethod
 from payment.models import StripePaymentMethodsHolder, Transaction, BankAccount
 from payment.serializers import BankAccountSerializer
 from payment.services import add_money_to_bank_account, calculate_service_fee
+from tackapp.websocket_messages import WSSender
+
+ws_sender = WSSender()
 
 
 @webhooks.handler("payment_intent.succeeded")
@@ -44,11 +47,8 @@ def create_pm_holder(event, *args, **kwargs):
 
 @receiver(signal=post_save, sender=BankAccount)
 def ba_save(instance: BankAccount, *args, **kwargs):
-    channel_layer = get_channel_layer()
     logging.getLogger().warning(f"{instance = }")
-    async_to_sync(channel_layer.group_send)(
+    ws_sender.send_message(
         f"user_{instance.user.id}",
-        {
-            'type': 'balance.update',
-            'message': BankAccountSerializer(instance).data
-        })
+        'balance.update',
+        BankAccountSerializer(instance).data)
