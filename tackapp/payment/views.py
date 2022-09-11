@@ -25,12 +25,12 @@ from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
 from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
-    AddBalanceStripeSerializer, TestChangeBankAccountSerializer, BankAccountSerializer
+    AddBalanceStripeSerializer, FeeSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
     detach_payment_method, update_dwolla_pms_with_primary, calculate_amount_with_fees, get_sum24h_transactions, \
-    calculate_transaction_loss
+    calculate_transaction_loss, calculate_service_fee
 
 
 class AddBalanceStripe(views.APIView):
@@ -40,7 +40,6 @@ class AddBalanceStripe(views.APIView):
 
     @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
     def post(self, request):
-
         serializer = AddBalanceStripeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         logger = logging.getLogger()
@@ -58,6 +57,8 @@ class AddBalanceStripe(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.STRIPE
         )
+
+        logging.getLogger().warning(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
@@ -68,18 +69,26 @@ class AddBalanceStripe(views.APIView):
                 status=400)
 
         # TODO: try-except block
-        pi = stripe.PaymentIntent.create(
-            customer=customer.id,
-            receipt_email=customer.email,
-            amount=amount_with_fees,
-            currency=serializer.validated_data["currency"],
-            payment_method=serializer.validated_data["payment_method"]
-        )
+        payment_method = serializer.validated_data["payment_method"] or None
+        logger.warning(f"{payment_method = }")
+        pi_request = {
+            "customer": customer.id,
+            "receipt_email": customer.email,
+            "amount": amount_with_fees,
+            "currency": serializer.validated_data["currency"]
+        }
+        if payment_method:
+            pi_request["payment_method"] = payment_method
+        logger.warning(f"{pi_request = }")
+        pi = stripe.PaymentIntent.create(**pi_request)
         Transaction.objects.create(
             user=request.user,
             is_stripe=True,
             amount_requested=serializer.validated_data["amount"],
             amount_with_fees=amount_with_fees,
+            service_fee=calculate_service_fee(
+                amount=amount_with_fees,
+                service=PaymentService.STRIPE),
             transaction_id=pi["id"]
         )
         logger.warning(f"{pi = }")
@@ -104,6 +113,7 @@ class AddBalanceDwolla(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.DWOLLA
         )
+        logging.getLogger().warning(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
@@ -168,14 +178,19 @@ class GetUserWithdrawMethods(views.APIView):
             ba = BankAccount.objects.get(user=request.user)
         except BankAccount.DoesNotExist:
             # TODO: create dwolla account and return empty list
-            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Can not find DB user"
+                },
+                status=400)
 
         try:
             pms = get_dwolla_payment_methods(ba.dwolla_user)
         except dwollav2.Error as e:
             return Response(e.body)
 
-        data = update_dwolla_pms_with_primary(pms)
+        data = update_dwolla_pms_with_primary(pms, request.user)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
         return Response({"results": serializer.data})
 
@@ -199,23 +214,33 @@ class AddUserWithdrawMethod(views.APIView):
         public_token = serializer.validated_data['public_token']
 
         access_token = get_access_token(public_token)
+        # TODO: WRONG?
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
-        try:
-            attach_all_accounts_to_dwolla(request.user, accounts)
-        except dwollav2.Error as e:
-            return Response(e.body, status=e.status)
-        except plaid.ApiException as e:
-            return Response(e.body, status=e.status)
 
         try:
             ba = BankAccount.objects.get(user=request.user)
         except BankAccount.DoesNotExist:
             # TODO: create dwolla account and return empty list
-            return Response({"error": "code", "message": "Can not find DB user"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Can not find DB user"
+                },
+                status=400)
+
+        adding_first_bank = False if UserPaymentMethods.objects.filter(bank_account=ba).exists() else True
+
+        try:
+            attach_all_accounts_to_dwolla(request.user, accounts, access_token)
+        except dwollav2.Error as e:
+            return Response(e.body, status=e.status)
+        except plaid.ApiException as e:
+            return Response(e.body, status=e.status)
+
         pms = get_dwolla_payment_methods(ba.dwolla_user)
-        data = update_dwolla_pms_with_primary(pms)
-        if not UserPaymentMethods.objects.filter(bank_account=ba).exists():
+        data = update_dwolla_pms_with_primary(pms, request.user)
+        if adding_first_bank:
             set_primary_method(
                 user=request.user,
                 payment_type=PaymentType.BANK,
@@ -282,8 +307,7 @@ class GetPaymentMethodById(views.APIView):
                     "error": "code",
                     "message": "Payment method not found"
                 },
-                status=400
-            )
+                status=400)
 
         return Response(StripePaymentMethodSerializer(pm))
 
@@ -340,7 +364,8 @@ class SetPrimaryPaymentMethod(views.APIView):
                     "error": "code",
                     "message": "Payment method does not exist",
                     "payment_method": serializer.validated_data["payment_method"]
-                })
+                },
+                status=400)
         return Response(
             {
                 "error": None,
@@ -350,27 +375,15 @@ class SetPrimaryPaymentMethod(views.APIView):
         )
 
 
-class TestChangeBankAccount(views.APIView):
-    @extend_schema(request=TestChangeBankAccountSerializer, responses=TestChangeBankAccountSerializer)
-    def post(self, request, *args, **kwargs):
-        serializer = TestChangeBankAccountSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ba = BankAccount.objects.get(user=serializer.validated_data["user"])
-        ba.usd_balance = serializer.validated_data["usd_balance"]
-        ba.save()
+class GetFees(views.APIView):
+    permission_classes = (IsAuthenticated,)
 
-        return Response({"message": "good"})
-
-
-class DisconnectWS(views.APIView):
+    @extend_schema(request=None, responses=FeeSerializer)
     def get(self, request, *args, **kwargs):
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"user_2",
-            {
-                'type': 'disconnect',
-                'message': ""
-            })
+        fees = Fee.objects.all().last()
+        serializer = FeeSerializer(fees)
+        return Response(serializer.data)
+
 
 class DwollaWebhook(views.APIView):
     def post(self, request, *args, **kwargs):

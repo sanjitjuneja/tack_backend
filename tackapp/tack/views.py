@@ -46,11 +46,10 @@ class TackViewset(
                     "error": "code",
                     "message": "You are not a member of this Group"
                 },
-                status=400
-            )
+                status=400)
         tack = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        output_serializer = TackDetailSerializer(tack)  # Refactor
+        output_serializer = TackDetailSerializer(tack, context={"request": request})  # Refactor
         return Response(output_serializer.data, status=201, headers=headers)
 
     def update(self, request, *args, **kwargs):
@@ -60,7 +59,12 @@ class TackViewset(
         serializer.is_valid(raise_exception=True)
 
         if tack.status != TackStatus.CREATED:
-            return Response({"error": "You cannot change Tack with active offers"}, status=400)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You cannot change Tack with active offers"
+                },
+                status=400)
 
         self.perform_update(serializer)
 
@@ -74,7 +78,12 @@ class TackViewset(
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
-            return Response({"message": "You can not delete tacks when you accepted Offer"})
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You can not delete tacks when you accepted an Offer"
+                },
+                status=400)
         self.perform_destroy(tack)
         return Response(status=204)
 
@@ -164,11 +173,41 @@ class TackViewset(
 
         tack = self.get_object()
         if tack.status != TackStatus.IN_PROGRESS:
-            return Response({"detail": "Current Tack status is not In Progress"})
+            return Response(
+                {
+                    "error": "code",
+                    "detail": "Current Tack status is not In Progress"
+                },
+                status=400)
 
         complete_tack(tack, "")
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
+
+    @extend_schema(request=None, responses={
+        200: inline_serializer(
+            name="Test",
+            fields={
+                "error": serializers.CharField(allow_null=True),
+                "is_ongoing_runner_tack": serializers.BooleanField()
+            }
+        )})
+    @action(
+        methods=("GET",),
+        detail=False,
+        url_path="me/ongoing-runner-tacks"
+    )
+    def ongoing_runner_tacks(self, request, *args, **kwargs):
+        ongoing_runner_tacks = Tack.active.filter(
+            runner=request.user,
+            status=TackStatus.IN_PROGRESS
+        )
+        return Response(
+            {
+                "error": None,
+                "is_ongoing_runner_tack": ongoing_runner_tacks.exists()
+            },
+            status=200)
 
     @extend_schema(request=None)
     @action(
@@ -180,10 +219,22 @@ class TackViewset(
         """Endpoint for Runner to start doing the Tack"""
 
         tack = self.get_object()
+        ongoing_runner_tacks = Tack.active.filter(
+            runner=request.user,
+            status=TackStatus.IN_PROGRESS
+        )
+        if ongoing_runner_tacks.exists():
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You already have ongoing Tack"
+                },
+                status=400)
         tack.change_status(TackStatus.IN_PROGRESS)
         return Response(self.get_serializer(tack).data)
 
-    @action(methods=["GET"], detail=True, serializer_class=OfferSerializer, permission_classes=(StrictTackOwnerPermission,))
+    @action(methods=["GET"], detail=True, serializer_class=OfferSerializer,
+            permission_classes=(StrictTackOwnerPermission,))
     def offers(self, request, *args, **kwargs):
         """Endpoint to display Offers related to specific Tack"""
 
@@ -286,12 +337,33 @@ class OfferViewset(
         tack = serializer.validated_data["tack"]
 
         if serializer.validated_data.get("price") and (not tack.allow_counter_offer):
-            return Response({"message": "Counter offering is not allowed to this Tack"}, status=403)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Counter offering is not allowed to this Tack"
+                },
+                status=403)
         if tack.tacker == request.user:
-            return Response({"message": "You are not allowed to create Offers to your own Tacks"}, status=403)
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You are not allowed to create Offers to your own Tacks"
+                },
+                status=403)
         if Offer.active.filter(tack=tack, runner=request.user):
-            return Response({"message": "You already have an offer for this Tack"}, status=409)
-
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You already have an offer for this Tack"
+                },
+                status=409)
+        if tack.status not in (TackStatus.ACTIVE, TackStatus.CREATED):
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You can create Offers only on Active Tacks"
+                },
+                status=400)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 

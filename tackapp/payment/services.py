@@ -139,23 +139,23 @@ def get_accounts_with_processor_tokens(access_token: str) -> list[AccountBase]:
     return accounts
 
 
-def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list:
+def attach_all_accounts_to_dwolla(user: User, accounts: list, access_token: str) -> list:
     """Attach and return all Dwolla payment methods to our BankAccount"""
 
     payment_methods = []
     dwolla_id = get_dwolla_id(user)
     for account in accounts:
-        payment_method_id = attach_account_to_dwolla(dwolla_id, account)
+        payment_method_id = attach_account_to_dwolla(dwolla_id, account, access_token)
         payment_methods.append(payment_method_id)
 
     return payment_methods
 
 
-def attach_account_to_dwolla(dwolla_id: str, account: dict) -> str:
+def attach_account_to_dwolla(dwolla_id: str, account: dict, access_token: str) -> str:
     """Attach one Dwolla payment method to our Tack BankAccount"""
 
     payment_method_id = get_dwolla_pm_by_plaid_token(dwolla_id, account)
-    add_dwolla_payment_method(dwolla_id, payment_method_id)
+    add_dwolla_payment_method(dwolla_id, payment_method_id, account["account_id"], access_token)
     return payment_method_id
 
 
@@ -173,23 +173,37 @@ def get_dwolla_pm_by_plaid_token(dwolla_customer_id, pm_account):
     return response.headers["Location"].split("/")[-1]
 
 
-def add_dwolla_payment_method(dwolla_id, dwolla_pm_id):
+def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id, access_token):
     """Make record in DB about Dwolla payment method"""
 
     try:
         ba = BankAccount.objects.get(dwolla_user=dwolla_id)
-        UserPaymentMethods.objects.create(bank_account=ba, dwolla_payment_method=dwolla_pm_id)
+        UserPaymentMethods.objects.create(
+            bank_account=ba,
+            dwolla_payment_method=dwolla_pm_id,
+            plaid_account_id=account_id,
+            dwolla_access_token=access_token
+        )
     except BankAccount.DoesNotExist:
         logging.getLogger().warning(f"Bank Account of {dwolla_id} is not found")
         # TODO: error handling
 
 
 @transaction.atomic
-def add_money_to_bank_account(bank_account: BankAccount, payment_intent: PaymentIntent):
+def add_money_to_bank_account(payment_intent: PaymentIntent, cur_transaction: Transaction):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
-
-    bank_account.usd_balance += payment_intent.amount
-    bank_account.save()
+    logger = logging.getLogger()
+    try:
+        logger.warning(f"{payment_intent.customer.id = }")
+        ba = BankAccount.objects.get(stripe_user=payment_intent.customer.id)
+        logger.warning(f"{ba = }")
+        ba.usd_balance += cur_transaction.amount_requested
+        logger.warning(f"{ba = }")
+        ba.save()
+        logging.getLogger().warning(f"{ba = }")
+    except BankAccount.DoesNotExist:
+        # TODO: Error handling/create BA
+        logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")
 
 
 def save_dwolla_access_token(access_token: str, user: User):
@@ -244,12 +258,13 @@ def get_transfer_request(
 
 
 def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
-    """Check """
+    """Check Active Bank balance"""
     logger = logging.getLogger()
-    ba = BankAccount.objects.get(user=user)
+    # ba = BankAccount.objects.get(user=user)
+    pm = UserPaymentMethods.objects.get(dwolla_payment_method=payment_method)
     amount = convert_to_decimal(amount)
     request = AccountsBalanceGetRequest(
-        access_token=ba.dwolla_access_token
+        access_token=pm.dwolla_access_token
     )
     response = plaid_client.accounts_balance_get(request)
     logger.warning(f"plaid {response = }")
@@ -260,7 +275,7 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         )
         dwolla_payment_id = payment_method_qs.dwolla_payment_method
         for account in response['accounts']:
-            if account["account_id"] == dwolla_payment_id:
+            if account["account_id"] == pm.plaid_account_id:
                 logger.warning(Decimal(account["balances"]["available"]))
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
@@ -286,8 +301,8 @@ def dwolla_transaction(
         user: User,
         amount: int,
         payment_method: str,
-        channel: str,
         action: str,
+        channel: str = "ach",
         currency: str = "USD",
         *args,
         **kwargs
@@ -357,6 +372,7 @@ def calculate_amount_with_fees(amount: int, service: str) -> int:
                 abs_fee = fees.fee_max_dwolla
 
     amount = int(amount + abs_fee)
+    logging.getLogger().warning(f"{amount = }")
     return amount
 
 
@@ -454,7 +470,7 @@ def detach_payment_method(user: User, payment_type: str, payment_method: str):
         detach_stripe_payment_method(payment_method)
 
 
-def update_dwolla_pms_with_primary(pms: dict):
+def update_dwolla_pms_with_primary(pms: dict, user: User):
     """Enrich (data: list) of (funding_source's: dict) (is_primary: bool) values"""
 
     data = pms["_embedded"]["funding-sources"]
@@ -467,6 +483,21 @@ def update_dwolla_pms_with_primary(pms: dict):
         "dwolla_payment_method",
         "is_primary"
     )
+
+    # Additional check if retrieved funding-sources from Dwolla API matched our UserPaymentMethods model
+    if len(data) != len(upms_values):
+        # TODO: add UserPaymentMethods
+        for dwolla_pm_id in dwolla_pm_ids:
+            if dwolla_pm_id not in upms_values.values_list("dwolla_payment_method", flat=True):
+                dwolla_id = BankAccount.objects.get(user=user).dwolla_user
+                add_dwolla_payment_method(dwolla_id, dwolla_pm_id)
+
+        upms_values = UserPaymentMethods.objects.filter(
+            dwolla_payment_method__in=dwolla_pm_ids
+        ).values(
+            "dwolla_payment_method",
+            "is_primary"
+        )
 
     # [{"id-1": bool}, ...]
     upms_dict = {
@@ -484,9 +515,13 @@ def calculate_service_fee(amount: int, service: str):
     service_fee = ServiceFee.objects.last()
     match service:
         case PaymentService.DWOLLA:
-            return int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum)
+            logging.getLogger().warning("calculate_service_fee, DWOLLA")
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
+            return int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
-            return int(amount * service_fee.stripe_percent + service_fee.stripe_const_sum)
+            logging.getLogger().warning("calculate_service_fee, STRIPE")
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
+            return int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum)
 
 
 def get_sum24h_transactions(user: User) -> int:

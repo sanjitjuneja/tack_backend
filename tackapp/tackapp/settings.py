@@ -42,9 +42,10 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = [
     "tackapp.net",
     "127.0.0.1",
-    "54.158.0.200",
+    "44.203.217.242",
     "localhost",
-    "34.236.154.0"
+    "backend.tackapp.net",
+    "54.158.0.200",
 ]
 
 INTERNAL_IPS = [
@@ -69,7 +70,6 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework",
     "debug_toolbar",
-    # "social_django",
     "sslserver",
     "phonenumber_field",
     "django_filters",
@@ -77,7 +77,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djstripe",
     "django_celery_beat",
-    "channels",
 ]
 
 
@@ -90,7 +89,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "tackapp.urls"
@@ -110,8 +108,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # "social_django.context_processors.backends",
-                # "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -127,11 +123,6 @@ CHANNEL_LAYERS = {
         },
     },
 }
-# AUTHENTICATION_BACKENDS = (
-#     # "social_core.backends.google.GoogleOAuth2",
-#     # "social_core.backends.facebook.FacebookOAuth2",
-#     "django.contrib.auth.backends.ModelBackend",
-# )
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
@@ -198,52 +189,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "user.User"
-# SOCIAL_AUTH_USER_MODEL = "user.User"
-
-# LOGIN_REDIRECT_URL = "api/v1/accounts/profile/"
-# LOGIN_URL = "api/v1/accounts/login/"
-# LOGOUT_URL = "api/v1/accounts/logout/"
-
-# SOCIAL_AUTH_PIPELINE = (
-#     "social_core.pipeline.social_auth.social_details",
-#     "social_core.pipeline.social_auth.social_uid",
-#     "social_core.pipeline.social_auth.auth_allowed",
-#     "social_core.pipeline.social_auth.social_user",
-#     "social_core.pipeline.user.get_username",
-#     # 'social_core.pipeline.social_auth.associate_by_email',
-#     "social_core.pipeline.user.create_user",
-#     "social_core.pipeline.social_auth.associate_user",
-#     "social_core.pipeline.social_auth.load_extra_data",
-#     "social_core.pipeline.user.user_details",
-#     "user.pipeline.get_profile_image",
-# )
-
-
-# # Google
-# SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", default="")
-# SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", default="")
-# SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-#     "https://www.googleapis.com/auth/userinfo.email",
-#     "https://www.googleapis.com/auth/userinfo.profile",
-# ]
-#
-# # Facebook
-# SOCIAL_AUTH_FACEBOOK_API_VERSION = "13.0"
-# SOCIAL_AUTH_FACEBOOK_KEY = env("SOCIAL_AUTH_FACEBOOK_KEY", default="")
-# SOCIAL_AUTH_FACEBOOK_SECRET = env("SOCIAL_AUTH_FACEBOOK_SECRET", default="")
-# SOCIAL_AUTH_FACEBOOK_SCOPE = ["email", "public_profile"]
-# SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-#     "locale": "en_US",
-#     "fields": "id, name, email, age_range",
-# }
-
-# AUTHENTICATION_BACKENDS = ('user.auth_backend.AuthBackend',)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -269,13 +219,6 @@ TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
 
-
-# def show_toolbar(request):
-#     return True
-# DEBUG_TOOLBAR_CONFIG = {
-#     "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-#     "INTERCEPT_REDIRECTS": False,
-# }
 
 CELERY_BROKER_URL = env("CELERY_BROKER")
 
@@ -310,11 +253,10 @@ SIMPLE_JWT = {
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8020",
-    "http://54.158.0.200:8020",
+    "http://44.203.217.242:8020",
     "https://backend.tackapp.net",
     "http://172.31.8.161",
-    "http://54.158.0.200",
-    "http://34.236.154.0:8020"
+    "http://44.203.217.242",
 ]
 
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
@@ -324,7 +266,6 @@ stripe.api_key = STRIPE_SECRET_KEY
 # STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
 STRIPE_TEST_SECRET_KEY = env("STRIPE_SECRET_KEY")
 STRIPE_LIVE_MODE = False  # Change to True in production
-# DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"  # Get it from the section in the Stripe dashboard where you added the webhook endpoint
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
@@ -335,7 +276,6 @@ DWOLLA_APP_KEY = env('DWOLLA_APP_KEY')
 DWOLLA_APP_SECRET = env('DWOLLA_APP_SECRET')
 DWOLLA_WEBHOOK_SECRET = env('DWOLLA_WEBHOOK_SECRET')
 DWOLLA_MAIN_FUNDING_SOURCE = env('DWOLLA_MAIN_FUNDING_SOURCE')
-# CSRF_COOKIE_SECURE = False
 PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
 

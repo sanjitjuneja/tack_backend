@@ -1,7 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
@@ -44,7 +44,7 @@ class GroupViewset(
                 status=400
             )
 
-        serializer = GroupMembersSerializer(gm)
+        serializer = GroupMembersSerializer(gm, context={"request": request})
         return Response(serializer.data)
 
     @action(methods=("GET",), detail=False, serializer_class=GroupMembersSerializer)
@@ -59,7 +59,7 @@ class GroupViewset(
             "group"
         )
         page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -74,7 +74,7 @@ class GroupViewset(
         group = self.get_object()
         request.user.active_group = group
         request.user.save()
-        serializer = GroupSerializer(group)
+        serializer = GroupSerializer(group, context={"request": request})
         return Response(serializer.data)
 
     @extend_schema(
@@ -104,9 +104,9 @@ class GroupViewset(
             return Response({"error": "code", "message": "Group not found"}, status=404)
         except GroupMembers.DoesNotExist:
             invite, created = GroupInvitations.objects.get_or_create(invitee=request.user, group=group)
-            invite_serializer = GroupInvitationsSerializer(invite)
+            invite_serializer = GroupInvitationsSerializer(invite, context={"request": request})
             return Response({"invitation": invite_serializer.data})
-        return Response({"group": GroupMembersSerializer(gm).data})
+        return Response({"group": GroupMembersSerializer(gm, context={"request": request}).data})
 
     @extend_schema(
         responses={
@@ -133,14 +133,37 @@ class GroupViewset(
 
         group = self.get_object()
         try:
-            # TODO: 1 query
             gm = GroupMembers.objects.get(member=request.user, group=group)
+
+            ongoing_tacks = Tack.active.filter(
+                Q(tacker=request.user) | Q(runner=request.user),
+                status__in=(
+                    TackStatus.ACCEPTED,
+                    TackStatus.IN_PROGRESS,
+                    TackStatus.WAITING_REVIEW
+                ),
+                group=group
+            )
+            logging.getLogger().warning(f"{ongoing_tacks = }")
+
+            # check if User have ongoing Tacks right now
+            if ongoing_tacks.exists():
+                return Response(
+                    {
+                        "error": "code",
+                        "message": "You can't leave this group. You have ongoing Tacks"
+                    },
+                    status=400)
+
+            if request.user.active_group == group:
+                request.user.active_group = None
+                request.user.save()
             gm.delete()
         except ObjectDoesNotExist:
             return Response({"message": "You are not a member of this group"}, status=400)
 
         return Response({"message": "Leaved Successfully",
-                         "group": GroupSerializer(group).data}, status=200)
+                         "group": GroupSerializer(group, context={"request": request}).data}, status=200)
 
     @action(
         methods=("GET",),
@@ -172,13 +195,13 @@ class GroupViewset(
         methods=("GET",),
         detail=True,
         serializer_class=UserListSerializer,
-        permission_classes=(GroupMemberPermission,)
+        permission_classes=(IsAuthenticated,)
     )
     def members(self, request, *args, **kwargs):
         group = self.get_object()
         users_qs = User.objects.filter(groupmembers__group=group)
         page = self.paginate_queryset(users_qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request", request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=("GET",), detail=True, permission_classes=(GroupMemberPermission,))
@@ -231,7 +254,7 @@ class GroupViewset(
             gm.save()
         except GroupMembers.DoesNotExist:
             return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
-        return Response(GroupMembersSerializer(gm).data)
+        return Response(GroupMembersSerializer(gm, context={"request": request}).data)
 
     @extend_schema(request=None)
     @action(
@@ -308,7 +331,7 @@ class InvitesView(
 
         qs = GroupInvitations.objects.filter(invitee=request.user).select_related("group")
         page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -319,7 +342,7 @@ class InvitesView(
         invite = self.get_object()
         GroupMembers.objects.create(group=invite.group, member=invite.invitee)
         invite.delete()
-        return Response({"accepted group": GroupSerializer(invite.group).data})
+        return Response({"accepted group": GroupSerializer(invite.group, context={"request": request}).data})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

@@ -1,5 +1,9 @@
 import logging
 
+from django.db import transaction
+
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models.signals import post_save
@@ -21,22 +25,18 @@ ws_sender = WSSender()
 
 @webhooks.handler("payment_intent.succeeded")
 def add_balance_to_user(event, *args, **kwargs):
+    logger = logging.getLogger()
+    logger.warning("add_balance_to_user")
     pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
-    if pi.status != PaymentIntentStatus.succeeded:
-        ba = BankAccount.objects.get(stripe_user=pi.customer)
-        add_money_to_bank_account(ba, pi)
-        service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
-        try:
-            Transaction.objects.get(
-                transaction_id=pi.id,
-                is_stripe=True,
-                amount_with_fees=pi.amount,
-                service_fee=service_fee,
-                is_succeeded=True
-            )
-        except Transaction.DoesNotExist:
-            # TODO: Something happened because Transaction should be created on AddBalanceStripe
-            pass
+    tr = Transaction.objects.get(transaction_id=pi.id)
+    logger.warning(f"{pi =}")
+    add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
+    service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
+    logger.warning(f"{service_fee =}")
+
+    logger.warning(f"{tr =}")
+    tr.is_succeeded = True
+    tr.save()
 
 
 @webhooks.handler("payment_method.attached")
@@ -47,7 +47,6 @@ def create_pm_holder(event, *args, **kwargs):
 
 @receiver(signal=post_save, sender=BankAccount)
 def ba_save(instance: BankAccount, *args, **kwargs):
-    logging.getLogger().warning(f"{instance = }")
     ws_sender.send_message(
         f"user_{instance.user.id}",
         'balance.update',

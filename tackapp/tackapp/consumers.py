@@ -86,10 +86,11 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def tack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        self.channel_layer.group_add(
+        await self.channel_layer.group_add(
             f"tack_{message['id']}_tacker",
             self.channel_name
         )
+
         logging.getLogger().warning(f"in tack_create: tack_{message['id']}_tacker",)
         await self.send(
             text_data=form_websocket_message(
