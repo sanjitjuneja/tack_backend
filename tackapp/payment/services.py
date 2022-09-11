@@ -455,9 +455,12 @@ def detach_payment_method(user: User, payment_type: str, payment_method: str):
 
 
 def update_dwolla_pms_with_primary(pms: dict):
+    """Enrich (data: list) of (funding_source's: dict) (is_primary: bool) values"""
+
     data = pms["_embedded"]["funding-sources"]
     dwolla_pm_ids = [funding_source["id"] for funding_source in data]
 
+    # [{"dwolla_payment_method": "id-1", "is_primary": bool}, ...]
     upms_values = UserPaymentMethods.objects.filter(
         dwolla_payment_method__in=dwolla_pm_ids
     ).values(
@@ -465,11 +468,15 @@ def update_dwolla_pms_with_primary(pms: dict):
         "is_primary"
     )
 
-    # TODO: too ugly will change later (31.08.2022)
-    for upm in upms_values:
-        for funding_source in data:
-            if funding_source["id"] == upm["dwolla_payment_method"]:
-                funding_source["is_primary"] = upm["is_primary"]
+    # [{"id-1": bool}, ...]
+    upms_dict = {
+        upm['dwolla_payment_method']: upm['is_primary']
+        for upm in upms_values
+    }
+    data = [
+        funding_source | {'is_primary': upms_dict.get(funding_source['id']) or False}
+        for funding_source in data
+    ]
     return data
 
 
