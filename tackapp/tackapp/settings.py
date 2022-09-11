@@ -81,6 +81,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
+    "tackapp.middleware.RequestTimeMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -129,7 +130,8 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "tackapp",  # custom engine for logging
+        # "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
