@@ -16,7 +16,7 @@ class Review(CoreModel):
     description = models.CharField(max_length=256)
 
     def __str__(self):
-        return f"{self.description[:20]}, {self.rating}, {self.user}"
+        return f"Review {self.id}: {self.user} {self.rating} on {self.tack}"
 
     class Meta:
         db_table = "reviews"

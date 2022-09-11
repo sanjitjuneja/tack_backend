@@ -20,5 +20,5 @@ class PopularTacksAdmin(ModelAdmin):
 
 @admin.register(Offer)
 class OfferAdmin(ModelAdmin):
-    list_display = ['id', 'tack', 'runner', 'offer_type', 'is_accepted', 'creation_time']
-    list_filter = ['offer_type', 'is_accepted']
+    list_display = ['id', 'tack', 'runner', 'offer_type', 'is_accepted', 'is_active', 'creation_time']
+    list_filter = ['offer_type', 'is_accepted', 'is_active']
