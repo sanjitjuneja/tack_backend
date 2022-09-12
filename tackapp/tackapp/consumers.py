@@ -120,7 +120,6 @@ class MainConsumer(AsyncWebsocketConsumer):
             f"tack_{message}_offer",
             self.channel_name)
 
-
     async def grouptack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
@@ -211,7 +210,6 @@ class MainConsumer(AsyncWebsocketConsumer):
             f"group_{message}",
             self.channel_name)
 
-
     async def offer_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
@@ -265,4 +263,3 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-
