@@ -11,7 +11,7 @@ thread_locals = local()
 time_measurement_logger = build_logger("tackapp.middleware")
 FORMAT = "\n%(asctime)23s :: %(name)-15s :: line %(lineno)5s :: %(message)20s"
 # time_measurement_logger = logging.getLogger("tackapp.middleware")
-time_measurement_logger.setLevel("DEBUG")
+time_measurement_logger.setLevel("CRITICAL")
 
 log_filename = "logs/time_measurement.log"
 os.makedirs(os.path.dirname(log_filename), exist_ok=True)
