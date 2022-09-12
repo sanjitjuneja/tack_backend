@@ -16,13 +16,13 @@ time_measurement_logger.setLevel("CRITICAL")
 log_filename = "logs/time_measurement.log"
 os.makedirs(os.path.dirname(log_filename), exist_ok=True)
 
-sh = logging.StreamHandler(sys.stdout)
-sh.setLevel("CRITICAL")
+# sh = logging.StreamHandler(sys.stdout)
+# sh.setLevel("CRITICAL")
 
 fh = logging.FileHandler(filename=log_filename)
 fh.setFormatter(logging.Formatter(FORMAT))
 time_measurement_logger.addHandler(fh)
-time_measurement_logger.addHandler(sh)
+# time_measurement_logger.addHandler(sh)
 
 logging.basicConfig(filename=log_filename)
 
