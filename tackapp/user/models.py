@@ -74,6 +74,6 @@ class User(AbstractUser):
         return f"{self.last_name} {self.first_name}"
 
     class Meta:
-        db_table = "users"
+        # db_table = "users"
         verbose_name = "User"
         verbose_name_plural = "Users"

@@ -13,6 +13,8 @@ services:
     command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
     ports:
       - "8020:8020"
+    depends_on:
+      - postgres
 
   nginx:
     container_name: 'nginx'
@@ -50,6 +52,13 @@ services:
       - tackapp/dev.env
     ports:
       - "15672:15672"
+
+  postgres:
+    image: postgres:14.4-alpine
+    container_name: 'postgres'
+    restart: always
+    env_file:
+      - tackapp/dev.env
 
   flower:
     build: .

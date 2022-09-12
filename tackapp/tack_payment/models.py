@@ -24,7 +24,7 @@ class BankAccount(models.Model):
         return f"{str(self.user)}: {self.usd_balance / 100:.2f} $"
 
     class Meta:
-        db_table = "bank_account"
+        # db_table = "bank_account"
         verbose_name = "Bank Account"
         verbose_name_plural = "Bank Accounts"
 
@@ -37,7 +37,7 @@ class UserPaymentMethods(models.Model):
     dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
 
     class Meta:
-        db_table = "payment_methods"
+        # db_table = "payment_methods"
         verbose_name = "Payment method"
         verbose_name_plural = "Payment methods"
         constraints = [
@@ -71,7 +71,7 @@ class Fee(models.Model):
     max_loss = models.PositiveIntegerField(default=4000)
 
     class Meta:
-        db_table = "fees"
+        # db_table = "fees"
         verbose_name = "Fee"
         verbose_name_plural = "Fees"
 
@@ -81,7 +81,7 @@ class StripePaymentMethodsHolder(models.Model):
     is_primary = models.BooleanField(default=False)
 
     class Meta:
-        db_table = "stripe_pm_holder"
+        # db_table = "stripe_pm_holder"
         verbose_name = "Stripe Payment method holder"
         verbose_name_plural = "Stripe Payment methods holder"
 

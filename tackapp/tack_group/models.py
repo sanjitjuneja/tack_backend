@@ -33,7 +33,7 @@ class Group(CoreModel):
         return f"{self.id}: {self.name}"
 
     class Meta:
-        db_table = "groups"
+        # db_table = "groups"
         verbose_name = "Group"
         verbose_name_plural = "Groups"
 
@@ -45,7 +45,7 @@ class GroupMembers(models.Model):
     date_joined = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "group_membership"
+        # db_table = "group_membership"
         verbose_name = "Group membership"
         verbose_name_plural = "Groups membership"
         constraints = [
@@ -58,7 +58,7 @@ class GroupInvitations(models.Model):
     group = models.ForeignKey("tack_group.Group", on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "group_invitations"
+        # db_table = "group_invitations"
         verbose_name = "Group invitation"
         verbose_name_plural = "Groups invitation"
 
@@ -68,6 +68,6 @@ class GroupTacks(models.Model):
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "group_tacks"
+        # db_table = "group_tacks"
         verbose_name = "Group Tack"
         verbose_name_plural = "Group Tacks"

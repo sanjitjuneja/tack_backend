@@ -19,7 +19,7 @@ class Review(CoreModel):
         return f"Review {self.id}: {self.user} {self.rating} on {self.tack}"
 
     class Meta:
-        db_table = "reviews"
+        # db_table = "reviews"
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
         constraints = [

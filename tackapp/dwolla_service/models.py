@@ -12,7 +12,7 @@ class DwollaEvent(models.Model):
     created = models.DateTimeField()
 
     class Meta:
-        db_table = "dwolla_events"
+        # db_table = "dwolla_events"
         verbose_name = "Dwolla event"
         verbose_name_plural = "Dwolla events"
 
@@ -22,7 +22,7 @@ class DwollaRemovedAccount(models.Model):
     creation_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "dwolla_removed_accounts"
+        # db_table = "dwolla_removed_accounts"
         verbose_name = "Dwolla removed account"
         verbose_name_plural = "Dwolla removed accounts"
 
