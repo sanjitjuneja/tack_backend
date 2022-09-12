@@ -104,7 +104,7 @@ class TackViewset(
         )
         tacks = self.filter_queryset(tacks)
         serializer = self.serializer_class(tacks, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
     def me_as_runner(self, request, *args, **kwargs):
@@ -123,7 +123,7 @@ class TackViewset(
             "tack__group"
         )
         serializer = self.get_serializer(offers, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
     def previous_as_tacker(self, request, *args, **kwargs):
