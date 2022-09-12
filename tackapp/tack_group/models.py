@@ -39,7 +39,7 @@ class Group(CoreModel):
 
 
 class GroupMembers(models.Model):
-    group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
+    group = models.ForeignKey("tack_group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
     is_muted = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -55,7 +55,7 @@ class GroupMembers(models.Model):
 
 class GroupInvitations(models.Model):
     invitee = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_invitee")
-    group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
+    group = models.ForeignKey("tack_group.Group", on_delete=models.CASCADE)
 
     class Meta:
         db_table = "group_invitations"
@@ -64,7 +64,7 @@ class GroupInvitations(models.Model):
 
 
 class GroupTacks(models.Model):
-    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True)
+    group = models.ForeignKey("tack_group.Group", on_delete=models.SET_NULL, null=True)
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
 
     class Meta:

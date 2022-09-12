@@ -15,9 +15,9 @@ from djstripe.enums import PaymentIntentStatus
 from djstripe import webhooks
 from djstripe.models import PaymentIntent, PaymentMethod
 
-from payment.models import StripePaymentMethodsHolder, Transaction, BankAccount
-from payment.serializers import BankAccountSerializer
-from payment.services import add_money_to_bank_account, calculate_service_fee
+from tack_payment.models import StripePaymentMethodsHolder, Transaction, BankAccount
+from tack_payment.serializers import BankAccountSerializer
+from tack_payment.services import add_money_to_bank_account, calculate_service_fee
 from tackapp.websocket_messages import WSSender
 
 ws_sender = WSSender()

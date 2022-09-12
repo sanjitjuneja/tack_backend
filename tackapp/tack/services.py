@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.choices import TackStatus, OfferType
-from payment.services import send_payment_to_runner
+from tack_payment.services import send_payment_to_runner
 from .models import Offer, Tack
 
 

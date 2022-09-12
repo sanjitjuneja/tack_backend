@@ -1,4 +1,4 @@
-from group.views import GroupViewset, InvitesView
+from tack_group.views import GroupViewset, InvitesView
 from rest_framework import routers
 
 router = routers.SimpleRouter()

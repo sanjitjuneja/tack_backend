@@ -8,7 +8,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from core.choices import TackStatus
-from group.models import GroupTacks
+from tack_group.models import GroupTacks
 from tack.models import Offer, Tack
 from user.models import User
 from .serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer

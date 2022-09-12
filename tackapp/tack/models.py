@@ -28,7 +28,7 @@ class Tack(CoreModel):
         ),
     )
     group = models.ForeignKey(
-        "group.Group",
+        "tack_group.Group",
         on_delete=models.CASCADE
     )
     description = models.CharField(max_length=512)
@@ -113,7 +113,7 @@ class PopularTack(models.Model):
             MaxValueValidator(999_999_99),
         ),
     )
-    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
+    group = models.ForeignKey("tack_group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
     allow_counter_offer = models.BooleanField()
     estimation_time_seconds = models.PositiveIntegerField(null=True, blank=True, default=None)

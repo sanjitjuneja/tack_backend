@@ -21,12 +21,12 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import views
 from rest_framework.response import Response
 
-from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
-from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
+from tack_payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
+from tack_payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
     AddBalanceStripeSerializer, FeeSerializer
-from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
+from tack_payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
     detach_payment_method, update_dwolla_pms_with_primary, calculate_amount_with_fees, get_sum24h_transactions, \

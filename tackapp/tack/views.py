@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from core.choices import TackStatus, OfferType
-from group.models import GroupTacks, Group
+from tack_group.models import GroupTacks, Group
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished

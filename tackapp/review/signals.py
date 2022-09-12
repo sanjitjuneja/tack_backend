@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 from core.choices import TackStatus
 from .models import Review
-from payment.services import send_payment_to_runner
+from tack_payment.services import send_payment_to_runner
 from review.services import get_reviews_by_user, change_tacks_rating_on_review_save
 
 

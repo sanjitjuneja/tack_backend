@@ -28,9 +28,9 @@ from plaid.model.products import Products
 
 from core.choices import OfferType, PaymentType, PaymentService, PaymentAction
 from dwolla_service.models import DwollaEvent
-from payment.plaid_service import plaid_client
-from payment.dwolla_service import dwolla_client
-from payment.models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, Transaction, ServiceFee
+from tack_payment.plaid_service import plaid_client
+from tack_payment.dwolla_service import dwolla_client
+from tack_payment.models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, Transaction, ServiceFee
 from tack.models import Tack
 from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User

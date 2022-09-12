@@ -9,9 +9,9 @@ import stripe
 from djstripe.models import Customer as dsCustomer
 from django.db.models import Q
 
-from payment.dwolla_service import dwolla_client
+from tack_payment.dwolla_service import dwolla_client
 from dwolla_service.models import DwollaRemovedAccount
-from payment.services import get_dwolla_id, get_dwolla_payment_methods, detach_dwolla_funding_sources, \
+from tack_payment.services import get_dwolla_id, get_dwolla_payment_methods, detach_dwolla_funding_sources, \
     _deactivate_dwolla_account, is_user_have_dwolla_pending_transfers
 from review.models import Review
 from user.models import User

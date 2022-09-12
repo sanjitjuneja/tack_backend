@@ -3,7 +3,7 @@ from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
-from payment.models import BankAccount
+from tack_payment.models import BankAccount
 from tackapp.websocket_messages import WSSender
 from user.models import User
 from user.serializers import UserDetailSerializer

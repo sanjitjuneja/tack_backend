@@ -2,7 +2,7 @@ from celery import shared_task
 from django.db import transaction
 
 from dwolla_service.models import DwollaRemovedAccount
-from payment.services import is_user_have_dwolla_pending_transfers
+from tack_payment.services import is_user_have_dwolla_pending_transfers
 from user.services import deactivate_dwolla_account
 
 

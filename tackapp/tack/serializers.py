@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from core.choices import OfferType
-from group.serializers import GroupSerializer
+from tack_group.serializers import GroupSerializer
 from user.serializers import UserSerializer, UserListSerializer
 from .models import *
 from phonenumber_field.serializerfields import PhoneNumberField
