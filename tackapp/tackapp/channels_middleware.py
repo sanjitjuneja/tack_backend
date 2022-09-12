@@ -24,9 +24,9 @@ def get_user(user_id):
 def extract_token(headers: tuple) -> bytes:
     """Function to get token from HTTP headers"""
 
-    # Starting from an end because "token" header will likely be there
+    # Starting from an end because "Authorization" header will likely be there
     for header, value in headers[::-1]:
-        if header == b'token':
+        if header == b'Authorization':
             return value
     return b''
 
