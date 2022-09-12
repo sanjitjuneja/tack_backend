@@ -91,7 +91,7 @@ INSTALLED_APPS = [
     "django_filters",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    "djstripe",
+    "djstripe.apps.DjstripeAppConfig",
     "storages",
     "fcm_django",
     "django_celery_beat",
