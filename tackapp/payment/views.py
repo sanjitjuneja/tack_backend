@@ -261,7 +261,7 @@ class DwollaMoneyWithdraw(views.APIView):
 
         try:
             ba = BankAccount.objects.get(user=request.user)
-            if ba.usd_balance <= serializer.validated_data["amount"]:
+            if ba.usd_balance < serializer.validated_data["amount"]:
                 return Response({"error": "code", "message": "Not enough money"}, status=400)
         except BankAccount.DoesNotExist:
             pass
