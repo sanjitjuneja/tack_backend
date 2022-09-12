@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 
 from tackapp.websocket_messages import WSSender
@@ -57,6 +57,10 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
         'groupdetails.delete',
         instance.group.id)
     # set another active group if user leaving his current active group
+
+
+@receiver(signal=pre_delete, sender=GroupMembers)
+def pre_delete_group_members(instance: GroupMembers, *args, **kwargs):
     if instance.member.active_group == instance.group:
         recent_gm = GroupMembers.objects.filter(
             member=instance.member
