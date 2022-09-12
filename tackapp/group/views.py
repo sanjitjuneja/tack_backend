@@ -72,8 +72,9 @@ class GroupViewset(
         """Endpoint for setting active Group to the User (for further Tack creation)"""
 
         group = self.get_object()
-        request.user.active_group = group
-        request.user.save()
+        if not request.user.active_group == group:
+            request.user.active_group = group
+            request.user.save()
         serializer = GroupSerializer(group, context={"request": request})
         return Response(serializer.data)
 
