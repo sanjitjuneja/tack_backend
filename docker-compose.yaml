@@ -6,6 +6,8 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
+    env_file:
+      - tackapp/prod.env
     volumes:
       - static_volume:/app/tackapp/staticfiles
       - media_volume:/app/tackapp/media
