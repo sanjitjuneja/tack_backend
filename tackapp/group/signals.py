@@ -55,12 +55,15 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
     ws_sender.send_message(
         f"user_{instance.member.id}",
         'groupdetails.delete',
-        instance.group.id)
+        instance.id)
     # set another active group if user leaving his current active group
 
 
 @receiver(signal=pre_delete, sender=GroupMembers)
 def pre_delete_group_members(instance: GroupMembers, *args, **kwargs):
+    logging.getLogger().warning(f"{instance = }")
+    logging.getLogger().warning(f"{instance.group = }")
+    logging.getLogger().warning(f"{instance.member.active_group = }")
     if instance.member.active_group == instance.group:
         recent_gm = GroupMembers.objects.filter(
             member=instance.member
