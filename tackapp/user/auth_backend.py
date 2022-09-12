@@ -1,30 +1,62 @@
-from django.db.models import Q
+from rest_framework import serializers, exceptions
+from rest_framework_simplejwt.serializers import PasswordField
+from fcm_django.models import FCMDevice
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from user.models import User
 
 
+def create_firebase_device(device_fields, user):
+    FCMDevice.objects.update_or_create(
+        device_id=device_fields.get('device_id'),
+        defaults={
+            "name": device_fields.get('device_name'),
+            "user": user,
+            "registration_id": device_fields.get('firebase_token'),
+            "type": device_fields.get('device_type'),
+        }
+    )
+
+
 class CustomJWTSerializer(TokenObtainPairSerializer):
     username_field = "phone_number"
+    device_id = "device_id"
+    firebase_token = "firebase_token"
+    device_name = "device_name"
+    device_type = "device_type"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields[self.username_field] = serializers.CharField()
+        self.fields["password"] = PasswordField()
+        self.fields["device_id"] = serializers.CharField(required=False)
+        self.fields["firebase_token"] = serializers.CharField(required=False)
+        self.fields["device_type"] = serializers.CharField(required=False)
+        self.fields["device_name"] = serializers.CharField(required=False)
 
     def validate(self, attrs):
         credentials = {
             'phone_number': attrs.get("phone_number"),
             'password': attrs.get("password")
         }
-
-        if type(credentials['phone_number']) is str:
-            credentials['phone_number'] = credentials['phone_number'].lower()
-
         try:
-            user = User.objects.get(
-                Q(phone_number=credentials["phone_number"]) |
-                Q(email=credentials["phone_number"])
-            )
-            if user:
-                credentials['phone_number'] = user.phone_number
+            if "@" in credentials["phone_number"]:
+                user = User.objects.filter(
+                    email=credentials["phone_number"]
+                )
+            else:
+                user = User.objects.filter(
+                    phone_number=credentials["phone_number"]
+                )
         except User.DoesNotExist:
-            pass
-
-        return super().validate(credentials)
+            raise exceptions.AuthenticationFailed(
+                self.error_messages["no_active_account"],
+                "no_active_account",
+            )
+        else:
+            data = super().validate(credentials)
+            if all(name in attrs for name in ("device_id", "device_type")):
+                create_firebase_device(attrs, user)
+            return data

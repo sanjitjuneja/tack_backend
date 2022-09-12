@@ -8,46 +8,27 @@ services:
     entrypoint: ["/app/docker-entrypoint.sh"]
     volumes:
       - .:/app/
-    environment:
-      - app=dev
-#    volumes:
-#      - static_volume:/app/tackapp/staticfiles
-#      - media_volume:/app/tackapp/media
-#    command: ["python3", "manage.py", "runserver", "0.0.0.0:8020"]
-    command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
-#    command: ["gunicorn", "tackapp.asgi:application", "--bind", "0.0.0.0:8020"]
-    ports:
-      - "8020:8020"
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:14.4-alpine
-    container_name: 'postgres'
-    restart: always
     env_file:
       - tackapp/dev.env
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
     ports:
-      - "5432:5432"
+      - "8020:8020"
 
-#  nginx:
-#    container_name: 'nginx'
-#    build: ./nginx
-#    ports:
-#      - "80:80"
-#    volumes:
-#      - static_volume:/app/tackapp/staticfiles
-#      - media_volume:/app/tackapp/media
-#    depends_on:
-#      - web
+  nginx:
+    container_name: 'nginx'
+    build: ./nginx
+    ports:
+      - "80:80"
+    env_file:
+      - tackapp/dev.env
+    depends_on:
+      - web
 
   celery:
     build: .
     container_name: 'celery'
     restart: always
     command: celery -A tackapp worker --loglevel=info --logfile=celery.log
-#    volumes:
-#      - .:/app/
     env_file:
       - tackapp/dev.env
     depends_on:
@@ -66,11 +47,9 @@ services:
     image: rabbitmq:3.10-management
     restart: always
     env_file:
-      - tackapp/prod.env
+      - tackapp/dev.env
     ports:
       - "15672:15672"
-      - "15671:15671"
-
 
   flower:
     build: .
@@ -85,8 +64,3 @@ services:
       - web
       - redis
       - celery
-      - postgres
-#
-#volumes:
-#  static_volume:
-#  media_volume:

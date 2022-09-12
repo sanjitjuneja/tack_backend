@@ -17,43 +17,52 @@ import environ
 import django
 import stripe
 from django.utils.encoding import force_str
+from firebase_admin import initialize_app
+
+from .servises import read_secrets
+from aws.secretmanager import receive_setting_secrets
+from aws.ssm import receive_setting_parameters
 django.utils.encoding.force_text = force_str
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-main_logger = logging.getLogger("tackapp")
-
-
-if os.getenv("app") == "dev":
-    main_logger.setLevel("DEBUG")
+app = os.getenv("APP")
+if app == "dev":
     env = environ.Env(DEBUG=(bool, True))
-    environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
-    main_logger.setLevel("INFO")
-    env = environ.Env(DEBUG=(bool, False))
-    environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
+    temp_env = environ.Env(DEBUG=(bool, True))
+    temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
+
+    env = receive_setting_secrets(
+        temp_env("AWS_ACCESS_KEY_ID"),
+        temp_env("AWS_SECRET_ACCESS_KEY"),
+        temp_env("AWS_REGION")
+    )
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+AWS_ACCESS_KEY_ID = read_secrets(app, env, "AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = read_secrets(app, env, "AWS_SECRET_ACCESS_KEY")
+AWS_REGION = read_secrets(app, env, "AWS_REGION")
+allowed_hosts, celery_broker, _, crsf_trusted_origins = receive_setting_parameters(
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    AWS_REGION
+)
+
+SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+DEBUG = read_secrets(app, env, "DEBUG")
 
-ALLOWED_HOSTS = [
-    "tackapp.net",
-    "127.0.0.1",
-    "44.203.217.242",
-    "localhost",
-    "backend.tackapp.net",
-    "34.236.154.0",
-]
+ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
 
 INTERNAL_IPS = [
     "127.0.0.1"
@@ -83,6 +92,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "djstripe",
+    "storages",
+    "fcm_django",
     "django_celery_beat",
 ]
 
@@ -137,13 +148,12 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     "default": {
-        "ENGINE": "tackapp",  # custom engine for logging
-        # "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": env("POSTGRES_DB"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST"),
-        "PORT": env("POSTGRES_PORT"),
+        "ENGINE": "tackapp",
+        "NAME": read_secrets(app, env, "POSTGRES_DB"),
+        "USER": read_secrets(app, env, "POSTGRES_USER"),
+        "PASSWORD": read_secrets(app, env, "POSTGRES_PASSWORD"),
+        "HOST": read_secrets(app, env, "POSTGRES_HOST"),
+        "PORT": read_secrets(app, env, "POSTGRES_PORT"),
     }
 }
 
@@ -182,15 +192,38 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
+AWS_STORAGE_BUCKET_NAME = read_secrets(app, env, 'AWS_STORAGE_BUCKET_NAME')
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_FILE_OVERWRITE = read_secrets(app, env, 'AWS_S3_FILE_OVERWRITE')
+AWS_DEFAULT_ACL = read_secrets(app, env, 'AWS_DEFAULT_ACL')
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_QUERYSTRING_AUTH = read_secrets(app, env, 'AWS_QUERYSTRING_AUTH')
+AWS_HEADERS = {
+    "Access-Control-Allow-On"
+}
 
-if DEBUG:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-else:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = "static/"
+STATIC_LOCATION = read_secrets(app, env, 'STATIC_LOCATION')
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/'
+STATICFILES_STORAGE = 'tackapp.storage_backends.StaticStorage'
 
-MEDIA_URL = 'media/'  # 'http://myhost:port/media/'
-MEDIA_ROOT = BASE_DIR / "media"
+PUBLIC_MEDIA_LOCATION = read_secrets(app, env, 'PUBLIC_MEDIA_LOCATION')
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
+DEFAULT_FILE_STORAGE = 'tackapp.storage_backends.PublicMediaStorage'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_ROOT = MEDIA_URL
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+#STATICFILES_STORAGE = 'storages.storage_backends.StaticStorage'
+
+# if DEBUG:
+#     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+# else:
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATIC_URL = "static/"
+#
+# MEDIA_URL = 'media/'  # 'http://myhost:port/media/'
+# MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -224,12 +257,12 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Twilio
-TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
-MESSAGING_SERVICE_SID = env("MESSAGING_SERVICE_SID")
+TWILIO_ACCOUNT_SID = read_secrets(app, env, "TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = read_secrets(app, env, "TWILIO_AUTH_TOKEN")
+MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
-CELERY_BROKER_URL = env("CELERY_BROKER")
+CELERY_BROKER_URL = celery_broker.get("Value")
 
 
 SIMPLE_JWT = {
@@ -260,36 +293,47 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
 }
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8020",
-    "http://44.203.217.242:8020",
-    "https://backend.tackapp.net",
-    "http://172.31.8.161",
-    "http://44.203.217.242",
-    "http://34.236.154.0:8020"
-]
+CSRF_TRUSTED_ORIGINS = crsf_trusted_origins.get("Value").split(",")
 
-STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
-STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = read_secrets(app, env, "STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
 # STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
-STRIPE_TEST_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_TEST_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
 STRIPE_LIVE_MODE = False  # Change to True in production
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
-DJSTRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+DJSTRIPE_WEBHOOK_SECRET = read_secrets(app, env, "STRIPE_WEBHOOK_SECRET")
 
 
-DWOLLA_APP_KEY = env('DWOLLA_APP_KEY')
-DWOLLA_APP_SECRET = env('DWOLLA_APP_SECRET')
-DWOLLA_WEBHOOK_SECRET = env('DWOLLA_WEBHOOK_SECRET')
-DWOLLA_MAIN_FUNDING_SOURCE = env('DWOLLA_MAIN_FUNDING_SOURCE')
-PLAID_CLIENT_ID = env("PLAID_CLIENT_ID")
-PLAID_CLIENT_SECRET = env("PLAID_CLIENT_SECRET")
+DWOLLA_APP_KEY = read_secrets(app, env, 'DWOLLA_APP_KEY')
+DWOLLA_APP_SECRET = read_secrets(app, env, 'DWOLLA_APP_SECRET')
+DWOLLA_MAIN_FUNDING_SOURCE = read_secrets(app, env, 'DWOLLA_MAIN_FUNDING_SOURCE')
+DWOLLA_WEBHOOK_SECRET = read_secrets(app, env, 'DWOLLA_WEBHOOK_SECRET')
+PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
+PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
 
-S3_BUCKET_TACKAPPSTORAGE = env("S3_BUCKET_TACKAPPSTORAGE")
+
+FIREBASE_APP = initialize_app()
+
+FCM_DJANGO_SETTINGS = {
+     # default: _('FCM Django')
+    "APP_VERBOSE_NAME": "[tackapp]",
+     # true if you want to have only one active device per registered user at a time
+     # default: False
+    "ONE_DEVICE_PER_USER": False,
+     # devices to which notifications cannot be sent,
+     # are deleted upon receiving error response from FCM
+     # default: False
+    "DELETE_INACTIVE_DEVICES": True,
+}
+
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR, 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
+
+S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
+
 S3_BUCKET_CARDS = "/media/payment_methods/cards"
 S3_BUCKET_BANKS = "/media/payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "/media/payment_methods/digital_wallets"

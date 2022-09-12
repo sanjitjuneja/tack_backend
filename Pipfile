@@ -42,6 +42,10 @@ django-celery-beat = "*"
 channels = "*"
 channels-redis = "*"
 hypercorn = "*"
+boto3 = "*"
+django-storages = "*"
+fcm-django = "*"
+firebase-admin = "*"
 
 [dev-packages]
 

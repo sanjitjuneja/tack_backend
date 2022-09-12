@@ -6,10 +6,8 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
-    volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
-#    command: ["gunicorn", "tackapp.wsgi:application", "--bind", "0.0.0.0:8000"]
+    env_file:
+      - tackapp/prod.env
     command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
     expose:
       - 8000
@@ -29,9 +27,6 @@ services:
     build: ./nginx
     ports:
       - "8020:80"
-    volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
     depends_on:
       - web
 
@@ -60,18 +55,6 @@ services:
     env_file:
       - tackapp/prod.env
 
-#  flower:
-#    build: .
-#    container_name: 'flower'
-#    restart: always
-#    command: celery -A tackapp --broker=$RABBITMQ_DEFAULT_USER flower --port=5555
-#    env_file:
-#      - tackapp/prod.env
-#    depends_on:
-#      - web
-#      - redis
-#      - celery
-#      - postgres
 
 volumes:
   static_volume:
