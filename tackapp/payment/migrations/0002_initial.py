@@ -11,8 +11,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('payment', '0001_initial'),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('djstripe', '0011_alter_invoiceitem_tax_rates_and_more'),
     ]
 
     operations = [

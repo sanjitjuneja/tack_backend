@@ -5,12 +5,16 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 
+from tackapp import settings
+
 
 class Migration(migrations.Migration):
 
     initial = True
 
     dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('djstripe', '0011_alter_invoiceitem_tax_rates_and_more'),
     ]
 
     operations = [
