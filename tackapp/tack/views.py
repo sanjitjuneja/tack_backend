@@ -91,7 +91,7 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        queryset = Tack.active.filter(
+        tacks = Tack.active.filter(
             tacker=request.user
         ).exclude(
             status=TackStatus.FINISHED
@@ -102,9 +102,8 @@ class TackViewset(
             "runner",
             "group"
         )
-        queryset = self.filter_queryset(queryset)
-        page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True, context={"request": request})
+        tacks = self.filter_queryset(tacks)
+        serializer = self.serializer_class(tacks, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
@@ -123,8 +122,7 @@ class TackViewset(
             "runner",
             "tack__group"
         )
-        page = self.paginate_queryset(offers)
-        serializer = self.get_serializer(page, many=True, context={"request": request})
+        serializer = self.get_serializer(offers, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
