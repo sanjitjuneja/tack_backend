@@ -30,8 +30,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 app = os.getenv("APP")
 if app == "dev":
     env = environ.Env(DEBUG=(bool, True))
-    environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
+    # env = environ.Env(DEBUG=(bool, True))
+    # env.read_env(os.path.join(BASE_DIR, "prod.env"))
     env = receive_setting_secrets(
         os.getenv("AWS_ACCESS_KEY_ID"),
         os.getenv("AWS_SECRET_ACCESS_KEY"),
