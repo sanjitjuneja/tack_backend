@@ -355,6 +355,12 @@ def dwolla_transaction(
 
 
 def calculate_amount_with_fees(amount: int, service: str) -> int:
+    """
+    Function that calculates new amount based on Fee that we charge users
+    :param amount: amount in absolute minimal values e.g. cents
+    :param service: service name e.g. "stripe", "dwolla"
+    :return: new calculated amount
+    """
     fees = Fee.objects.all().last()
     abs_fee = 0
     match service:
@@ -362,13 +368,13 @@ def calculate_amount_with_fees(amount: int, service: str) -> int:
             abs_fee = amount * fees.fee_percent_stripe / 100
             if abs_fee < fees.fee_min_stripe:
                 abs_fee = fees.fee_min_stripe
-            elif abs_fee > fees.fee_max_stripe:
+            elif abs_fee > fees.fee_max_stripe and fees.fee_max_stripe:
                 abs_fee = fees.fee_max_stripe
         case PaymentService.DWOLLA:
             abs_fee = amount * fees.fee_percent_dwolla / 100
             if abs_fee < fees.fee_min_dwolla:
                 abs_fee = fees.fee_min_dwolla
-            elif abs_fee > fees.fee_max_dwolla:
+            elif abs_fee > fees.fee_max_dwolla and fees.fee_max_dwolla:
                 abs_fee = fees.fee_max_dwolla
 
     amount = int(amount + abs_fee)

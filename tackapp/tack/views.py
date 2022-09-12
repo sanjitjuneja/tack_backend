@@ -378,9 +378,6 @@ class OfferViewset(
     def accept(self, request, *args, **kwargs):
         """Endpoint for Tacker to accept Runner's offer"""
 
-        # TODO: check Tacker balance
-        # user.balance < tack.price - redirect on payment
-
         offer = self.get_object()
 
         # TODO: to service
