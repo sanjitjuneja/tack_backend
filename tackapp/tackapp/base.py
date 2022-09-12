@@ -7,6 +7,7 @@ from django.db.backends.utils import CursorWrapper as DjangoCursorWrapper
 from django.utils.encoding import force_str
 
 from tackapp.middleware import thread_locals
+from tackapp.middleware import time_measurement_logger
 
 
 @contextmanager
@@ -14,9 +15,8 @@ def calc_sql_time(sql):
     timestamp = time.monotonic()
     yield
 
-    logging.getLogger().warning((
-        f'Duration of SQL-request {sql} - '
-        f'{time.monotonic() - timestamp:.3f} sec'))
+    time_measurement_logger.debug((
+        f'{sql} :: {time.monotonic() - timestamp:.3f} sec'))
 
 
 class DatabaseWrapper(DjangoDatabaseWrapper):

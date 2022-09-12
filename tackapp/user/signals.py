@@ -16,13 +16,13 @@ ws_sender = WSSender()
 @receiver(signal=post_save, sender=User)
 def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs):
     if created and not instance.is_superuser:
-        # stripe_id, dwolla_id = create_api_accounts(instance)
+        stripe_id, dwolla_id = create_api_accounts(instance)
 
         # Creating record in our system
         BankAccount.objects.create(
             user=instance,
-            # stripe_user=stripe_id,
-            # dwolla_user=dwolla_id
+            stripe_user=stripe_id,
+            dwolla_user=dwolla_id
         )
     ws_sender.send_message(
         f"user_{instance.id}",

@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+import logging
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -22,10 +23,16 @@ django.utils.encoding.force_text = force_str
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+main_logger = logging.getLogger("tackapp")
+
+
 if os.getenv("app") == "dev":
+    main_logger.setLevel("DEBUG")
     env = environ.Env(DEBUG=(bool, True))
     environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
+    main_logger.setLevel("INFO")
     env = environ.Env(DEBUG=(bool, False))
     environ.Env.read_env(os.path.join(BASE_DIR, "prod.env"))
 
