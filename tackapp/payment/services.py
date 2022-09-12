@@ -342,6 +342,7 @@ def dwolla_transaction(
         amount_requested=amount,
         amount_with_fees=amount_with_fees,
         service_fee=service_fee,
+        is_deposit=False
     )
     match action:
         case PaymentAction.WITHDRAW:

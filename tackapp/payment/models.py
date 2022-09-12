@@ -93,6 +93,7 @@ class Transaction(models.Model):
     service_fee = models.PositiveIntegerField()
     is_dwolla = models.BooleanField(default=False)
     is_stripe = models.BooleanField(default=False)
+    is_deposit = models.BooleanField(default=True)
     transaction_id = models.CharField(max_length=255)
     creation_time = models.DateTimeField(auto_now_add=True)
     is_succeeded = models.BooleanField(default=False)
