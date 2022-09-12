@@ -108,17 +108,18 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def tack_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
+        await self.send(
+            text_data=form_websocket_message(
+                model='Tack', action='delete', obj=message
+            )
+        )
         await self.channel_layer.group_discard(
             f"tack_{message}_tacker",
             self.channel_name)
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-        await self.send(
-            text_data=form_websocket_message(
-                model='Tack', action='delete', obj=message
-            )
-        )
+
 
     async def grouptack_create(self, event):
         logger.warning(f"{event = }")
@@ -201,14 +202,15 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def groupdetails_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_discard(
-            f"group_{message}",
-            self.channel_name)
         await self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='delete', obj=message
             )
         )
+        await self.channel_layer.group_discard(
+            f"group_{message}",
+            self.channel_name)
+
 
     async def offer_create(self, event):
         logger.warning(f"{event = }")
@@ -255,11 +257,12 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def runnertack_delete(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_discard(
-            f"tack_{message}_offer",
-            self.channel_name)
         await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='delete', obj=message
             )
         )
+        await self.channel_layer.group_discard(
+            f"tack_{message}_offer",
+            self.channel_name)
+
