@@ -26,7 +26,7 @@ def extract_token(headers: tuple) -> bytes:
 
     # Starting from an end because "Authorization" header will likely be there
     for header, value in headers[::-1]:
-        if header == b'Authorization':
+        if header == b'authorization':
             return value
     return b''
 
