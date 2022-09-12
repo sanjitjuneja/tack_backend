@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-while ! python3 manage.py migrate --fake-initial 2>&1; do
+while ! python3 manage.py migrate 2>&1; do
    echo "Migration is in progress status"
    sleep 3
 done
