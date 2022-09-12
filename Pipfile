@@ -34,7 +34,6 @@ model-bakery = "*"
 faker = "*"
 faker-e164 = "*"
 stripe = "*"
-dj-stripe = "*"
 dwollav2 = "*"
 plaid-python = "*"
 aiohttp = "*"
@@ -46,6 +45,7 @@ boto3 = "*"
 django-storages = "*"
 fcm-django = "*"
 firebase-admin = "*"
+dj-stripe = "*"
 
 [dev-packages]
 
