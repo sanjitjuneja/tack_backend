@@ -14,7 +14,7 @@ class WSSender:
 
     @classmethod
     def send_message(cls, ws_group: str, ws_type: str, ws_message: dict | int):
-        ws_message = build_message_dict(ws_message)
+        # ws_message = build_message_dict(ws_message)
 
         async_to_sync(cls.channel_layer.group_send)(
             ws_group,
@@ -24,16 +24,16 @@ class WSSender:
             })
 
 
-def build_message_dict(dictionary: dict):
-    for key, value in dictionary.items():
-        if key == "image":
-            # dictionary[key] = build_image_url(value)
-            continue
-        elif isinstance(value, dict):
-            build_message_dict(value)
-
-    return dictionary
-
-
-def build_image_url(image_url: str) -> str:
-    return f"{AWS_S3_CUSTOM_DOMAIN}/{image_url}"
+# def build_message_dict(dictionary: dict):
+#     for key, value in dictionary.items():
+#         if key == "image":
+#             # dictionary[key] = build_image_url(value)
+#             continue
+#         elif isinstance(value, dict):
+#             build_message_dict(value)
+#
+#     return dictionary
+#
+#
+# def build_image_url(image_url: str) -> str:
+#     return f"{AWS_S3_CUSTOM_DOMAIN}/{image_url}"
