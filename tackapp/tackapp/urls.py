@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView, TokenBlacklistView
 
 from tackapp import consumers
+from tackapp.views import healthcheck
 from user.auth_backend import CustomJWTSerializer
 
 urlpatterns = [
@@ -21,7 +22,7 @@ urlpatterns = [
     re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
     re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
-
+    path("", healthcheck),
     # Optional UI:
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
