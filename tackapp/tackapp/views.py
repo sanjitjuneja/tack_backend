@@ -52,7 +52,7 @@ class NotificationView(views.APIView):
             ),
             android=messaging.AndroidConfig(
                 ttl=datetime.timedelta(seconds=3600),
-                priority='normal',
+                priority='high',
                 notification=messaging.AndroidNotification(
                     icon='stock_ticker_update',
                     color='#f45342'
@@ -61,9 +61,9 @@ class NotificationView(views.APIView):
             apns=messaging.APNSConfig(
                 payload=messaging.APNSPayload(
                     aps=messaging.Aps(badge=42),
+                    sound="default"
                 ),
-            ),
-            topic='industry-tech',
+            )
         )
             # data={
             #     "Nick": "Mario",
@@ -76,6 +76,6 @@ class NotificationView(views.APIView):
         devices = FCMDevice.objects.filter(user_id=serializer.validated_data["user"])
         logger.warning(f"{devices = }")
         # response = devices.send_message(message=message, sound='default', **kwargs)
-        response = devices.send_message(message, sound=True)
+        response = devices.send_message(message)
         logger.warning(f"{response = }")
         return Response()
