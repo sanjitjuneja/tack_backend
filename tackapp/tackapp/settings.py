@@ -34,7 +34,7 @@ if app == "dev":
     env.read_env(os.path.join(BASE_DIR, "dev.env"))
     # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
-    temp_env = environ.Env(DEBUG=(bool, True))
+    temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
 
     env = receive_setting_secrets(
@@ -61,6 +61,7 @@ SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = read_secrets(app, env, "DEBUG")
+logging.getLogger(f"{DEBUG = }")
 
 ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
 
