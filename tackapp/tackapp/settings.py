@@ -60,7 +60,7 @@ SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = read_secrets(app, env, "DEBUG")
+DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
 logging.getLogger().warning(f"{DEBUG = }")
 
 ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
@@ -194,12 +194,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 AWS_STORAGE_BUCKET_NAME = read_secrets(app, env, 'AWS_STORAGE_BUCKET_NAME')
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-AWS_S3_FILE_OVERWRITE = read_secrets(app, env, 'AWS_S3_FILE_OVERWRITE')
+AWS_S3_FILE_OVERWRITE = True if read_secrets(app, env, 'AWS_S3_FILE_OVERWRITE') == "True" else False
 AWS_DEFAULT_ACL = read_secrets(app, env, 'AWS_DEFAULT_ACL')
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
-AWS_QUERYSTRING_AUTH = read_secrets(app, env, 'AWS_QUERYSTRING_AUTH')
+AWS_QUERYSTRING_AUTH = True if read_secrets(app, env, 'AWS_QUERYSTRING_AUTH') == "True" else False
 AWS_HEADERS = {
     "Access-Control-Allow-On"
 }
