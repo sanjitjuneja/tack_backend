@@ -318,12 +318,8 @@ FCM_DJANGO_SETTINGS = {
     "DELETE_INACTIVE_DEVICES": True,
 }
 
-GOOGLE_APPLICATION_CREDENTIALS = json.load(
-    open(
-        os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json'
-                     )
-    )
-)
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
+
 logging.getLogger().warning(f"{GOOGLE_APPLICATION_CREDENTIALS = }")
 
 S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
