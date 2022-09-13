@@ -24,7 +24,7 @@ urlpatterns = [
     re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
     path("", HealthCheck.as_view()),
-    path("/notification", Notification.as_view()),
+    path("notification/", Notification.as_view()),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
