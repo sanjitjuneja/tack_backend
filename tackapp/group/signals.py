@@ -1,14 +1,11 @@
 import logging
-from uuid import uuid4
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 
 from tackapp.websocket_messages import WSSender
 from .models import Group, GroupMembers, GroupInvitations
-from .serializers import GroupInvitationsSerializer, GroupSerializer, GroupMembersSerializer
+from .serializers import GroupInvitationsSerializer, GroupMembersSerializer
 
 
 ws_sender = WSSender()
