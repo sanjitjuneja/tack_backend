@@ -52,10 +52,10 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'amount_requested',
         'amount_with_fees',
         'service_fee',
-        'is_stripe',
-        'is_dwolla',
+        'service_name',
+        'action_type',
         'is_succeeded',
         'transaction_id',
     )
-    list_filter = ('creation_time',)
+    list_filter = ('creation_time', 'service_name', 'action_type')
     search_fields = ('user', 'transaction_id')

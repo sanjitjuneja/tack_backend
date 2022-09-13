@@ -338,11 +338,11 @@ def dwolla_transaction(
     Transaction.objects.create(
         user=user,
         transaction_id=transaction_id,
-        is_dwolla=True,
+        service_name=PaymentService.DWOLLA,
         amount_requested=amount,
         amount_with_fees=amount_with_fees,
         service_fee=service_fee,
-        is_deposit=False
+        action_type=action
     )
     match action:
         case PaymentAction.WITHDRAW:

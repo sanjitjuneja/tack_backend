@@ -2,6 +2,8 @@ import djstripe.models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint, Deferrable
+
+from core.choices import PaymentService, PaymentAction
 from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
@@ -91,9 +93,8 @@ class Transaction(models.Model):
     amount_requested = models.PositiveIntegerField()
     amount_with_fees = models.PositiveIntegerField()
     service_fee = models.PositiveIntegerField()
-    is_dwolla = models.BooleanField(default=False)
-    is_stripe = models.BooleanField(default=False)
-    is_deposit = models.BooleanField(default=True)
+    service_name = models.CharField(max_length=10, choices=PaymentService.choices)
+    action_type = models.CharField(max_length=10, choices=PaymentAction.choices)
     transaction_id = models.CharField(max_length=255)
     creation_time = models.DateTimeField(auto_now_add=True)
     is_succeeded = models.BooleanField(default=False)
