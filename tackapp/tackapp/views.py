@@ -17,5 +17,6 @@ class Notification(views.APIView):
     def post(self, request, *args, **kwargs):
         serializer = NotificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        FCMDevice.objects.filter(user_id=NotificationSerializer)
+        devices = FCMDevice.objects.filter(user_id=NotificationSerializer)
+        devices.send_message(user=serializer.validated_data["user"])
         return Response()
