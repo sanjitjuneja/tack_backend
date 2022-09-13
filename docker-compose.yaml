@@ -16,6 +16,8 @@ services:
     container_name: 'nginx'
     restart: always
     build: ./nginx
+    env_file:
+      - tackapp/prod.env
     ports:
       - "80:80"
     depends_on:
