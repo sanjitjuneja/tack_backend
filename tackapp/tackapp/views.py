@@ -61,7 +61,8 @@ class NotificationView(views.APIView):
             apns=messaging.APNSConfig(
                 payload=messaging.APNSPayload(
                     aps=messaging.Aps(badge=42),
-                    sound="default"
+                    critical=True,
+                    volume=1
                 ),
             )
         )
