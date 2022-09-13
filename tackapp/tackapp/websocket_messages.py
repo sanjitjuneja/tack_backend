@@ -27,7 +27,7 @@ class WSSender:
 def build_message_dict(dictionary: dict):
     for key, value in dictionary.items():
         if key == "image":
-            dictionary[key] = build_image_url(value)
+            # dictionary[key] = build_image_url(value)
             continue
         elif isinstance(value, dict):
             build_message_dict(value)
