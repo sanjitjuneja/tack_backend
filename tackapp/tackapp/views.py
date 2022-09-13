@@ -21,7 +21,7 @@ class NotificationView(views.APIView):
     @extend_schema(request=NotificationSerializer, responses=NotificationSerializer)
     def post(self, request, *args, **kwargs):
         message = Message(
-            # notification=Notification(title="title", body="First one", image="url"),
+            notification=Notification(title="title", body="First one", image="url"),
             data={
                 "Nick": "Mario",
                 "body": "great match!",
