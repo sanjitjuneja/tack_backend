@@ -533,7 +533,7 @@ def calculate_service_fee(amount: int, service: str):
 
 def get_sum24h_transactions(user: User) -> int:
     sum24h = Transaction.objects.filter(
-                Q(is_stripe=True, is_succeeded=True) | Q(is_dwolla=True),
+                Q(service_name=PaymentService.STRIPE, is_succeeded=True) | Q(service_name=PaymentService.DWOLLA),
                 user=user,
                 creation_time__gt=timezone.now() - timedelta(hours=24)
             ).aggregate(

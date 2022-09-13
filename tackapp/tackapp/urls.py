@@ -3,11 +3,11 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 import debug_toolbar
-from drf_spectacular.views import SpectacularSwaggerView
+from drf_spectacular.views import SpectacularSwaggerView, SpectacularAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView, TokenBlacklistView
 
 from tackapp import consumers
-from tackapp.views import healthcheck
+from tackapp.views import HealthCheck
 from user.auth_backend import CustomJWTSerializer
 
 urlpatterns = [
@@ -23,7 +23,9 @@ urlpatterns = [
     re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
     re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
-    # path("", healthcheck),
+    path("", HealthCheck.as_view()),
+
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

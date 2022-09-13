@@ -1,5 +1,8 @@
 from django.http import HttpResponse
+from rest_framework import views
+from rest_framework.response import Response
 
 
-def healthcheck(request, *args, **kwargs):
-    return HttpResponse('')
+class HealthCheck(views.APIView):
+    def get(self):
+        return Response()
