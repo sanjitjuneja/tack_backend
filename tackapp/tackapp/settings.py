@@ -61,7 +61,7 @@ SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = read_secrets(app, env, "DEBUG")
-logging.getLogger(f"{DEBUG = }")
+logging.getLogger().warning(f"{DEBUG = }")
 
 ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
 
