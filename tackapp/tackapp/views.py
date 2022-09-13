@@ -7,7 +7,7 @@ from rest_framework import views
 from rest_framework.response import Response
 
 from tackapp.serializers import NotificationSerializer
-from firebase_admin.messaging import Message, Notification
+from firebase_admin.messaging import Message, Notification, FCMOptions
 
 logger = logging.getLogger()
 
@@ -20,6 +20,14 @@ class HealthCheck(views.APIView):
 class NotificationView(views.APIView):
     @extend_schema(request=NotificationSerializer, responses=NotificationSerializer)
     def post(self, request, *args, **kwargs):
+        data = {
+            "title": 'New Notification fired',
+            "body": 'I just fired a new notification'
+        }
+        kwargs = {
+            "content_available": True,
+            'extra_kwargs': {"priority": "high", "mutable_content": True, 'notification': data},
+        }
         message = Message(
             notification=Notification(title="title", body="First one", image="url"),
             data={
@@ -32,6 +40,7 @@ class NotificationView(views.APIView):
         serializer.is_valid(raise_exception=True)
         devices = FCMDevice.objects.filter(user_id=serializer.validated_data["user"])
         logger.warning(f"{devices = }")
-        response = devices.send_message(message)
+        response = devices.send_message(sound='default', **kwargs)
+        # response = devices.send_message(message)
         logger.warning(f"{response = }")
         return Response()
