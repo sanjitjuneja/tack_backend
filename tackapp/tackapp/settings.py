@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "user.apps.UserConfig",
+    "djstripe",
     "tack.apps.TackConfig",
     "review.apps.ReviewConfig",
     "group.apps.GroupConfig",
@@ -82,7 +83,6 @@ INSTALLED_APPS = [
     "django_filters",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    "djstripe",
     "django_celery_beat",
 ]
 

@@ -69,8 +69,6 @@ services:
       - tackapp/prod.env
     ports:
       - "15672:15672"
-      - "15671:15671"
-
 
   flower:
     build: .
