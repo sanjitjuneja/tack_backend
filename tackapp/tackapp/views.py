@@ -32,5 +32,6 @@ class NotificationView(views.APIView):
         serializer.is_valid(raise_exception=True)
         devices = FCMDevice.objects.filter(user_id=serializer.validated_data["user"])
         logger.warning(f"{devices = }")
-        devices.send_message(message)
+        response = devices.send_message(message)
+        logger.warning(f"{response = }")
         return Response()
