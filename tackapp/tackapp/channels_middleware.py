@@ -47,6 +47,7 @@ class TokenAuthMiddleware:
 
         # Get the token
         token = extract_token(scope['headers'])
+        logger.warning(f"{scope['headers'] = }")
         logger.warning(f"{token = }")
         # Try to authenticate the user
         try:
