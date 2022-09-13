@@ -1,7 +1,7 @@
 from django.db import models
-from django.templatetags.static import static
 
 from tackapp.settings import S3_BUCKET_TACKAPPSTORAGE, S3_BUCKET_CARDS, S3_BUCKET_BANKS
+
 
 images_dict = {
     "visa": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/visa.png",
