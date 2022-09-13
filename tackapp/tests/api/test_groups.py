@@ -4,7 +4,7 @@ from PIL import Image
 from django.http import HttpRequest
 from django.urls import reverse
 
-from tack_group.models import GroupMembers
+from group.models import GroupMembers
 from user.models import User
 
 

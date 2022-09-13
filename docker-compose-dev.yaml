@@ -16,16 +16,6 @@ services:
     depends_on:
       - postgres
 
-  nginx:
-    container_name: 'nginx'
-    build: ./nginx
-    ports:
-      - "80:80"
-    env_file:
-      - tackapp/dev.env
-    depends_on:
-      - web
-
   celery:
     build: .
     container_name: 'celery'

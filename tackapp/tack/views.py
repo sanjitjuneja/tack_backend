@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from core.choices import TackStatus, OfferType
-from tack_group.models import GroupTacks, Group
+from group.models import GroupTacks, Group
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished
@@ -104,7 +104,7 @@ class TackViewset(
         )
         tacks = self.filter_queryset(tacks)
         serializer = self.serializer_class(tacks, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
     def me_as_runner(self, request, *args, **kwargs):
@@ -123,7 +123,7 @@ class TackViewset(
             "tack__group"
         )
         serializer = self.get_serializer(offers, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
     def previous_as_tacker(self, request, *args, **kwargs):
@@ -394,19 +394,19 @@ class OfferViewset(
         serializer = OfferSerializer(offer)
         return Response(serializer.data)
 
-    # @action(
-    #     methods=("POST",),
-    #     detail=True,
-    #     permission_classes=(OfferTackOwnerPermission,),
-    #     serializer_class=AcceptOfferSerializer
-    # )
-    # def test_accept(self, request, *args, **kwargs):
-    #     """*For testing purposes* Endpoint for Tacker to accept Runner's offer"""
-    #
-    #     offer = self.get_object()
-    #     accept_offer(offer)
-    #     serializer = OfferSerializer(offer)
-    #     return Response(serializer.data)
+    @action(
+        methods=("POST",),
+        detail=True,
+        permission_classes=(OfferTackOwnerPermission,),
+        serializer_class=AcceptOfferSerializer
+    )
+    def test_accept(self, request, *args, **kwargs):
+        """*For testing purposes* Endpoint for Tacker to accept Runner's offer"""
+
+        offer = self.get_object()
+        accept_offer(offer)
+        serializer = OfferSerializer(offer)
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=False)
     def me(self, request, *args, **kwargs):

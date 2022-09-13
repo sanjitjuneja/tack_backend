@@ -33,19 +33,19 @@ class Group(CoreModel):
         return f"{self.id}: {self.name}"
 
     class Meta:
-        # db_table = "groups"
+        db_table = "groups"
         verbose_name = "Group"
         verbose_name_plural = "Groups"
 
 
 class GroupMembers(models.Model):
-    group = models.ForeignKey("tack_group.Group", on_delete=models.CASCADE)
+    group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
     member = models.ForeignKey("user.User", on_delete=models.CASCADE)
     is_muted = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # db_table = "group_membership"
+        db_table = "group_membership"
         verbose_name = "Group membership"
         verbose_name_plural = "Groups membership"
         constraints = [
@@ -55,19 +55,19 @@ class GroupMembers(models.Model):
 
 class GroupInvitations(models.Model):
     invitee = models.ForeignKey("user.User", on_delete=models.CASCADE, related_name="gi_invitee")
-    group = models.ForeignKey("tack_group.Group", on_delete=models.CASCADE)
+    group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
 
     class Meta:
-        # db_table = "group_invitations"
+        db_table = "group_invitations"
         verbose_name = "Group invitation"
         verbose_name_plural = "Groups invitation"
 
 
 class GroupTacks(models.Model):
-    group = models.ForeignKey("tack_group.Group", on_delete=models.SET_NULL, null=True)
+    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True)
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
 
     class Meta:
-        # db_table = "group_tacks"
+        db_table = "group_tacks"
         verbose_name = "Group Tack"
         verbose_name_plural = "Group Tacks"

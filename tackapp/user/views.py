@@ -8,8 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.choices import TackStatus
-from tack_payment.models import BankAccount, UserPaymentMethods
-from tack_payment.services import dwolla_transaction
+from payment.models import BankAccount, UserPaymentMethods
+from payment.services import dwolla_transaction
 from review.serializers import ReviewSerializer
 from tack.models import Tack
 from .serializers import *

@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-from tack_group.models import GroupMembers
+from group.models import GroupMembers
 from tack.models import Tack
 
 

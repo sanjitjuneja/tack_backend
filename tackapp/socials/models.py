@@ -17,6 +17,6 @@ class PhoneVerification(CoreModel):
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        # db_table = "verifications"
+        db_table = "verifications"
         verbose_name = "Verification"
         verbose_name_plural = "Verifications"

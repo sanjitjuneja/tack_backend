@@ -77,12 +77,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "user.apps.UserConfig",
+    "djstripe",
     "tack.apps.TackConfig",
     "review.apps.ReviewConfig",
-    "tack_group.apps.GroupConfig",
+    "group.apps.GroupConfig",
     "socials.apps.SocialsConfig",
-    "djstripe.apps.DjstripeAppConfig",
-    "tack_payment.apps.PaymentConfig",
+    "payment.apps.PaymentConfig",
     "dwolla_service.apps.DwollaServiceConfig",
     "drf_spectacular",
     "rest_framework",
@@ -191,7 +191,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
-
 AWS_STORAGE_BUCKET_NAME = read_secrets(app, env, 'AWS_STORAGE_BUCKET_NAME')
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 AWS_S3_FILE_OVERWRITE = read_secrets(app, env, 'AWS_S3_FILE_OVERWRITE')
@@ -211,19 +210,7 @@ STATICFILES_STORAGE = 'tackapp.storage_backends.StaticStorage'
 PUBLIC_MEDIA_LOCATION = read_secrets(app, env, 'PUBLIC_MEDIA_LOCATION')
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
 DEFAULT_FILE_STORAGE = 'tackapp.storage_backends.PublicMediaStorage'
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# MEDIA_ROOT = MEDIA_URL
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
-#STATICFILES_STORAGE = 'storages.storage_backends.StaticStorage'
-
-# if DEBUG:
-#     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-# else:
-#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-# STATIC_URL = "static/"
-#
-# MEDIA_URL = 'media/'  # 'http://myhost:port/media/'
-# MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -314,7 +301,6 @@ DWOLLA_MAIN_FUNDING_SOURCE = read_secrets(app, env, 'DWOLLA_MAIN_FUNDING_SOURCE'
 DWOLLA_WEBHOOK_SECRET = read_secrets(app, env, 'DWOLLA_WEBHOOK_SECRET')
 PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
-
 
 FIREBASE_APP = initialize_app()
 

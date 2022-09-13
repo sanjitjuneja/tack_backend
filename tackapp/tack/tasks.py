@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Subquery
 from django.utils import timezone
 
-from tack_payment.services import send_payment_to_runner
+from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
 from core.choices import TackStatus
 from user.models import User

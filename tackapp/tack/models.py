@@ -28,7 +28,7 @@ class Tack(CoreModel):
         ),
     )
     group = models.ForeignKey(
-        "tack_group.Group",
+        "group.Group",
         on_delete=models.CASCADE
     )
     description = models.CharField(max_length=512)
@@ -62,7 +62,7 @@ class Tack(CoreModel):
         return f"Tack {self.pk}: {self.title}"
 
     class Meta:
-        # db_table = "tacks"
+        db_table = "tacks"
         verbose_name = "Tack"
         verbose_name_plural = "Tacks"
 
@@ -87,7 +87,7 @@ class Offer(CoreModel):
         return f"Offer {self.id}: on {self.tack} from {self.runner}"
 
     class Meta:
-        # db_table = "offers"
+        db_table = "offers"
         verbose_name = "Offer"
         verbose_name_plural = "Offers"
         constraints = [
@@ -113,12 +113,12 @@ class PopularTack(models.Model):
             MaxValueValidator(999_999_99),
         ),
     )
-    group = models.ForeignKey("tack_group.Group", on_delete=models.SET_NULL, null=True, blank=True)
+    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
     allow_counter_offer = models.BooleanField()
     estimation_time_seconds = models.PositiveIntegerField(null=True, blank=True, default=None)
 
     class Meta:
-        # db_table = "popular_tacks"
+        db_table = "popular_tacks"
         verbose_name = "Popular Tack"
         verbose_name_plural = "Popular Tacks"

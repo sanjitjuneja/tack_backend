@@ -21,12 +21,12 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import views
 from rest_framework.response import Response
 
-from tack_payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
-from tack_payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
+from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
+from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
     AddBalanceStripeSerializer, FeeSerializer
-from tack_payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
+from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
     detach_payment_method, update_dwolla_pms_with_primary, calculate_amount_with_fees, get_sum24h_transactions, \
@@ -83,7 +83,8 @@ class AddBalanceStripe(views.APIView):
         pi = stripe.PaymentIntent.create(**pi_request)
         Transaction.objects.create(
             user=request.user,
-            is_stripe=True,
+            service_name=PaymentService.STRIPE,
+            action_type=PaymentAction.DEPOSIT,
             amount_requested=serializer.validated_data["amount"],
             amount_with_fees=amount_with_fees,
             service_fee=calculate_service_fee(
@@ -261,7 +262,7 @@ class DwollaMoneyWithdraw(views.APIView):
 
         try:
             ba = BankAccount.objects.get(user=request.user)
-            if ba.usd_balance <= serializer.validated_data["amount"]:
+            if ba.usd_balance < serializer.validated_data["amount"]:
                 return Response({"error": "code", "message": "Not enough money"}, status=400)
         except BankAccount.DoesNotExist:
             pass
