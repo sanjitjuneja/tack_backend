@@ -22,7 +22,7 @@ def accept_offer(offer: Offer):
 
 
 @transaction.atomic
-def complete_tack(tack: Tack, message: str):
+def complete_tack(tack: Tack, message: str = ""):
     tack.completion_message = message
     tack.completion_time = timezone.now()
     tack.status = TackStatus.WAITING_REVIEW

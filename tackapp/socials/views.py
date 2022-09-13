@@ -57,14 +57,13 @@ class TwilioSendMessage(views.APIView):
                 },
                 status=503)
 
-        sms_type = SMSType.SIGNUP
         PhoneVerification(
             uuid=uuid,
             user=None,
             phone_number=phone_number,
             sms_code=sms_code,
             message_sid=message_sid,
-            sms_type=sms_type,
+            sms_type=SMSType.SIGNUP,
         ).save()
 
         return Response({"uuid": uuid}, status=200)
@@ -135,7 +134,6 @@ class PasswordRecoverySendMessage(views.APIView):
         uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
         sms_code = generate_sms_code()
-        sms_type = SMSType.RECOVERY
 
         try:
             user = User.objects.get(phone_number=phone_number)
@@ -156,7 +154,7 @@ class PasswordRecoverySendMessage(views.APIView):
             phone_number=phone_number,
             sms_code=sms_code,
             message_sid=message_sid,
-            sms_type=sms_type,
+            sms_type=SMSType.RECOVERY,
         ).save()
         return Response(
             {

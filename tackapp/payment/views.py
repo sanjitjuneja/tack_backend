@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
 from django.db.models import Sum, Q, F
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -80,21 +81,22 @@ class AddBalanceStripe(views.APIView):
         if payment_method:
             pi_request["payment_method"] = payment_method
         logger.warning(f"{pi_request = }")
-        pi = stripe.PaymentIntent.create(**pi_request)
-        Transaction.objects.create(
-            user=request.user,
-            service_name=PaymentService.STRIPE,
-            action_type=PaymentAction.DEPOSIT,
-            amount_requested=serializer.validated_data["amount"],
-            amount_with_fees=amount_with_fees,
-            service_fee=calculate_service_fee(
-                amount=amount_with_fees,
-                service=PaymentService.STRIPE),
-            transaction_id=pi["id"]
-        )
-        logger.warning(f"{pi = }")
-        logger.warning(f"{type(pi) = }")
-        return Response(pi)
+        with transaction.atomic():
+            pi = stripe.PaymentIntent.create(**pi_request)
+            Transaction.objects.create(
+                user=request.user,
+                service_name=PaymentService.STRIPE,
+                action_type=PaymentAction.DEPOSIT,
+                amount_requested=serializer.validated_data["amount"],
+                amount_with_fees=amount_with_fees,
+                service_fee=calculate_service_fee(
+                    amount=amount_with_fees,
+                    service=PaymentService.STRIPE),
+                transaction_id=pi["id"]
+            )
+            logger.warning(f"{pi = }")
+            logger.warning(f"{type(pi) = }")
+            return Response(pi)
 
 
 class AddBalanceDwolla(views.APIView):
@@ -161,7 +163,11 @@ class GetUserPaymentMethods(views.APIView):
             subscriber=request.user
         )
         logging.getLogger().warning(f"{ds_customer = }")
-        pms = dsPaymentMethod.objects.filter(customer=ds_customer)
+        pms = dsPaymentMethod.objects.filter(
+            customer=ds_customer
+        ).order_by(
+            "-created"
+        )
         logging.getLogger().warning(f"{pms = }")
         serializer = StripePaymentMethodSerializer(pms, many=True)
         return Response({"results": serializer.data})

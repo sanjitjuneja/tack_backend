@@ -96,7 +96,7 @@ class TackViewset(
         ).exclude(
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).prefetch_related(
             "tacker",
             "runner",
@@ -115,7 +115,7 @@ class TackViewset(
         ).exclude(
             tack__status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).select_related(
             "tack",
             "tack__tacker",
@@ -131,7 +131,7 @@ class TackViewset(
             tacker=request.user,
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).prefetch_related(
             "tacker",
             "runner",
@@ -150,7 +150,7 @@ class TackViewset(
             runner=request.user,
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).select_related(
             "tacker",
             "runner",
@@ -178,7 +178,7 @@ class TackViewset(
                 },
                 status=400)
 
-        complete_tack(tack, "")
+        complete_tack(tack)
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
@@ -412,7 +412,11 @@ class OfferViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for getting owned Offers"""
 
-        qs = Offer.active.filter(runner=request.user)
+        qs = Offer.active.filter(
+            runner=request.user
+        ).order_by(
+            "-creation_time"
+        )
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)

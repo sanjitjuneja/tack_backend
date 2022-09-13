@@ -173,8 +173,15 @@ def get_dwolla_pm_by_plaid_token(dwolla_customer_id, pm_account):
     return response.headers["Location"].split("/")[-1]
 
 
-def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id, access_token):
-    """Make record in DB about Dwolla payment method"""
+def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id=None, access_token=None):
+    """
+    Make record in DB about Dwolla payment method and related Plaid information
+    :param dwolla_id: User id in Dwolla API
+    :param dwolla_pm_id: Payment method id in Dwolla API
+    :param account_id: Bank id in Plaid API
+    :param access_token: access token for this Bank in Plaid API
+    :return: None
+    """
 
     try:
         ba = BankAccount.objects.get(dwolla_user=dwolla_id)

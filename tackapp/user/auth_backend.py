@@ -43,11 +43,11 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
         }
         try:
             if "@" in credentials["phone_number"]:
-                user = User.objects.filter(
+                user = User.objects.get(
                     email=credentials["phone_number"]
                 )
             else:
-                user = User.objects.filter(
+                user = User.objects.get(
                     phone_number=credentials["phone_number"]
                 )
         except User.DoesNotExist:

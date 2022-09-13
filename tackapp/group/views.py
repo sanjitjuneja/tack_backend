@@ -54,7 +54,7 @@ class GroupViewset(
         qs = GroupMembers.objects.filter(
             member=request.user
         ).order_by(
-            "date_joined"
+            "-date_joined"
         ).select_related(
             "group"
         )

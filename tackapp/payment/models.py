@@ -32,7 +32,7 @@ class BankAccount(models.Model):
 class UserPaymentMethods(models.Model):
     bank_account = models.ForeignKey("payment.BankAccount", on_delete=models.CASCADE)
     dwolla_payment_method = models.CharField(max_length=64)
-    plaid_account_id = models.CharField(max_length=128)
+    plaid_account_id = models.CharField(max_length=128, null=True, blank=True, default=None)
     is_primary = models.BooleanField(default=False)
     dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
 
