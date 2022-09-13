@@ -30,17 +30,17 @@ class NotificationView(views.APIView):
         }
         message = Message(
             notification=Notification(title="title", body="First one", image="url"),
-            data={
-                "Nick": "Mario",
-                "body": "great match!",
-                "Room": "PortugalVSDenmark"
-            },
+            # data={
+            #     "Nick": "Mario",
+            #     "body": "great match!",
+            #     "Room": "PortugalVSDenmark"
+            # },
         )
         serializer = NotificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         devices = FCMDevice.objects.filter(user_id=serializer.validated_data["user"])
         logger.warning(f"{devices = }")
-        response = devices.send_message(message=message, sound='default', **kwargs)
-        # response = devices.send_message(message)
+        # response = devices.send_message(message=message, sound='default', **kwargs)
+        response = devices.send_message(message)
         logger.warning(f"{response = }")
         return Response()
