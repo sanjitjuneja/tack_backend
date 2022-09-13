@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+import json
 import logging
 import os
 from datetime import timedelta
@@ -317,7 +318,12 @@ FCM_DJANGO_SETTINGS = {
     "DELETE_INACTIVE_DEVICES": True,
 }
 
-GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
+GOOGLE_APPLICATION_CREDENTIALS = json.load(
+    open(
+        os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json'
+                     )
+    )
+)
 logging.getLogger().warning(f"{GOOGLE_APPLICATION_CREDENTIALS = }")
 
 S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
