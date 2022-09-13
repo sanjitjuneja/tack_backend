@@ -19,7 +19,7 @@ import stripe
 from django.utils.encoding import force_str
 from firebase_admin import initialize_app
 
-from .servises import read_secrets
+from tackapp.services import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
 django.utils.encoding.force_text = force_str
