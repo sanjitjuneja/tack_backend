@@ -17,6 +17,21 @@ def upload_path_user_avs(instance, filename: str):
     return f"profiles/{year}/{month}/{uuid4()}.{extension}"
 
 
+class LowercaseEmailField(models.EmailField):
+    """
+    Override EmailField to convert emails to lowercase before saving.
+    """
+    def to_python(self, value):
+        """
+        Convert email to lowercase.
+        """
+        value = super(LowercaseEmailField, self).to_python(value)
+        # Value can be None so check that it's a string before lowercasing.
+        if isinstance(value, str):
+            return value.lower()
+        return value
+
+
 class CustomUserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
 
@@ -60,7 +75,7 @@ class User(AbstractUser):
     active_group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True, default=None)
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=5)
     tacks_amount = models.PositiveIntegerField(default=0)
-    email = models.EmailField(unique=True, null=True, default=None)
+    email = LowercaseEmailField(unique=True, null=True, default=None)
 
     objects = CustomUserManager()
 
