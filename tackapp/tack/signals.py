@@ -64,7 +64,7 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
         if created:
             logger.warning(f"if created:")
             ws_sender.send_message(
-                f"tack_{instance.tack_id}_tacker",
+                f"user_{instance.tack.tacker_id}",
                 'offer.create',
                 OfferSerializer(instance).data)
             ws_sender.send_message(
@@ -77,7 +77,7 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
         if instance.status == OfferStatus.ACCEPTED:
             logger.warning(f"if instance.is_accepted: ")
             ws_sender.send_message(
-                f"tack_{instance.tack_id}_tacker",
+                f"user_{instance.tack.tacker_id}",
                 'tack.update',
                 TackDetailSerializer(instance.tack).data)
             ws_sender.send_message(
@@ -115,7 +115,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
         else:
             logging.getLogger().warning(f"if not instance.is_active:")
             ws_sender.send_message(
-                f"tack_{instance.id}_tacker",
+                f"user_{instance.tacker_id}",
                 'tack.delete',
                 instance.id)
             ws_sender.send_message(
