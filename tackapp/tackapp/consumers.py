@@ -41,7 +41,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"group_{gm.group_id}",
                 self.channel_name
             )
-            logger.warning(f"{gm = }")
+            # logger.warning(f"{gm = }")
             logger.warning(f"group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
