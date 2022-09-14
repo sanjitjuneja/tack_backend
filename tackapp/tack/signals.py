@@ -46,11 +46,11 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
     if instance.is_active:
         logger.warning(f"send_websocket_message_on_offer_save {ws_sender = }")
         ws_sender.send_message(
-            f"tack_{instance.tack.id}_tacker",
+            f"tack_{instance.tack_id}_tacker",
             'offer.create',
             OfferSerializer(instance).data)
         ws_sender.send_message(
-            f"user_{instance.runner.id}",
+            f"user_{instance.runner_id}",
             'runnertack.create',
             TacksOffersSerializer(instance).data)
     else:
@@ -71,11 +71,11 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             #     TacksOffersSerializer(instance).data)
         else:
             ws_sender.send_message(
-                f"tack_{instance.tack.id}_tacker",
+                f"user_{instance.tack.tacker_id}",  # tack_id_tacker
                 'offer.delete',
                 instance.id)
             ws_sender.send_message(
-                f"user_{instance.runner.id}",
+                f"user_{instance.runner_id}",  # tack_id_runner
                 'runnertack.delete',
                 instance.id)
 

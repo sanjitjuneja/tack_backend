@@ -21,8 +21,10 @@ def set_owner_as_group_member(instance: Group, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=GroupInvitations)
 def post_save_invitations(instance: GroupInvitations, *args, **kwargs):
+    logger.warning("post_save_invitations")
+    logger.warning(f"{instance = }")
     ws_sender.send_message(
-        f"user_{instance.invitee.id}",
+        f"user_{instance.invitee_id}",
         'invitation.create',
         GroupInvitationsSerializer(instance).data)
 
