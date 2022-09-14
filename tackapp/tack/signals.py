@@ -69,14 +69,15 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             #     f"group_{instance.tack.group_id}",
             #     'group.update',
             #     TacksOffersSerializer(instance).data)
-        ws_sender.send_message(
-            f"tack_{instance.tack.id}_tacker",
-            'offer.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.runner.id}",
-            'runnertack.delete',
-            instance.id)
+        else:
+            ws_sender.send_message(
+                f"tack_{instance.tack.id}_tacker",
+                'offer.delete',
+                instance.id)
+            ws_sender.send_message(
+                f"user_{instance.runner.id}",
+                'runnertack.delete',
+                instance.id)
 
 
 @receiver(signal=post_save, sender=Tack)
