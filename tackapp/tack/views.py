@@ -306,8 +306,10 @@ class TackViewset(
                 },
                 status=400)
         with transaction.atomic():
+            tack.accepted_offer.is_cancelled = True
             tack.is_active = False
             tack.is_canceled = True
+            tack.accepted_offer.save()
             tack.save()
         serializer = self.get_serializer(tack)
         return Response(serializer.data)

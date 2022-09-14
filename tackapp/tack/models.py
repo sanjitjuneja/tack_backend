@@ -82,6 +82,7 @@ class Offer(CoreModel):
     is_accepted = models.BooleanField(default=False)
     lifetime_seconds = models.PositiveIntegerField(default=900)
     is_active = models.BooleanField(default=True)
+    is_cancelled = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Offer {self.id}: on {self.tack} from {self.runner}"
