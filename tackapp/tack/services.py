@@ -16,7 +16,7 @@ def accept_offer(offer: Offer):
     offer.tack.accepted_time = timezone.now()
     offer.tack.price = offer.price if offer.price else offer.tack.price
     offer.is_accepted = True
-    # TODO: offer.is active = False ?
+    offer.is_active = False
     offer.save()
     offer.tack.save()
 
