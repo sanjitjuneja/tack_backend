@@ -86,16 +86,15 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def tack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_add(
-            f"tack_{message['id']}_tacker",
-            self.channel_name
-        )
-
-        logging.getLogger().warning(f"Added to tack_{message['id']}_tacker")
         await self.send(
             text_data=form_websocket_message(
                 model='Tack', action='create', obj=message
             ))
+        await self.channel_layer.group_add(
+            f"tack_{message['id']}_tacker",
+            self.channel_name
+        )
+        logging.getLogger().warning(f"Added to tack_{message['id']}_tacker")
 
     async def tack_update(self, event):
         logger.warning(f"{event = }")
@@ -179,15 +178,15 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def groupdetails_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_add(
-            f"group_{message['id']}",
-            self.channel_name)
-        logging.getLogger().warning(f"Added to group_{message['id']}")
         await self.send(
             text_data=form_websocket_message(
                 model='GroupDetails', action='create', obj=message
             )
         )
+        await self.channel_layer.group_add(
+            f"group_{message['id']}",
+            self.channel_name)
+        logging.getLogger().warning(f"Added to group_{message['id']}")
 
     async def groupdetails_update(self, event):
         logger.warning(f"{event = }")
@@ -231,26 +230,27 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def runnertack_create(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_add(
-            f"tack_{message['id']}_offer",
-            self.channel_name)
         await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='create', obj=message
             )
         )
+        await self.channel_layer.group_add(
+            f"tack_{message['id']}_offer",
+            self.channel_name)
 
     async def runnertack_update(self, event):
         logger.warning(f"{event = }")
         message = event['message']
-        await self.channel_layer.group_add(
-            f"tack_{message['id']}_offer",
-            self.channel_name)
+        logger.warning(f"{self.user = }")
         await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='update', obj=message
             )
         )
+        await self.channel_layer.group_add(
+            f"tack_{message['id']}_offer",
+            self.channel_name)
 
     async def runnertack_delete(self, event):
         logger.warning(f"{event = }")

@@ -85,6 +85,11 @@ class TackViewset(
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
+        Offer.active.filter(
+            tack=tack
+        ).update(
+            status=OfferStatus.DELETED
+        )
         self.perform_destroy(tack)
         return Response(status=204)
 
