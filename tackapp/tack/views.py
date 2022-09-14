@@ -444,6 +444,7 @@ class OfferViewset(
                     "message": "Cannot delete accepted Offers"
                 },
                 status=400)
+        instance.set_deleted_status()
         self.perform_destroy(instance)
         return Response(status=204)
 

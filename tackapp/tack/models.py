@@ -90,6 +90,11 @@ class Offer(CoreModel):
         self.is_active = False
         self.save()
 
+    def set_deleted_status(self):
+        self.status = OfferStatus.DELETED
+        self.is_active = False
+        self.save()
+
     class Meta:
         db_table = "offers"
         verbose_name = "Offer"
