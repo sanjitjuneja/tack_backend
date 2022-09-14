@@ -437,7 +437,7 @@ class OfferViewset(
         """Endpoint for Runner to delete their own not accepted Offers"""
 
         instance = self.get_object()
-        if instance.is_accepted:
+        if instance.status == OfferStatus.ACCEPTED:
             return Response(
                 {
                     "error": "code",
