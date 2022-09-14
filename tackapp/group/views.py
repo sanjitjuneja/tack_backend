@@ -288,7 +288,7 @@ class GroupViewset(
         tacks_len = 10 - len(popular_tacks)
         tacks = Tack.active.filter(
             group=group,
-            status__in=[TackStatus.WAITING_REVIEW, TackStatus.FINISHED]
+            status__in=(TackStatus.WAITING_REVIEW, TackStatus.FINISHED)
         ).annotate(
             offer_count=Count('offer')
         ).order_by(

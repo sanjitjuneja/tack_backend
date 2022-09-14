@@ -26,7 +26,7 @@ from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUse
 from plaid.model.processor_token_create_request import ProcessorTokenCreateRequest
 from plaid.model.products import Products
 
-from core.choices import OfferType, PaymentType, PaymentService, PaymentAction
+from core.choices import PaymentType, PaymentService, PaymentAction
 from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client

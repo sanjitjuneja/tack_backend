@@ -112,8 +112,11 @@ class TackViewset(
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
         offers = Offer.objects.filter(
-            Q(is_active=False, is_accepted=True) |
-            Q(is_active=True),
+            status__in=(
+                OfferStatus.ACCEPTED,
+                OfferStatus.CREATED,
+                OfferStatus.IN_PROGRESS
+            ),
             runner=request.user
         ).exclude(
             tack__status=TackStatus.FINISHED
@@ -231,7 +234,11 @@ class TackViewset(
                     "message": "You already have ongoing Tack"
                 },
                 status=400)
-        tack.change_status(TackStatus.IN_PROGRESS)
+        with transaction.atomic():
+            tack.status = TackStatus.IN_PROGRESS
+            tack.accepted_offer.status = OfferStatus.IN_PROGRESS
+            tack.save()
+            tack.accepted_offer.save()
         return Response(self.get_serializer(tack).data)
 
     @action(methods=["GET"], detail=True, serializer_class=OfferSerializer,
@@ -239,9 +246,8 @@ class TackViewset(
     def offers(self, request, *args, **kwargs):
         """Endpoint to display Offers related to specific Tack"""
 
-        # TODO filter backend? maybe
         tack = self.get_object()
-        offers = Offer.active.filter(tack=tack, is_active=True).prefetch_related("runner")
+        offers = Offer.active.filter(tack=tack).prefetch_related("runner")
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -306,7 +312,7 @@ class TackViewset(
                 },
                 status=400)
         with transaction.atomic():
-            tack.accepted_offer.is_cancelled = True
+            tack.accepted_offer.status = OfferStatus.CANCELLED
             tack.is_active = False
             tack.is_canceled = True
             tack.accepted_offer.save()

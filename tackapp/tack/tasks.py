@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from user.models import User
 
 
@@ -33,9 +33,8 @@ def delete_offer_task(offer_id: int) -> None:
         offer = Offer.objects.get(pk=offer_id)
     except ObjectDoesNotExist:
         return None
-    if not offer.is_accepted and offer.is_active:
-        offer.is_active = False
-        offer.save()
+    if offer.status != OfferStatus.ACCEPTED:
+        offer.set_expired_status()
 
 
 @shared_task

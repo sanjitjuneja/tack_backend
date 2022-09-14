@@ -81,3 +81,15 @@ class PaymentAction(models.TextChoices):
 
     DEPOSIT = "deposit", "Deposit"
     WITHDRAW = "withdraw", "Withdraw"
+
+
+class OfferStatus(models.TextChoices):
+    """Choices for Offer status"""
+
+    CREATED = "created", "Created"
+    ACCEPTED = "accepted", "Accepted"
+    DELETED = "deleted", "Deleted"
+    EXPIRED = "expired", "Expired"
+    CANCELLED = "cancelled", "Cancelled"
+    IN_PROGRESS = "in_progress", "In progress"
+    FINISHED = "finished", "Finished"

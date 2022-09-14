@@ -7,7 +7,7 @@ from django.db.models import Prefetch
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from group.models import GroupTacks
 from tack.models import Offer, Tack
 from user.models import User
@@ -32,7 +32,7 @@ def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
-    if not instance.is_accepted:
+    if instance.status not in (OfferStatus.ACCEPTED, OfferStatus.IN_PROGRESS):
         related_offers = Offer.active.filter(
             tack=instance.tack)
         if related_offers.count() == 1:
@@ -44,6 +44,8 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 @receiver(signal=post_save, sender=Offer)
 def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, **kwargs):
     logger.warning(f"send_websocket_message_on_offer_save")
+    # TODO: rewrite logic based on Offer status
+
     if instance.is_active:
         logger.warning(f"if instance.is_active:")
         if created:
@@ -59,7 +61,7 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
         logger.warning("after if created:")
     else:
         logger.warning(f"else inside send_websocket_message_on_offer_save")
-        if instance.is_accepted:
+        if instance.status == OfferStatus.ACCEPTED:
             logger.warning(f"if instance.is_accepted: ")
             ws_sender.send_message(
                 f"tack_{instance.tack_id}_tacker",

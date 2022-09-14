@@ -29,10 +29,15 @@ django.utils.encoding.force_text = force_str
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+logger = logging.getLogger()
+
+
 app = os.getenv("APP")
+logger.warning(f"{app = }")
 if app == "dev":
     env = environ.Env(DEBUG=(bool, True))
     env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    logger.warning(f"{env = }")
     # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
@@ -43,6 +48,7 @@ else:
         temp_env("AWS_SECRET_ACCESS_KEY"),
         temp_env("AWS_REGION")
     )
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
