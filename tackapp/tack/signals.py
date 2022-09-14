@@ -37,6 +37,10 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     logger.warning(f"inside tack_status_on_offer_save {instance = }")
     logger.warning(f"{instance.status = }")
     logger.warning(f"{instance.is_active = }")
+
+    # TODO: rethink guard statement to 1 SQL query
+    if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
+        return
     if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
         related_offers = Offer.objects.filter(
             tack=instance.tack,

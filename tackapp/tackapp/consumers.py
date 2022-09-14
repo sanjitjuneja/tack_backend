@@ -38,11 +38,11 @@ class MainConsumer(AsyncWebsocketConsumer):
         group_members = await get_user_groups(self.user)
         for gm in group_members:
             await self.channel_layer.group_add(
-                f"group_{gm.group.id}",
+                f"group_{gm.group_id}",
                 self.channel_name
             )
             logger.warning(f"{gm = }")
-            logger.warning(f"group_{gm.group.id}")
+            logger.warning(f"group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
         for tack in tacks_tacker:
