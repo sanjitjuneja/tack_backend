@@ -146,10 +146,10 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             # Tack status changes for Tacker and Runner
             logging.getLogger().warning(f"else:")
             ws_sender.send_message(
-                f"tack_{instance.id}_tacker",
+                f"user_{instance.tacker_id}",
                 'tack.update',
                 TackDetailSerializer(instance).data)
             ws_sender.send_message(
-                f"tack_{instance.id}_runner",
+                f"user_{instance.runner_id}",
                 'runnertack.update',
                 TacksOffersSerializer(instance.accepted_offer).data)

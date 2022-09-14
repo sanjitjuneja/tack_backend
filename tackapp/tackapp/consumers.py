@@ -91,7 +91,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        logging.getLogger().warning(f"in tack_create: tack_{message['id']}_tacker",)
+        logging.getLogger().warning(f"Added to tack_{message['id']}_tacker")
         await self.send(
             text_data=form_websocket_message(
                 model='Tack', action='create', obj=message
