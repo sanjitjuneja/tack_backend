@@ -11,6 +11,9 @@ from tack.models import Tack, Offer
 from core.choices import TackStatus, OfferStatus
 from user.models import User
 
+from fcm_django.models import FCMDevice
+from .notification import create_message, send_message
+
 
 @shared_task
 @transaction.atomic
@@ -51,3 +54,18 @@ def set_tack_inactive_on_user_last_login() -> None:
 @shared_task
 def set_tack_active_on_user_last_login(user_id: int) -> None:
     Tack.objects.filter(tacker=user_id).update(is_active=True)
+
+
+@shared_task
+def tack_long_inactive(tack_id, user_id, data, nf_types) -> None:
+    if not Offer.objects.filter(tack=tack_id).exists():
+        messages = create_message(data, nf_types)
+        devices = FCMDevice.objects.filter(user=user_id)
+        send_message(messages, (devices, ))
+
+
+@shared_task
+def tack_expire_soon(user_id, data, nf_types) -> None:
+    messages = create_message(data, nf_types)
+    devices = FCMDevice.objects.filter(user=user_id)
+    send_message(messages, (devices, ))
