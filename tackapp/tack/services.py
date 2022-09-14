@@ -34,6 +34,10 @@ def confirm_complete_tack(tack: Tack):
     tack.completion_time = timezone.now()
     send_payment_to_runner(tack)
     tack.status = TackStatus.FINISHED
+    tack.tacker.tacks_amount += 1
+    tack.runner.tacks_amount += 1
+    tack.tacker.save()
+    tack.runner.save()
     tack.save()
 
 
