@@ -52,6 +52,15 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
             f"user_{instance.runner.id}",
             'runnertack.create',
             TacksOffersSerializer(instance).data)
+        if instance.is_accepted:
+            ws_sender.send_message(
+                f"user_{instance.runner_id}",
+                'runnertack.update',
+                TacksOffersSerializer(instance).data)
+            ws_sender.send_message(
+                f"tack_{instance.tack_id}_tacker",
+                'tack.update',
+                TackDetailSerializer(instance.tack).data)
     else:
         ws_sender.send_message(
             f"tack_{instance.tack.id}_tacker",
@@ -77,7 +86,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             'runnertack.delete',
             instance.id)
         ws_sender.send_message(
-            f"group_{instance.group.id}",
+            f"group_{instance.group_id}",
             'grouptack.delete',
             instance.id)
     else:
@@ -93,11 +102,11 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                         'is_mine_offer_sent': False
                       }
             ws_sender.send_message(
-                f"group_{instance.group.id}",
+                f"group_{instance.group_id}",
                 'grouptack.create',
                 message)
             ws_sender.send_message(
-                f"user_{instance.tacker.id}",
+                f"user_{instance.tacker_id}",
                 'tack.create',
                 tack_serializer.data)
         elif instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
@@ -109,21 +118,21 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'is_mine_offer_sent': False
             }
             ws_sender.send_message(
-                f"group_{instance.group.id}",
+                f"group_{instance.group_id}",
                 'grouptack.update',
                 message)
             ws_sender.send_message(
-                f"user_{instance.tacker.id}",
+                f"user_{instance.tacker_id}",
                 'tack.update',
                 tack_serializer.data)
         else:
             # Tack status changes for Tacker and Runner
             logging.getLogger().warning(f"else:")
             ws_sender.send_message(
-                f"tack_{instance.tacker.id}_tacker",
+                f"tack_{instance.id}_tacker",
                 'tack.update',
                 TackDetailSerializer(instance).data)
             ws_sender.send_message(
-                f"tack_{instance.runner.id}_runner",
+                f"tack_{instance.id}_runner",
                 'runnertack.update',
                 TacksOffersSerializer(instance.accepted_offer).data)

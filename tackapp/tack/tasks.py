@@ -33,7 +33,7 @@ def delete_offer_task(offer_id: int) -> None:
         offer = Offer.objects.get(pk=offer_id)
     except ObjectDoesNotExist:
         return None
-    if not offer.is_accepted:
+    if not offer.is_accepted and offer.is_active:
         offer.is_active = False
         offer.save()
 

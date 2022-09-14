@@ -36,6 +36,9 @@ from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
 
 
+logger = logging.getLogger()
+
+
 @transaction.atomic
 def send_payment_to_runner(tack: Tack):
     """Transact money from one BankAccount to another"""
@@ -423,6 +426,8 @@ def dwolla_webhook_handler(request):
 def detach_dwolla_funding_sources(dwolla_id):
     funding_sources = get_dwolla_payment_methods(dwolla_id)
 
+
+    logger.warning(f"in detach_dwolla_funding_sources: {funding_sources = }")
     for funding_source in funding_sources:
         detach_dwolla_funding_source(funding_source['id'])
 
