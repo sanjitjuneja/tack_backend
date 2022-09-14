@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.serializers import PasswordField
 from fcm_django.models import FCMDevice
@@ -5,6 +7,8 @@ from fcm_django.models import FCMDevice
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from user.models import User
+
+logger = logging.getLogger()
 
 
 def create_firebase_device(device_fields, user):
@@ -45,15 +49,19 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             if isinstance(credentials['phone_number'], str):
                 credentials['phone_number'] = credentials['phone_number'].lower()
 
+            logger.warning(f"{credentials = }")
             if "@" in credentials["phone_number"]:
                 user = User.objects.get(
                     email=credentials["phone_number"]
                 )
+                credentials['phone_number'] = user.phone_number
+                logger.warning(f"Inside if: {user = }")
             else:
                 user = User.objects.get(
                     phone_number=credentials["phone_number"]
                 )
-                credentials['phone_number'] = user.phone_number
+                logger.warning(f"Inside else: {user = }")
+
         except User.DoesNotExist:
             raise exceptions.AuthenticationFailed(
                 self.error_messages["no_active_account"],
