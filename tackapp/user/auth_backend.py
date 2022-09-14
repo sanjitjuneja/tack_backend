@@ -49,7 +49,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
         try:
             if isinstance(credentials['phone_number'], str):
                 credentials['phone_number'] = credentials['phone_number'].lower()
-
+            logger.warning(f"{self.fields = }")
             logger.warning(f"{credentials = }")
             if "@" in credentials["phone_number"]:
                 user = User.objects.get(
