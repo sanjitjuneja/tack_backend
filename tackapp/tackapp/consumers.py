@@ -263,3 +263,12 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
+
+    async def completedtackrunner_create(self, event):
+        logger.warning(f"{event = }")
+        message = event['message']
+        await self.send(
+            text_data=form_websocket_message(
+                model='CompletedTackRunner', action='create', obj=message
+            )
+        )
