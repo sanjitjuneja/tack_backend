@@ -1,16 +1,10 @@
 import logging
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Prefetch
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from core.choices import TackStatus, OfferStatus
-from group.models import GroupTacks
 from tack.models import Offer, Tack
-from user.models import User
 from .serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from .tasks import delete_offer_task
 from tackapp.websocket_messages import WSSender
@@ -181,4 +175,3 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 f"user_{instance.runner_id}",
                 'runnertack.update',
                 TacksOffersSerializer(instance.accepted_offer).data)
-
