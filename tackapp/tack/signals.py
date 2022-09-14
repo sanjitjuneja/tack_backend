@@ -103,11 +103,11 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     if not instance.is_active:
         if instance.is_canceled:
             ws_sender.send_message(
-                f"user_{instance.tacker_id}",
+                f"tack_{instance.id}_tacker",
                 'tack.delete',
                 instance.id)
             ws_sender.send_message(
-                f"user_{instance.runner_id}",
+                f"tack_{instance.id}_runner",
                 'runnertack.delete',
                 instance.id)
         # Tack deletion process
