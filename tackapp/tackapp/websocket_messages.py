@@ -6,6 +6,12 @@ from tackapp.settings import AWS_S3_CUSTOM_DOMAIN
 
 class WSSender:
     channel_layer = get_channel_layer()
+    instance = None
+
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(WSSender, cls).__new__(cls)
+        return cls.instance
 
     def __init__(self):
         self.ws_group: str
