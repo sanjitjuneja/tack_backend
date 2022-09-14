@@ -243,6 +243,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logger.warning(f"{event = }")
         message = event['message']
         logger.warning(f"{self.user = }")
+
         await self.send(
             text_data=form_websocket_message(
                 model='RunnerTack', action='update', obj=message
