@@ -43,10 +43,13 @@ logger = logging.getLogger()
 def send_payment_to_runner(tack: Tack):
     """Transact money from one BankAccount to another"""
 
+    logger.warning("INSIDE send_payment_to_runner")
     if tack.is_paid:
+        logger.warning("if tack.is_paid:")
         return
     tack.runner.bankaccount.usd_balance += tack.price
     tack.is_paid = True
+    tack.runner.bankaccount.save()
     tack.save()
 
 
