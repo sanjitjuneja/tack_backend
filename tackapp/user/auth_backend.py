@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import MultipleObjectsReturned
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.serializers import PasswordField
 from fcm_django.models import FCMDevice
@@ -67,6 +68,12 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 self.error_messages["no_active_account"],
                 "no_active_account",
             )
+        except MultipleObjectsReturned as e:
+            return {
+                "error": "code",
+                "message": ("Multiple users with given credentials found.",
+                            "Please, contact our support.")
+            }
         else:
             data = super().validate(credentials)
             if all(name in attrs for name in ("device_id", "device_type")):
