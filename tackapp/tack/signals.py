@@ -186,12 +186,12 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'completedtackrunner.create',
                 TackDetailSerializer(instance).data)
         # Tack status changes for Tacker and Runner
-        elif instance.status == TackStatus.ACCEPTED:
-            ws_sender.send_message(
-                f"group_{instance.group_id}",
-                'grouptack.delete',
-                instance.id)
         else:
+            if instance.status == TackStatus.ACCEPTED:
+                ws_sender.send_message(
+                    f"group_{instance.group_id}",
+                    'grouptack.delete',
+                    instance.id)
             logging.getLogger().warning(f"else:")
             ws_sender.send_message(
                 f"user_{instance.tacker_id}",
