@@ -124,7 +124,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             ws_sender.send_message(
                 f"group_{instance.group_id}",
                 'grouptack.delete',
-                instance.id)
+                instance.accepted_offer.id)  # accepted_offer_id
     else:
         if created:
             logging.getLogger().warning(f"Tack created")
@@ -186,6 +186,11 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'completedtackrunner.create',
                 TackDetailSerializer(instance).data)
         # Tack status changes for Tacker and Runner
+        elif instance.status == TackStatus.ACCEPTED:
+            ws_sender.send_message(
+                f"group_{instance.group_id}",
+                'grouptack.delete',
+                instance.id)
         else:
             logging.getLogger().warning(f"else:")
             ws_sender.send_message(
