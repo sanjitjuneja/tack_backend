@@ -80,7 +80,7 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
                 'tack.update',
                 TackDetailSerializer(instance.tack).data)
             ws_sender.send_message(
-                f"user_{instance.runner_id}",
+                f"tack_{instance.id}_runner",
                 'runnertack.update',
                 TacksOffersSerializer(instance).data)
         else:
@@ -90,7 +90,7 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
                 'offer.delete',
                 instance.id)
             ws_sender.send_message(
-                f"tack_{instance.id}_runner",  # tack_id_runner
+                f"user_{instance.runner_id}",  # tack_id_runner
                 'runnertack.delete',
                 instance.id)
 
