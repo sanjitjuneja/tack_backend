@@ -9,6 +9,7 @@ from .serializers import GroupInvitationsSerializer, GroupMembersSerializer
 
 
 ws_sender = WSSender()
+logger = logging.getLogger()
 
 
 @receiver(signal=post_save, sender=Group)
@@ -36,6 +37,7 @@ def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
 @receiver(signal=post_save, sender=GroupMembers)
 def post_save_group_members(instance: GroupMembers, created: bool, *args, **kwargs):
     if created:
+        logger.warning(f"in post_save_group_members: {instance = }")
         ws_sender.send_message(
             f"user_{instance.member.id}",
             'groupdetails.create',

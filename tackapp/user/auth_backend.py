@@ -42,6 +42,9 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             'password': attrs.get("password")
         }
         try:
+            if isinstance(credentials['phone_number'], str):
+                credentials['phone_number'] = credentials['phone_number'].lower()
+
             if "@" in credentials["phone_number"]:
                 user = User.objects.get(
                     email=credentials["phone_number"]
@@ -50,6 +53,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 user = User.objects.get(
                     phone_number=credentials["phone_number"]
                 )
+                credentials['phone_number'] = user.phone_number
         except User.DoesNotExist:
             raise exceptions.AuthenticationFailed(
                 self.error_messages["no_active_account"],
