@@ -37,15 +37,10 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     logger.warning(f"inside tack_status_on_offer_save {instance = }")
     logger.warning(f"{instance.status = }")
     logger.warning(f"{instance.is_active = }")
-    if instance.status not in (OfferStatus.ACCEPTED, OfferStatus.IN_PROGRESS):
+    if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
         related_offers = Offer.objects.filter(
             tack=instance.tack,
-            status__in=(
-                OfferStatus.ACCEPTED,
-                OfferStatus.IN_PROGRESS,
-                OfferStatus.FINISHED,
-            )
-        )
+            status=OfferStatus.CREATED)
         if related_offers.count() == 1:
             instance.tack.change_status(TackStatus.ACTIVE)
         if related_offers.count() == 0:
