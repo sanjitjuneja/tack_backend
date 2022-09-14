@@ -1,0 +1,132 @@
+import logging
+
+from django.db.models import Q
+from rest_framework import filters
+from rest_framework import viewsets, mixins
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from core.choices import TackStatus
+from payment.models import BankAccount, UserPaymentMethods
+from payment.services import dwolla_transaction
+from review.serializers import ReviewSerializer
+from tack.models import Tack
+from .serializers import *
+from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio, deactivate_dwolla_customer
+
+
+class UsersViewset(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username', '=phone_number')
+
+    def get_serializer_class(self):
+        """Changing serializer class depends on actions"""
+
+        if self.action == "partial_update" or self.action == "update":
+            return UserDetailSerializer
+        else:
+            return super().get_serializer_class()
+
+    @action(methods=("GET",), detail=False, serializer_class=UserDetailSerializer)
+    def me(self, request, *args, **kwargs):
+        self.queryset = User.objects.all()
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+    @action(
+        methods=("PATCH",),
+        detail=False,
+        url_path="me/change_bio",
+        serializer_class=UserDetailSerializer
+    )
+    def me_change_bio(self, request, *args, **kwargs):
+        self.queryset = User.objects.all()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = user_change_bio(request.user, serializer.validated_data)
+
+        return Response(self.get_serializer(user).data)
+
+    @action(methods=("DELETE",), detail=False, url_path="me")
+    def me_delete(self, request, *args, **kwargs):
+        dwolla_pms = UserPaymentMethods.objects.filter(bank_account__user=request.user)
+        if not dwolla_pms:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You don't have Dwolla Bank Accounts"
+                },
+                status=400)
+        try:
+            primary_pm = dwolla_pms.get(primary=True)
+        except UserPaymentMethods.DoesNotExist:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You don't have Dwolla primary Bank Account"
+                },
+                status=400)
+        active_tacks = Tack.active.filter(
+            Q(tacker=request.user) | Q(runner=request.user),
+            status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
+        )
+        if active_tacks:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "You have active Tacks"
+                },
+                status=400)
+
+        ba = BankAccount.objects.get(user=request.user)
+        min_withdraw_amount = 100
+        if ba.usd_balance >= min_withdraw_amount:
+            dwolla_transaction(
+                user=request.user,
+                amount=ba.usd_balance,
+                payment_method=primary_pm,
+                action="withdraw"
+            )
+
+        deactivate_dwolla_customer(request.user)
+        return Response(
+            {
+                "error": None,
+                "message": "Successfuly deleted"
+            },
+            status=204)
+
+    @action(methods=("GET",), detail=True)
+    def reviews_as_reviewed(self, request, *args, **kwargs):
+        """Endpoint for get all Reviews of the User as reviewed"""
+
+        user = self.get_object()
+        reviews_qs = get_reviews_by_user(user)
+        page = self.paginate_queryset(reviews_qs)
+        serializer = ReviewSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(methods=("GET",), detail=True)
+    def reviews_as_reviewer(self, request, *args, **kwargs):
+        """Endpoint for get all Reviews of the User as reviewer"""
+
+        user = self.get_object()
+        reviews_qs = get_reviews_as_reviewer_by_user(user)
+        page = self.paginate_queryset(reviews_qs)
+        serializer = ReviewSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(methods=("GET",), detail=False, url_path="me/balance", serializer_class=BankAccountSerializer)
+    def balance(self, request, *args, **kwargs):
+        """Endpoint for retrieving USD balance of current User"""
+
+        ba, created = BankAccount.objects.get_or_create(user=request.user)
+        return Response(BankAccountSerializer(ba).data)

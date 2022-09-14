@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: 'web'
+    build: .
+    restart: always
+    entrypoint: ["/app/docker-entrypoint.sh"]
+    env_file:
+      - tackapp/prod.env
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
+    expose:
+      - 8000
+
+  nginx:
+    container_name: 'nginx'
+    restart: always
+    build: ./nginx
+    env_file:
+      - tackapp/prod.env
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+  celery:
+    build: .
+    container_name: 'celery'
+    restart: always
+    command: celery -A tackapp worker --loglevel=info --logfile=celery.log
+    environment:
+      - app=prod
+    env_file:
+      - tackapp/prod.env
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    container_name: 'redis'
+    image: redis:7-alpine
+    restart: always
+
+  rabbit:
+    container_name: 'rabbit'
+    image: rabbitmq:3.10-management
+    restart: always
+    env_file:
+      - tackapp/prod.env
+    ports:
+      - "15672:15672"
+
+  flower:
+    build: .
+    container_name: 'flower'
+    restart: always
+    command: celery -A tackapp --broker=$CELERY_BROKER flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - tackapp/prod.env
+    depends_on:
+      - web
+      - redis
+      - celery
