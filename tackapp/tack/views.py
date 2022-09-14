@@ -3,6 +3,7 @@ import logging
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import views, viewsets, mixins
@@ -304,9 +305,10 @@ class TackViewset(
                     "message": "Cannot cancel Tack in this status"
                 },
                 status=400)
-        tack.is_active = False
-        tack.is_canceled = True
-        tack.save()
+        with transaction.atomic():
+            tack.is_active = False
+            tack.is_canceled = True
+            tack.save()
         serializer = self.get_serializer(tack)
         return Response(serializer.data)
 

@@ -83,20 +83,30 @@ def send_websocket_message_on_offer_save(instance: Offer, *args, **kwargs):
 @receiver(signal=post_save, sender=Tack)
 def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
     if not instance.is_active:
+        if instance.is_canceled:
+            ws_sender.send_message(
+                f"user_{instance.tacker_id}",
+                'tack.delete',
+                instance.id)
+            ws_sender.send_message(
+                f"user_{instance.runner_id}",
+                'runnertack.delete',
+                instance.id)
         # Tack deletion process
-        logging.getLogger().warning(f"if not instance.is_active:")
-        ws_sender.send_message(
-            f"tack_{instance.id}_tacker",
-            'tack.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"tack_{instance.id}_offer",
-            'runnertack.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"group_{instance.group_id}",
-            'grouptack.delete',
-            instance.id)
+        else:
+            logging.getLogger().warning(f"if not instance.is_active:")
+            ws_sender.send_message(
+                f"tack_{instance.id}_tacker",
+                'tack.delete',
+                instance.id)
+            ws_sender.send_message(
+                f"tack_{instance.id}_offer",
+                'runnertack.delete',
+                instance.id)
+            ws_sender.send_message(
+                f"group_{instance.group_id}",
+                'grouptack.delete',
+                instance.id)
     else:
         if created:
             logging.getLogger().warning(f"Tack created")
