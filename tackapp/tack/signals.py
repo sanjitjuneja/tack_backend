@@ -34,6 +34,9 @@ def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
+    logger.warning(f"inside tack_status_on_offer_save {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     if instance.status not in (OfferStatus.ACCEPTED, OfferStatus.IN_PROGRESS):
         related_offers = Offer.objects.filter(
             tack=instance.tack,
@@ -51,7 +54,9 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"send_websocket_message_on_offer_save")
+    logger.warning(f"send_websocket_message_on_offer_save {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     # TODO: rewrite logic based on Offer status
 
     if instance.is_active:
@@ -93,6 +98,9 @@ def send_websocket_message_on_offer_save(instance: Offer, created: bool, *args, 
 
 @receiver(signal=post_save, sender=Tack)
 def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
+    logger.warning(f"tack_post_save {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     if not instance.is_active:
         if instance.is_canceled:
             ws_sender.send_message(
@@ -193,6 +201,9 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def send_offer_expired_notification(instance: Offer, *args, **kwargs):
+    logger.warning(f"send_offer_expired_notification {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     if not instance.is_active:
         data = {
             "tack_price": instance.price,
@@ -214,6 +225,9 @@ def send_offer_expired_notification(instance: Offer, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def finish_tack_notification(instance: Tack, *args, **kwargs):
+    logger.warning(f"finish_tack_notification {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     data = {
         "runner_firstname": instance.runner.first_name,
         "runner_lastname": instance.runner.last_name,
@@ -259,6 +273,9 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def offer_is_accepted_notification(instance: Offer, *args, **kwargs):
+    logger.warning(f"offer_is_accepted_notification {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     if instance.status == OfferStatus.ACCEPTED:
         data = {
             "tack_price": instance.price,
@@ -273,6 +290,9 @@ def offer_is_accepted_notification(instance: Offer, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def tack_is_created_notification(instance: Tack, created: bool, *args, **kwargs):
+    logger.warning(f"tack_is_created_notification {instance = }")
+    logger.warning(f"{instance.status = }")
+    logger.warning(f"{instance.is_active = }")
     if created:
         data = {
             "group_name": instance.group.name,
