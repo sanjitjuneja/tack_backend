@@ -110,7 +110,9 @@ class TackViewset(
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        offers = Offer.active.filter(
+        offers = Offer.objects.filter(
+            Q(is_active=False, is_accepted=True) |
+            Q(is_active=True),
             runner=request.user
         ).exclude(
             tack__status=TackStatus.FINISHED
