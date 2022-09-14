@@ -143,13 +143,25 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'grouptack.update',
                 runner_message)
         else:
-            # Tack status changes for Tacker and Runner
             logging.getLogger().warning(f"else:")
-            ws_sender.send_message(
-                f"user_{instance.tacker_id}",
-                'tack.update',
-                TackDetailSerializer(instance).data)
-            ws_sender.send_message(
-                f"user_{instance.runner_id}",
-                'runnertack.update',
-                TacksOffersSerializer(instance.accepted_offer).data)
+            if instance.status == TackStatus.FINISHED:
+                ws_sender.send_message(
+                    f"user_{instance.tacker_id}",
+                    'tack.delete',
+                    instance.id)
+                ws_sender.send_message(
+                    f"user_{instance.runner_id}",
+                    'runnertack.delete',
+                    instance.id)
+            # Tack status changes for Tacker and Runner
+            else:
+                logging.getLogger().warning(f"else:")
+                ws_sender.send_message(
+                    f"user_{instance.tacker_id}",
+                    'tack.update',
+                    TackDetailSerializer(instance).data)
+                ws_sender.send_message(
+                    f"user_{instance.runner_id}",
+                    'runnertack.update',
+                    TacksOffersSerializer(instance.accepted_offer).data)
+
