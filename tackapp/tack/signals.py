@@ -120,7 +120,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             ws_sender.send_message(
                 f"tack_{instance.id}_offer",
                 'runnertack.delete',
-                instance.id)
+                instance.accepted_offer.id)
             ws_sender.send_message(
                 f"group_{instance.group_id}",
                 'grouptack.delete',
@@ -180,7 +180,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             ws_sender.send_message(
                 f"user_{instance.runner_id}",
                 'runnertack.delete',
-                instance.id)
+                instance.accepted_offer.id)
             ws_sender.send_message(
                 f"user_{instance.runner_id}",
                 'completedtackrunner.create',
