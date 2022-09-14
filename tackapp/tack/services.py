@@ -8,6 +8,9 @@ from payment.services import send_payment_to_runner
 from .models import Offer, Tack
 
 
+TACK_WITHOUT_OFFER_TIME = 900
+
+
 @transaction.atomic
 def accept_offer(offer: Offer):
     offer.tack.runner = offer.runner
@@ -37,3 +40,7 @@ def confirm_complete_tack(tack: Tack):
 
 def deactivate_related_offers(tack: Tack):
     Offer.active.filter(tack=tack).update(is_active=False)
+
+
+def calculate_tack_expiring(estimation_time_seconds: int) -> int:
+    return int(estimation_time_seconds * 0.9)
