@@ -1,3 +1,5 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, pre_delete
@@ -11,6 +13,8 @@ from user.services import create_api_accounts, deactivate_dwolla_customer, delet
 
 
 ws_sender = WSSender()
+logger = logging.getLogger()
+logger.warning(f"in User signals {ws_sender = }")
 
 
 @receiver(signal=post_save, sender=User)

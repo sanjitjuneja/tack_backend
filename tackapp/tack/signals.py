@@ -16,6 +16,8 @@ from .tasks import delete_offer_task
 from tackapp.websocket_messages import WSSender
 
 ws_sender = WSSender()
+logger = logging.getLogger()
+logger.warning(f"in Tack signals {ws_sender = }")
 
 
 @receiver(signal=post_save, sender=Offer)
