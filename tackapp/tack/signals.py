@@ -165,12 +165,17 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 f"group_{instance.group_id}",
                 'grouptack.update',
                 message)
+
             ws_sender.send_message(
                 f"user_{instance.tacker_id}",
                 'tack.update',
                 tack_serializer.data)
             ws_sender.send_message(
                 f"tack_{instance.id}_offer",
+                'grouptack.update',
+                runner_message)
+            ws_sender.send_message(
+                f"user_{instance.runner_id}",
                 'grouptack.update',
                 runner_message)
         elif instance.status == TackStatus.FINISHED:
