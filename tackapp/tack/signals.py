@@ -121,7 +121,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 f"group_{instance.group_id}",
                 'grouptack.delete',
                 instance.id)  # accepted_offer_id
-            if instance.status != TackStatus.CREATED:
+            if instance.status != (TackStatus.CREATED, TackStatus.ACTIVE):
                 logger.warning(f"{instance.accepted_offer_id = }")
                 ws_sender.send_message(
                     f"tack_{instance.id}_offer",
