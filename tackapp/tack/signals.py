@@ -118,13 +118,14 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                 'tack.delete',
                 instance.id)
             ws_sender.send_message(
-                f"tack_{instance.id}_offer",
-                'runnertack.delete',
-                instance.accepted_offer.id)
-            ws_sender.send_message(
                 f"group_{instance.group_id}",
                 'grouptack.delete',
                 instance.accepted_offer.id)  # accepted_offer_id
+            if instance.status != TackStatus.CREATED:
+                ws_sender.send_message(
+                    f"tack_{instance.id}_offer",
+                    'runnertack.delete',
+                    instance.accepted_offer_id)
     else:
         if created:
             logging.getLogger().warning(f"Tack created")

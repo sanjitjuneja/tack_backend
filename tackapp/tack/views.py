@@ -20,6 +20,9 @@ from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished
 
 
+logger = logging.getLogger()
+
+
 class TackViewset(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
@@ -66,6 +69,8 @@ class TackViewset(
         tack = self.get_object()
         serializer = self.get_serializer(tack, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
+
+        logger.warning(f"{serializer.validated_data = }")
 
         if tack.status != TackStatus.CREATED:
             return Response(
