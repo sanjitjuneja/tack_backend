@@ -122,5 +122,5 @@ def send_message(messages: list, devices_list_of_queryset: tuple) -> None:
     logger.warning(f" inside send_message {devices_list_of_queryset = }")
     for message, devices in zip(messages, devices_list_of_queryset):
         logger.warning(f"---send_message---")
-        logger.warning(f"Sent {str(message)} for {devices}")
+        logger.warning(f"Sent {message} for {devices}")
         devices.send_message(message,)
