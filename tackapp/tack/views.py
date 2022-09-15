@@ -87,7 +87,7 @@ class TackViewset(
             # forcibly invalidate the prefetch cache on the instance.
             tack._prefetched_objects_cache = {}
 
-        return Response(serializer.data)
+        return Response(TackDetailSerializer(tack, context={"request": request}).data)
 
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
