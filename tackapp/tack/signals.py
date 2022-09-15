@@ -109,10 +109,6 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
             'tack': tack_serializer.data,
             'is_mine_offer_sent': True
         }
-        # ws_sender.send_message(
-        #     f"group_{instance.group_id}",
-        #     'grouptack.update',
-        #     message)
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
