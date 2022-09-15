@@ -103,10 +103,10 @@ def offer_accepted(instance: Offer, created: bool, *args, **kwargs):
             'runnertack.update',
             TacksOffersSerializer(instance).data)
         # is this needed?
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",
-            "offer.delete",
-            instance.id)
+        # ws_sender.send_message(
+        #     f"user_{instance.tack.tacker_id}",
+        #     "offer.delete",
+        #     instance.id)
 
 
 @receiver(signal=post_save, sender=Offer)
@@ -166,8 +166,7 @@ def offer_cancelled(instance: Offer, created: bool, *args, **kwargs):
         ws_sender.send_message(
             f"tack_{instance.id}_tacker",
             "canceltackertackrunner.create",
-            TackDetailSerializer(instance.tack).data
-        )
+            TackDetailSerializer(instance.tack).data)
 
 
 @receiver(signal=post_save, sender=Tack)
