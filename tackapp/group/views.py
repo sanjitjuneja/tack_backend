@@ -31,6 +31,11 @@ class GroupViewset(
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
 
+    def get_permissions(self):
+        if self.action == "retrieve":  # per action
+            self.permission_classes = (GroupMemberPermission,)
+        return super().get_permissions()
+
     def retrieve(self, request, *args, **kwargs):
         group = self.get_object()
         try:
