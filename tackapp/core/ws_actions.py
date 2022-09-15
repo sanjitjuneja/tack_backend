@@ -18,6 +18,10 @@ def ws_offer_created(instance: Offer):
         'is_mine_offer_sent': True
     }
     ws_sender.send_message(
+        f"user_{instance.tack.tacker_id}",  # tack_{instance.tack_id}_tacker
+        'offer.create',
+        OfferSerializer(instance).data)
+    ws_sender.send_message(
         f"user_{instance.runner_id}",
         'runnertack.create',
         TacksOffersSerializer(instance).data)
