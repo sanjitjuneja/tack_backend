@@ -75,9 +75,10 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
 def tack_created_first_time(instance: Tack, created: bool, *args, **kwargs):
     if created and instance.status == TackStatus.CREATED:
         logger.warning(f"tack_created_first_time. {instance.status = }")
+
+        tack_serializer = TackDetailSerializer(instance)
         # Workaround on a problem to fly-calculate data for every User of the Group
         # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
-        tack_serializer = TackDetailSerializer(instance)
         message = {
             'id': instance.id,
             'tack': tack_serializer.data,
@@ -99,28 +100,10 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         logger.warning(f"tack_created_active_update. {instance.status = }")
         tack_serializer = TackDetailSerializer(instance)
         logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
-        # message = {
-        #     'id': instance.id,
-        #     'tack': tack_serializer.data,
-        #     'is_mine_offer_sent': False
-        # }
-        message_for_runner = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': True
-        }
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
             tack_serializer.data)
-        # ws_sender.send_message(
-        #     f"tack_{instance.id}_offer",
-        #     'grouptack.update',
-        #     runner_message)
-        # ws_sender.send_message(
-        #     f"user_{instance.runner_id}",
-        #     'grouptack.update',
-        #     message_for_runner)
 
 
 @receiver(signal=post_save, sender=Tack)
@@ -174,6 +157,16 @@ def tack_finished(instance: Tack, created: bool, *args, **kwargs):
             f"user_{instance.runner_id}",
             'completedtackrunner.create',
             TackDetailSerializer(instance).data)
+
+
+@receiver(signal=post_save, sender=Tack)
+def tack_is_not_active(instance: Tack, created: bool, *args, **kwargs):
+    if not instance.is_active:
+        ws_sender.send_message(
+            f"user_{instance.tacker_id}",
+            "tack.delete",
+            instance.id
+        )
 
 
 @receiver(signal=post_save, sender=Offer)
