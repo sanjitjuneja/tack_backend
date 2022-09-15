@@ -8,7 +8,7 @@ from payment.services import send_payment_to_runner
 from .models import Offer, Tack
 
 
-TACK_WITHOUT_OFFER_TIME = 900
+TACK_WITHOUT_OFFER_TIME = 20
 
 
 @transaction.atomic
