@@ -32,6 +32,16 @@ def extract_token(headers: tuple) -> bytes:
     return b''
 
 
+def extract_device_info(headers: tuple) -> bytes:
+    """Function to get device_id from HTTP headers"""
+
+    # Starting from an end because "Authorization" header will likely be there
+    for header, value in headers[::-1]:
+        if header == b'device-info':
+            return value
+    return b'No device info'
+
+
 class TokenAuthMiddleware:
     """
     Custom token auth middleware
@@ -47,8 +57,10 @@ class TokenAuthMiddleware:
 
         # Get the token
         token = extract_token(scope['headers'])
+        device_info = extract_device_info(scope['headers'])
         logger.warning(f"{scope['headers'] = }")
         logger.warning(f"{token = }")
+
         # Try to authenticate the user
         try:
             # This will automatically validate the token and raise an error if token is invalid
@@ -74,4 +86,4 @@ class TokenAuthMiddleware:
             user = await get_user(int(decoded_data["user_id"]))
             logger.warning(f"{user = }")
         # Return the inner application directly and let it run everything else
-        return await self.inner(dict(scope, user=user), receive, send)
+        return await self.inner(dict(scope, user=user, device_info=device_info), receive, send)

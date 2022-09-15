@@ -19,6 +19,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             # await self.disconnect(close_code=3000)
             # await self.close(code=3000)
         self.user = self.scope['user']
+        self.device_info = self.scope['device_info']
         # logger = logging.getLogger()
         # logger.warning(f"Inside websocket_connect")
         logger.warning(f"WS connected for {self.user.id}")
@@ -86,7 +87,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logger.warning(f"{message = }")
 
     async def tack_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         response = await self.send(
             text_data=form_websocket_message(
@@ -100,7 +101,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_tacker")
 
     async def tack_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -108,7 +109,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def tack_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -125,7 +126,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
 
     async def grouptack_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -133,7 +134,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def grouptack_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -141,7 +142,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def grouptack_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -149,7 +150,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def balance_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -157,7 +158,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def invitation_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -165,7 +166,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def invitation_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -173,7 +174,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def user_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -181,7 +182,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             ))
 
     async def groupdetails_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -194,7 +195,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Added to group_{message['id']}")
 
     async def groupdetails_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -203,7 +204,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         )
 
     async def groupdetails_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -216,7 +217,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Discarded to group_{message}")
 
     async def offer_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -225,7 +226,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         )
 
     async def offer_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -234,7 +235,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         )
 
     async def runnertack_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -247,7 +248,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_update(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         logger.warning(f"{self.user = }")
 
@@ -262,7 +263,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_delete(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -275,7 +276,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
 
     async def completedtackrunner_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(
@@ -284,7 +285,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         )
 
     async def canceltackertackrunner_create(self, event):
-        logger.warning(f"Sent to {self.user} - {event = }")
+        logger.warning(f"Sent to {self.user}({self.device_info}) - {event = }")
         message = event['message']
         await self.send(
             text_data=form_websocket_message(

@@ -117,23 +117,10 @@ def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[M
     ]
 
 
-# def create_notification_message(data: dict, nf_type: tuple, image_url: str = None):
-#     title_body = map_body_title(build_title_body(data), nf_type)
-#     return Message(
-#         notification=Notification(
-#             title=title_body.get("title"),
-#             body=title_body.get("body"),
-#             image=image_url
-#         ),
-#         # android=android,
-#         # apns=apns
-#     )
-
-
 def send_message(messages: list, devices_list_of_queryset: tuple) -> None:
     logger.warning(f"Message inside send_message {messages = }")
     logger.warning(f" inside send_message {devices_list_of_queryset = }")
     for message, devices in zip(messages, devices_list_of_queryset):
-        logger.warning(f"{message = }")
-        logger.warning(f"{devices = }")
+        logger.warning(f"---send_message---")
+        logger.warning(f"Sent {str(message)} for {devices}")
         devices.send_message(message,)

@@ -170,17 +170,9 @@ def tack_is_not_active(instance: Tack, created: bool, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Offer)
-def send_offer_expired_notification(instance: Offer, *args, **kwargs):
+def send_offer_expired_notification(instance: Offer, created: bool, *args, **kwargs):
     logger.warning(f"send_offer_expired_notification. {instance.status = }")
-    if not instance.is_active:
-        data = {
-            "tack_price": instance.price,
-            "tack_title": instance.tack.title
-        }
-        messages = create_message(data, ("offer_expired",))
-        devices = FCMDevice.objects.filter(user=instance.runner)
-        send_message(messages, (devices,))
-    else:
+    if created:
         data = {
             "runner_firstname": instance.runner.first_name,
             "runner_lastname": instance.runner.last_name,
@@ -188,6 +180,14 @@ def send_offer_expired_notification(instance: Offer, *args, **kwargs):
         }
         messages = create_message(data, ("offer_received",))
         devices = FCMDevice.objects.filter(user=instance.tack.tacker)
+        send_message(messages, (devices,))
+    elif instance.status == OfferStatus.EXPIRED:
+        data = {
+            "tack_price": instance.price,
+            "tack_title": instance.tack.title
+        }
+        messages = create_message(data, ("offer_expired",))
+        devices = FCMDevice.objects.filter(user=instance.runner)
         send_message(messages, (devices,))
 
 
