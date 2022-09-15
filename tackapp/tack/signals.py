@@ -112,7 +112,7 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         ws_sender.send_message(
             f"user_{instance.tacker_id}",  # tack_{instance.tack_id}_tacker
             'offer.create',
-            OfferSerializer(instance).data)
+            OfferSerializer(instance.accepted_offer).data)
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
