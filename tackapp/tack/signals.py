@@ -5,6 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from core.choices import OfferStatus
+from core.ws_actions import ws_offer_created, ws_offer_in_progress, ws_offer_finished, ws_offer_expired, \
+    ws_offer_deleted, ws_offer_cancelled, ws_offer_accepted
 from group.models import GroupMembers
 from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
@@ -46,141 +48,41 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
             status=OfferStatus.CREATED)
         if related_offers.count() == 1:
             instance.tack.change_status(TackStatus.ACTIVE)
-        if related_offers.count() == 0:
+        elif related_offers.count() == 0:
             instance.tack.change_status(TackStatus.CREATED)
 
 
 @receiver(signal=post_save, sender=Offer)
-def offer_created(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_created. {instance.status = }")
-    if created and instance.status == OfferStatus.CREATED:
-        logger.warning(f"if created:")
-        tack_serializer = TackDetailSerializer(instance.tack)
-        runner_message = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': True
-        }
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_{instance.tack_id}_tacker
-            'offer.create',
-            OfferSerializer(instance).data)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'runnertack.create',
-            TacksOffersSerializer(instance).data)
-        ws_sender.send_message(
-            f"tack_{instance.id}_offer",
-            "grouptack.update",
-            runner_message
-        )
-
-
-@receiver(signal=post_save, sender = Offer)
-def offer_expired(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_expired. {instance.status = }")
-    if not created and instance.status == OfferStatus.EXPIRED:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_id_tacker
-            'offer.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",  # tack_id_runner
-            'runnertack.delete',
-            instance.id)
-
-
-@receiver(signal=post_save, sender=Offer)
-def offer_accepted(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_accepted. {instance.status = }")
-    if not created and instance.status == OfferStatus.ACCEPTED:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_{instance.tack_id}_tacker
-            'tack.update',
-            TackDetailSerializer(instance.tack).data)
-        ws_sender.send_message(
-            f"user_{instance.tack.runner_id}",  # tack_{instance.tack_id}_runner
-            'runnertack.update',
-            TacksOffersSerializer(instance).data)
-        # is this needed?
-        # ws_sender.send_message(
-        #     f"user_{instance.tack.tacker_id}",
-        #     "offer.delete",
-        #     instance.id)
-
-
-@receiver(signal=post_save, sender=Offer)
-def offer_in_progress(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_in_progress. {instance.status = }")
-    if not created and instance.status == OfferStatus.IN_PROGRESS:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_{instance.tack_id}_tacker
-            'tack.update',
-            TackDetailSerializer(instance.tack).data)
-        ws_sender.send_message(
-            f"user_{instance.tack.runner_id}",  # tack_{instance.tack_id}_runner
-            'runnertack.update',
-            TacksOffersSerializer(instance).data)
-
-
-@receiver(signal=post_save, sender=Offer)
-def offer_finished(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_finished. {instance.status = }")
-    if not created and instance.status == OfferStatus.FINISHED:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_id_tacker
-            'offer.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",  # tack_id_runner
-            'runnertack.delete',
-            instance.id)
-
-
-@receiver(signal=post_save, sender=Offer)
-def offer_deleted(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_deleted. {instance.status = }")
-    if not created and instance.status == OfferStatus.DELETED:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_id_tacker
-            'offer.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",  # tack_id_runner
-            'runnertack.delete',
-            instance.id)
-
-
-@receiver(signal=post_save, sender=Offer)
-def offer_cancelled(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"offer_cancelled. {instance.status = }")
-    if not created and instance.status == OfferStatus.CANCELLED:
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_id_tacker
-            'tack.delete',
-            instance.tack_id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",  # tack_id_runner
-            'runnertack.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.tack.tacker_id}",  # tack_id_tacker
-            "canceltackertackrunner.create",
-            TackDetailSerializer(instance.tack).data)
+def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
+    match instance.status:
+        case OfferStatus.CREATED:
+            ws_offer_created(instance)
+        case OfferStatus.ACCEPTED:
+            ws_offer_accepted(instance)
+        case OfferStatus.IN_PROGRESS:
+            ws_offer_in_progress(instance)
+        case OfferStatus.FINISHED:
+            ws_offer_finished(instance)
+        case OfferStatus.EXPIRED:
+            ws_offer_expired(instance)
+        case OfferStatus.DELETED:
+            ws_offer_deleted(instance)
+        case OfferStatus.CANCELLED:
+            ws_offer_cancelled(instance)
 
 
 @receiver(signal=post_save, sender=Tack)
 def tack_created_first_time(instance: Tack, created: bool, *args, **kwargs):
-    logger.warning(f"tack_created_first_time. {instance.status = }")
     if created and instance.status == TackStatus.CREATED:
+        logger.warning(f"tack_created_first_time. {instance.status = }")
         # Workaround on a problem to fly-calculate data for every User of the Group
         # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
         tack_serializer = TackDetailSerializer(instance)
         message = {
-                    'id': instance.id,
-                    'tack': tack_serializer.data,
-                    'is_mine_offer_sent': False
-                  }
+            'id': instance.id,
+            'tack': tack_serializer.data,
+            'is_mine_offer_sent': False
+        }
         ws_sender.send_message(
             f"group_{instance.group_id}",
             'grouptack.create',
@@ -193,8 +95,8 @@ def tack_created_first_time(instance: Tack, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
-    logger.warning(f"tack_created_active_update. {instance.status = }")
     if not created and instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
+        logger.warning(f"tack_created_active_update. {instance.status = }")
         tack_serializer = TackDetailSerializer(instance)
         logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
         message = {
@@ -207,18 +109,18 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
             'tack': tack_serializer.data,
             'is_mine_offer_sent': True
         }
-        ws_sender.send_message(
-            f"group_{instance.group_id}",
-            'grouptack.update',
-            message)
+        # ws_sender.send_message(
+        #     f"group_{instance.group_id}",
+        #     'grouptack.update',
+        #     message)
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
             tack_serializer.data)
-        ws_sender.send_message(
-            f"tack_{instance.id}_offer",
-            'grouptack.update',
-            runner_message)
+        # ws_sender.send_message(
+        #     f"tack_{instance.id}_offer",
+        #     'grouptack.update',
+        #     runner_message)
         ws_sender.send_message(
             f"user_{instance.runner_id}",
             'grouptack.update',
@@ -226,9 +128,9 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Tack)
-def tack_status_accepted(instance: Tack, created: bool, *args, **kwargs):
-    logger.warning(f"tack_status_accepted. {instance.status = }")
+def tack_accepted(instance: Tack, created: bool, *args, **kwargs):
     if not created and instance.status == TackStatus.ACCEPTED:
+        logger.warning(f"tack_status_accepted. {instance.status = }")
         ws_sender.send_message(
             f"group_{instance.group_id}",
             'grouptack.delete',
@@ -244,13 +146,12 @@ def tack_status_accepted(instance: Tack, created: bool, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Tack)
-def tack_status_accepted_in_progress_waiting_review(instance: Tack, created: bool, *args, **kwargs):
-    logger.warning(f"tack_status_accepted_in_progress_waiting_review. {instance.status = }")
-    if not created and \
-            instance.status in (
-                TackStatus.IN_PROGRESS,
-                TackStatus.WAITING_REVIEW
+def tack_accepted_in_progress_waiting_review(instance: Tack, created: bool, *args, **kwargs):
+    if not created and instance.status in (
+            TackStatus.IN_PROGRESS,
+            TackStatus.WAITING_REVIEW
     ):
+        logger.warning(f"tack_status_accepted_in_progress_waiting_review. {instance.status = }")
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
@@ -262,9 +163,9 @@ def tack_status_accepted_in_progress_waiting_review(instance: Tack, created: boo
 
 
 @receiver(signal=post_save, sender=Tack)
-def tack_status_finished(instance: Tack, created: bool, *args, **kwargs):
-    logger.warning(f"tack_status_finished. {instance.status = }")
+def tack_finished(instance: Tack, created: bool, *args, **kwargs):
     if not created and instance.status == TackStatus.FINISHED:
+        logger.warning(f"tack_status_finished. {instance.status = }")
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.delete',
@@ -296,13 +197,13 @@ def send_offer_expired_notification(instance: Offer, *args, **kwargs):
             "runner_lastname": instance.runner.last_name,
             "tack_title": instance.tack.title
         }
-        messages = create_message(data, ("offer_received", ))
+        messages = create_message(data, ("offer_received",))
         devices = FCMDevice.objects.filter(user=instance.tack.tacker)
         send_message(messages, (devices,))
 
 
 @receiver(signal=post_save, sender=Tack)
-def finish_tack_notification(instance: Tack, *args, **kwargs):
+def senf_tack_finished_notification(instance: Tack, *args, **kwargs):
     logger.warning(f"finish_tack_notification. {instance.status = }")
     data = {
         "runner_firstname": instance.runner.first_name,
@@ -311,9 +212,9 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
         "tack_title": instance.title,
         "tack_price": instance.price,
     } if instance.status in (
-            TackStatus.WAITING_REVIEW,
-            TackStatus.IN_PROGRESS,
-            TackStatus.FINISHED
+        TackStatus.WAITING_REVIEW,
+        TackStatus.IN_PROGRESS,
+        TackStatus.FINISHED
     ) else dict()
     if instance.status == TackStatus.IN_PROGRESS:
         messages = create_message(data, ("in_progress",))
@@ -323,7 +224,7 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
             countdown=calculate_tack_expiring(instance.estimation_time_seconds),
             kwargs={
                 "user_id": instance.runner_id,
-                "nf_types": ("tack_expiring", ),
+                "nf_types": ("tack_expiring",),
                 "data": data,
             }
         )
@@ -350,7 +251,7 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
         #     "tack_price": instance.price,
         #     "tack_title": instance.title,
         # }
-        messages = create_message(data, ("finished", ))
+        messages = create_message(data, ("finished",))
         logger.warning(f"INSIDE SIGNAL {instance.runner = }")
         logger.warning(f"INSIDE SIGNAL {instance.runner_id = }")
         logger.warning(f"INSIDE SIGNAL {instance.runner.id = }")
@@ -360,7 +261,7 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Offer)
-def offer_is_accepted_notification(instance: Offer, *args, **kwargs):
+def send_offer_accepted_notification(instance: Offer, *args, **kwargs):
     logger.warning(f"offer_is_accepted_notification. {instance.status = }")
     if instance.status == OfferStatus.ACCEPTED:
         data = {
@@ -375,7 +276,7 @@ def offer_is_accepted_notification(instance: Offer, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Tack)
-def tack_is_created_notification(instance: Tack, created: bool, *args, **kwargs):
+def send_tack_created_notification(instance: Tack, created: bool, *args, **kwargs):
     logger.warning(f"tack_is_created_notification. {instance.status = }")
     if created:
         data = {
@@ -393,13 +294,13 @@ def tack_is_created_notification(instance: Tack, created: bool, *args, **kwargs)
             ).values_list("member", flat=True)
         ))
         messages = create_message(data, ("tack_created",))
-        send_message(messages, (devices, ))
+        send_message(messages, (devices,))
         tack_long_inactive.apply_async(
             countdown=TACK_WITHOUT_OFFER_TIME,
             kwargs={
                 "tack_id": instance.id,
                 "user_id": instance.tacker.id,
                 "data": data,
-                "nf_types": ("no_offers_to_tack", )
+                "nf_types": ("no_offers_to_tack",)
             }
         )
