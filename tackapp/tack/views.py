@@ -35,6 +35,14 @@ class TackViewset(
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['status']
 
+    def get_serializer_class(self):
+        """Changing serializer class depends on actions"""
+
+        if self.action == "partial_update" or self.action == "update":
+            return TackCreateSerializer
+        else:
+            return super().get_serializer_class()
+
     @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
         serializer = TackCreateSerializer(data=request.data)
