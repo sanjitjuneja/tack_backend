@@ -99,16 +99,20 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         logger.warning(f"tack_created_active_update. {instance.status = }")
         tack_serializer = TackDetailSerializer(instance)
         logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
-        message = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': False
-        }
-        message_for_runner = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': True
-        }
+        # message = {
+        #     'id': instance.id,
+        #     'tack': tack_serializer.data,
+        #     'is_mine_offer_sent': False
+        # }
+        # message_for_runner = {
+        #     'id': instance.id,
+        #     'tack': tack_serializer.data,
+        #     'is_mine_offer_sent': True
+        # }
+        ws_sender.send_message(
+            f"user_{instance.tacker_id}",  # tack_{instance.tack_id}_tacker
+            'offer.create',
+            OfferSerializer(instance).data)
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
@@ -117,10 +121,10 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         #     f"tack_{instance.id}_offer",
         #     'grouptack.update',
         #     runner_message)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'grouptack.update',
-            message_for_runner)
+        # ws_sender.send_message(
+        #     f"user_{instance.runner_id}",
+        #     'grouptack.update',
+        #     message_for_runner)
 
 
 @receiver(signal=post_save, sender=Tack)
