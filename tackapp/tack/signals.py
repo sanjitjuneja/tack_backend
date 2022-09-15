@@ -161,7 +161,7 @@ def tack_finished(instance: Tack, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def tack_is_not_active(instance: Tack, created: bool, *args, **kwargs):
-    if not instance.is_active:
+    if not instance.is_active and instance.status == TackStatus.CREATED:
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             "tack.delete",
