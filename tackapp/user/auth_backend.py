@@ -10,6 +10,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from user.models import User
 
 logger = logging.getLogger()
+logger.setLevel(logging.CRITICAL)
 
 
 def create_firebase_device(device_fields, user):

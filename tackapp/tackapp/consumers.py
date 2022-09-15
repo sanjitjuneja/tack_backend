@@ -33,7 +33,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name)
-        logger.warning(f"{self.user} Added to group_{self.room_group_name}")
+        logger.warning(f"{self.user} Added to {self.room_group_name}")
 
         # group_members = await self.get_user_groups(self.user)
         group_members = await get_user_groups(self.user)
