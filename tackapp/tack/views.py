@@ -133,7 +133,8 @@ class TackViewset(
             status__in=(
                 OfferStatus.ACCEPTED,
                 OfferStatus.CREATED,
-                OfferStatus.IN_PROGRESS
+                OfferStatus.IN_PROGRESS,
+                OfferStatus.FINISHED
             ),
             runner=request.user
         ).exclude(
