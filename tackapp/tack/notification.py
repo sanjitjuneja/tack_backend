@@ -101,7 +101,7 @@ def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[M
                     priority='high',
                     notification=AndroidNotification(
                         icon='stock_ticker_update',
-                        color='#f45342',
+                        color='#54bca0',
                         sound="default"
                     ),
                 ),
