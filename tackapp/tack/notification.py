@@ -1,5 +1,9 @@
+import logging
+
 from firebase_admin.messaging import Message, Notification
 from core.notification_config import apns, android
+
+logger = logging.getLogger()
 
 
 def build_title_body(data: dict) -> dict:
@@ -49,9 +53,9 @@ def build_title_body(data: dict) -> dict:
                      f"Funds will be sent after review is completed")
         },
         "finished": {
-            f"{data.get('tack_price')} Was Sent To Your Balance",
-            (f"{data.get('tack_title')} - Tacker review complete! "
-             f"Your Tack balance has increased by {data.get('tack_price')}")
+            "title": f"{data.get('tack_price')} Was Sent To Your Balance",
+            "body": (f"{data.get('tack_title')} - Tacker review complete! "
+                     f"Your Tack balance has increased by {data.get('tack_price')}")
         }
     }
     return nf_type_dict
@@ -63,6 +67,14 @@ def map_body_title(nf_type_dict: dict, nf_types: tuple):
 
 def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[Message]:
     title_body_list = map_body_title(build_title_body(data), nf_types)
+    logger.warning(f"{data = }")
+    logger.warning(f"{nf_types = }")
+    logger.warning(f"{image_url = }")
+    logger.warning(f"{title_body_list = }")
+    logger.warning(f"{type(title_body_list) = }")
+    for obj in title_body_list:
+        logger.warning(f"{obj = }")
+
     return [
         Message(
             notification=Notification(
@@ -76,6 +88,10 @@ def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[M
     ]
 
 
-def send_message(messages: list, devices_list):
-    for message, device in zip(messages, devices_list):
-        device.send_message(message)
+def send_message(messages: list, devices_list_of_queryset: tuple) -> None:
+    logger.warning(f"{messages = }")
+    logger.warning(f"{devices_list_of_queryset = }")
+    for message, devices in zip(messages, devices_list_of_queryset):
+        logger.warning(f"{message = }")
+        logger.warning(f"{devices = }")
+        devices.send_message(message, )

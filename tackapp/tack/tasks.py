@@ -61,11 +61,11 @@ def tack_long_inactive(tack_id, user_id, data, nf_types) -> None:
     if not Offer.objects.filter(tack=tack_id).exists():
         messages = create_message(data, nf_types)
         devices = FCMDevice.objects.filter(user=user_id)
-        send_message(messages, (devices, ))
+        send_message(messages, (devices,))
 
 
 @shared_task
 def tack_expire_soon(user_id, data, nf_types) -> None:
     messages = create_message(data, nf_types)
     devices = FCMDevice.objects.filter(user=user_id)
-    send_message(messages, (devices, ))
+    send_message(messages, (devices,))

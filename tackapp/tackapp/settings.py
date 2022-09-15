@@ -321,7 +321,7 @@ FCM_DJANGO_SETTINGS = {
      # devices to which notifications cannot be sent,
      # are deleted upon receiving error response from FCM
      # default: False
-    "DELETE_INACTIVE_DEVICES": True,
+    "DELETE_INACTIVE_DEVICES": False,
 }
 
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
