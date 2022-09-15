@@ -205,7 +205,7 @@ def senf_tack_finished_notification(instance: Tack, *args, **kwargs):
         TackStatus.IN_PROGRESS,
         TackStatus.FINISHED
     ) else dict()
-    if instance.status == TackStatus.IN_PROGRESS:
+    if instance.status == TackStatus.IN_PROGRESS and not instance.estimation_time_seconds:
         messages = create_message(data, ("in_progress",))
         devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
         send_message(messages, (devices_tacker,))
