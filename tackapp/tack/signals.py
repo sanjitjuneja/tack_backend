@@ -105,7 +105,7 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
             'is_mine_offer_sent': False
         }
         runner_message = {
-            'id': instance.id,
+            'id': instance.accepted_offer_id,
             'tack': tack_serializer.data,
             'is_mine_offer_sent': True
         }
