@@ -334,6 +334,8 @@ class TackViewset(
             tack.accepted_offer.status = OfferStatus.CANCELLED
             tack.is_active = False
             tack.is_canceled = True
+            tack.tacker.bank_account.usd_balance += tack.price
+            tack.tacker.bank_account.save()
             tack.accepted_offer.save()
             tack.save()
         serializer = self.get_serializer(tack)
