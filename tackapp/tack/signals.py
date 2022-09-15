@@ -200,14 +200,14 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
                     'grouptack.delete',
                     instance.id)
             logging.getLogger().warning(f"else:")
-            ws_sender.send_message(
-                f"user_{instance.tacker_id}",
-                'tack.update',
-                TackDetailSerializer(instance).data)
-            ws_sender.send_message(
-                f"user_{instance.runner_id}",
-                'runnertack.update',
-                TacksOffersSerializer(instance.accepted_offer).data)
+            # ws_sender.send_message(
+            #     f"user_{instance.tacker_id}",
+            #     'tack.update',
+            #     TackDetailSerializer(instance).data)
+            # ws_sender.send_message(
+            #     f"user_{instance.runner_id}",
+            #     'runnertack.update',
+            #     TacksOffersSerializer(instance.accepted_offer).data)
 
 
 @receiver(signal=post_save, sender=Offer)
@@ -263,6 +263,14 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
             }
         )
     if instance.status == TackStatus.WAITING_REVIEW:
+        ws_sender.send_message(
+            f"user_{instance.tacker_id}",
+            'tack.update',
+            TackDetailSerializer(instance).data)
+        ws_sender.send_message(
+            f"user_{instance.runner_id}",
+            'runnertack.update',
+            TacksOffersSerializer(instance.accepted_offer).data)
         # data = {
         #     "runner_firstname": instance.runner.first_name,
         #     "tacker_firstname": instance.tacker.first_name,
