@@ -11,8 +11,8 @@ logger = logging.getLogger()
 
 class MainConsumer(AsyncWebsocketConsumer):
     async def websocket_connect(self, event):
-        logger.warning(f"async def websocket_connect: ")
-        logger.warning(f"{self.scope = }")
+        # logger.warning(f"async def websocket_connect: ")
+        # logger.warning(f"{self.scope = }")
         # if 'user' not in self.scope:
         #     logger.warning(f"if not hasattr(self.scope, 'user'):")
         #     raise
@@ -20,9 +20,9 @@ class MainConsumer(AsyncWebsocketConsumer):
             # await self.close(code=3000)
         self.user = self.scope['user']
         # logger = logging.getLogger()
-        logger.warning(f"Inside websocket_connect")
-        logger.warning(f"WS connected {self.user.id}")
-        logger.warning(f"{self.channel_name = }")
+        # logger.warning(f"Inside websocket_connect")
+        logger.warning(f"WS connected for {self.user.id}")
+        # logger.warning(f"{self.channel_name = }")
         if self.user.is_anonymous:
             await self.close()
 
@@ -33,6 +33,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name)
+        logger.warning(f"{self.user} Added to group_{self.room_group_name}")
 
         # group_members = await self.get_user_groups(self.user)
         group_members = await get_user_groups(self.user)
@@ -42,7 +43,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
             # logger.warning(f"{gm = }")
-            logger.warning(f"group_{gm.group_id}")
+            logger.warning(f"{self.user} Added to group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
         for tack in tacks_tacker:
@@ -50,7 +51,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_tacker",
                 self.channel_name
             )
-            logger.warning(f"tack_{tack.id}_tacker")
+            logger.warning(f"{self.user} Added to tack_{tack.id}_tacker")
 
         tacks_runner = await get_tacks_runner(self.user)
         for tack in tacks_runner:
@@ -58,15 +59,15 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_runner",
                 self.channel_name
             )
-            logger.warning(f"tack_{tack.id}_runner")
+            logger.warning(f"{self.user} Added to tack_{tack.id}_runner")
 
         offers = await get_user_offers(self.user)
         for offer in offers:
             await self.channel_layer.group_add(
-                f"tack_{offer.tack.id}_offer",
+                f"tack_{offer.tack_id}_offer",
                 self.channel_name
             )
-            logger.warning(f"tack_{offer.tack.id}_offer")
+            logging.getLogger().warning(f"{self.user} Added to tack_{offer.tack_id}_offer")
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -77,6 +78,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        logging.getLogger().warning(f"{self.user} Discarded to {self.room_group_name}")
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
@@ -94,7 +96,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             f"tack_{message['id']}_tacker",
             self.channel_name
         )
-        logging.getLogger().warning(f"Added to tack_{message['id']}_tacker")
+        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_tacker")
 
     async def tack_update(self, event):
         logger.warning(f"{event = }")
@@ -115,9 +117,11 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_tacker",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_tacker")
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
 
     async def grouptack_create(self, event):
         logger.warning(f"{event = }")
@@ -186,7 +190,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             f"group_{message['id']}",
             self.channel_name)
-        logging.getLogger().warning(f"Added to group_{message['id']}")
+        logging.getLogger().warning(f"{self.user} Added to group_{message['id']}")
 
     async def groupdetails_update(self, event):
         logger.warning(f"{event = }")
@@ -208,6 +212,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"group_{message}",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Discarded to group_{message}")
 
     async def offer_create(self, event):
         logger.warning(f"{event = }")
@@ -238,6 +243,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             f"tack_{message['id']}_offer",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_update(self, event):
         logger.warning(f"{event = }")
@@ -252,6 +258,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             f"tack_{message['id']}_offer",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_delete(self, event):
         logger.warning(f"{event = }")
@@ -264,6 +271,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
+        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
 
     async def completedtackrunner_create(self, event):
         logger.warning(f"{event = }")
