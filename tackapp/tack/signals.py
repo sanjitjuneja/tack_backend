@@ -327,6 +327,11 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
                 "data": data,
             }
         )
+    if instance.is_canceled:
+        messages = create_message(data, ("canceled",))
+        devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
+        send_message(messages, (devices_tacker,))
+
     if instance.status == TackStatus.WAITING_REVIEW:
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
@@ -336,21 +341,13 @@ def finish_tack_notification(instance: Tack, *args, **kwargs):
             f"user_{instance.runner_id}",
             'runnertack.update',
             TacksOffersSerializer(instance.accepted_offer).data)
-        # data = {
-        #     "runner_firstname": instance.runner.first_name,
-        #     "tacker_firstname": instance.tacker.first_name,
-        #     "tack_title": instance.title,
-        # }
         messages = create_message(data, ("waiting_review", "pending_review"))
         runner_devices = FCMDevice.objects.filter(user=instance.runner)
         tacker_devices = FCMDevice.objects.filter(user=instance.tacker)
         send_message(messages, (tacker_devices, runner_devices))
     if instance.status == TackStatus.FINISHED:
-        # data = {
-        #     "tack_price": instance.price,
-        #     "tack_title": instance.title,
-        # }
         messages = create_message(data, ("finished", ))
+        logger.warning(f"INSIDE SIGNAL {messages[0] = }")
         logger.warning(f"INSIDE SIGNAL {instance.runner = }")
         logger.warning(f"INSIDE SIGNAL {instance.runner_id = }")
         logger.warning(f"INSIDE SIGNAL {instance.runner.id = }")
@@ -392,8 +389,11 @@ def tack_is_created_notification(instance: Tack, created: bool, *args, **kwargs)
                 member=instance.tacker
             ).values_list("member", flat=True)
         ))
+        logger.warning(f"INSIDE SIGNAL {devices = }")
         messages = create_message(data, ("tack_created",))
+
         send_message(messages, (devices, ))
+
         tack_long_inactive.apply_async(
             countdown=TACK_WITHOUT_OFFER_TIME,
             kwargs={
