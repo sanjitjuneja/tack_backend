@@ -15,6 +15,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from core.choices import TackStatus, OfferType
 from group.models import GroupTacks, Group
+from payment.models import BankAccount
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished
@@ -334,8 +335,9 @@ class TackViewset(
             tack.accepted_offer.status = OfferStatus.CANCELLED
             tack.is_active = False
             tack.is_canceled = True
-            tack.tacker.bank_account.usd_balance += tack.price
-            tack.tacker.bank_account.save()
+            ba = BankAccount.objects.get(user=tack.tacker)
+            ba.usd_balance += tack.price
+            ba.save()
             tack.accepted_offer.save()
             tack.save()
         serializer = self.get_serializer(tack)
