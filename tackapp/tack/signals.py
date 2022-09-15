@@ -104,8 +104,8 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
             'tack': tack_serializer.data,
             'is_mine_offer_sent': False
         }
-        runner_message = {
-            'id': instance.accepted_offer_id,
+        message_for_runner = {
+            'id': instance.id,
             'tack': tack_serializer.data,
             'is_mine_offer_sent': True
         }
@@ -120,7 +120,7 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         ws_sender.send_message(
             f"user_{instance.runner_id}",
             'grouptack.update',
-            runner_message)
+            message_for_runner)
 
 
 @receiver(signal=post_save, sender=Tack)
