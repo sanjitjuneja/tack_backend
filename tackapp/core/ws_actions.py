@@ -12,7 +12,7 @@ def ws_offer_created(instance: Offer):
     logger.warning(f"offer_created. {instance.status = }")
     logger.warning(f"if created:")
     tack_serializer = TackDetailSerializer(instance.tack)
-    runner_message = {
+    message_for_runner = {
         'id': instance.tack_id,
         'tack': tack_serializer.data,
         'is_mine_offer_sent': True
@@ -28,8 +28,12 @@ def ws_offer_created(instance: Offer):
     ws_sender.send_message(
         f"tack_{instance.tack_id}_offer",
         "grouptack.update",
-        runner_message
+        message_for_runner
     )
+    ws_sender.send_message(
+        f"user_{instance.runner_id}",
+        'grouptack.update',
+        message_for_runner)
 
 
 def ws_offer_accepted(instance: Offer):

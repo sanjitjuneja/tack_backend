@@ -104,11 +104,11 @@ def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
         #     'tack': tack_serializer.data,
         #     'is_mine_offer_sent': False
         # }
-        # message_for_runner = {
-        #     'id': instance.id,
-        #     'tack': tack_serializer.data,
-        #     'is_mine_offer_sent': True
-        # }
+        message_for_runner = {
+            'id': instance.id,
+            'tack': tack_serializer.data,
+            'is_mine_offer_sent': True
+        }
         ws_sender.send_message(
             f"user_{instance.tacker_id}",
             'tack.update',
