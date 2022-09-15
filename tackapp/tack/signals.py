@@ -120,7 +120,7 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
             ws_sender.send_message(
                 f"group_{instance.group_id}",
                 'grouptack.delete',
-                instance.accepted_offer.id)  # accepted_offer_id
+                instance.id)  # accepted_offer_id
             if instance.status != TackStatus.CREATED:
                 ws_sender.send_message(
                     f"tack_{instance.id}_offer",
@@ -226,8 +226,8 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
 #         messages = create_message(data, ("offer_received", ))
 #         devices = FCMDevice.objects.filter(user=instance.tack.tacker)
 #         send_message(messages, (devices,))
-
-
+#
+#
 # @receiver(signal=post_save, sender=Tack)
 # def finish_tack_notification(instance: Tack, *args, **kwargs):
 #     logger.warning(f"finish_tack_notification {instance = }")
@@ -274,8 +274,8 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
 #         messages = create_message(data, ("finished", ))
 #         devices = FCMDevice.objects.filter(user=instance.runner)
 #         send_message(messages, (devices,))
-
-
+#
+#
 # @receiver(signal=post_save, sender=Offer)
 # def offer_is_accepted_notification(instance: Offer, *args, **kwargs):
 #     logger.warning(f"offer_is_accepted_notification {instance = }")
@@ -291,8 +291,8 @@ def tack_post_save(instance: Tack, created: bool, *args, **kwargs):
 #         runner_devices = FCMDevice.objects.filter(user=instance.runner)
 #         tacker_devices = FCMDevice.objects.filter(user=instance.tack.tacker)
 #         send_message(messages, [runner_devices, tacker_devices])
-
-
+#
+#
 # @receiver(signal=post_save, sender=Tack)
 # def tack_is_created_notification(instance: Tack, created: bool, *args, **kwargs):
 #     logger.warning(f"tack_is_created_notification {instance = }")
