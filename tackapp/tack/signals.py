@@ -163,6 +163,11 @@ def offer_cancelled(instance: Offer, created: bool, *args, **kwargs):
             f"user_{instance.runner_id}",  # tack_id_runner
             'runnertack.delete',
             instance.id)
+        ws_sender.send_message(
+            f"tack_{instance.id}_tacker",
+            "canceltackertackrunner.create",
+            TackDetailSerializer(instance.tack).data
+        )
 
 
 @receiver(signal=post_save, sender=Tack)

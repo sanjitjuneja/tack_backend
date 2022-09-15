@@ -281,3 +281,12 @@ class MainConsumer(AsyncWebsocketConsumer):
                 model='CompletedTackRunner', action='create', obj=message
             )
         )
+
+    async def canceltackertackrunner_create(self, event):
+        logger.warning(f"{event = }")
+        message = event['message']
+        await self.send(
+            text_data=form_websocket_message(
+                model='CancelTackerTackRunner', action='create', obj=message
+            )
+        )
