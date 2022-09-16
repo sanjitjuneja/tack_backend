@@ -5,7 +5,7 @@ from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.choices import images_dict, PaymentType
 from core.validators import supported_currency
-from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods, Fee
+from payment.models import BankAccount, StripePaymentMethodsHolder, Fee
 
 
 class AddBalanceStripeSerializer(serializers.Serializer):

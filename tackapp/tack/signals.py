@@ -183,7 +183,7 @@ def send_offer_expired_notification(instance: Offer, created: bool, *args, **kwa
         send_message(messages, (devices,))
     elif instance.status == OfferStatus.EXPIRED:
         data = {
-            "tack_price": instance.price,
+            "tack_price": instance.tack.price,  # instance.price or instance.tack.price
             "tack_title": instance.tack.title
         }
         messages = create_message(data, ("offer_expired",))
@@ -192,7 +192,7 @@ def send_offer_expired_notification(instance: Offer, created: bool, *args, **kwa
 
 
 @receiver(signal=post_save, sender=Tack)
-def senf_tack_finished_notification(instance: Tack, *args, **kwargs):
+def send_tack_finished_notification(instance: Tack, *args, **kwargs):
     logger.warning(f"finish_tack_notification. {instance.status = }")
     data = {
         "runner_firstname": instance.runner.first_name,
@@ -203,8 +203,8 @@ def senf_tack_finished_notification(instance: Tack, *args, **kwargs):
     } if instance.status in (
         TackStatus.WAITING_REVIEW,
         TackStatus.IN_PROGRESS,
-        TackStatus.FINISHED
-    ) else dict()
+        TackStatus.FINISHED,
+    ) or instance.is_canceled else dict()
     if instance.status == TackStatus.IN_PROGRESS and instance.estimation_time_seconds:
         messages = create_message(data, ("in_progress",))
         devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
@@ -236,11 +236,6 @@ def senf_tack_finished_notification(instance: Tack, *args, **kwargs):
         send_message(messages, (tacker_devices, runner_devices))
     if instance.status == TackStatus.FINISHED:
         messages = create_message(data, ("finished", ))
-        logger.warning(f"INSIDE SIGNAL {messages[0] = }")
-        messages = create_message(data, ("finished",))
-        logger.warning(f"INSIDE SIGNAL {instance.runner = }")
-        logger.warning(f"INSIDE SIGNAL {instance.runner_id = }")
-        logger.warning(f"INSIDE SIGNAL {instance.runner.id = }")
         devices = FCMDevice.objects.filter(user=instance.runner)
         logger.warning(f"INSIDE SIGNAL {devices = }")
         send_message(messages, (devices,))

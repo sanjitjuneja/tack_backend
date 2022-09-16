@@ -1,8 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from tackapp.settings import AWS_S3_CUSTOM_DOMAIN
-
 
 class WSSender:
     channel_layer = get_channel_layer()

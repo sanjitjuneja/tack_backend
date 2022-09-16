@@ -20,3 +20,31 @@ class PhoneVerification(CoreModel):
         db_table = "verifications"
         verbose_name = "Verification"
         verbose_name_plural = "Verifications"
+
+
+class FailedLoginAttempts(models.Model):
+    device_id = models.CharField(max_length=128, null=True, blank=True, default=None)
+    device_type = models.CharField(max_length=128, null=True, blank=True, default=None)
+    device_name = models.CharField(max_length=128, null=True, blank=True, default=None)
+    user = models.ForeignKey('user.User', null=True, blank=True, default=None, on_delete=models.SET_NULL)
+    credentials = models.CharField(max_length=128)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "failed_login_attempts"
+        verbose_name = "Failed login attempt"
+        verbose_name_plural = "Failed login attempts"
+
+
+class TimeoutSettings(models.Model):
+    signup_time_window_minutes = models.PositiveSmallIntegerField(default=60)
+    signup_max_attempts_per_window = models.PositiveSmallIntegerField(default=3)
+    signup_activation_code_ttl_minutes = models.PositiveSmallIntegerField(default=360)
+    signin_time_window_minutes = models.PositiveSmallIntegerField(default=60)
+    signin_max_attempts_per_window = models.PositiveSmallIntegerField(default=10)
+
+    class Meta:
+        db_table = "timeout_settings"
+        verbose_name = "Timeout setting"
+        verbose_name_plural = "Timeout settings"
+        

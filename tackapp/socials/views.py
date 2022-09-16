@@ -20,20 +20,35 @@ from user.serializers import UserDetailSerializer
 from .sms_service import twilio_client
 from .serializers import *
 from .services import generate_sms_code
-from .models import PhoneVerification
+from .models import PhoneVerification, TimeoutSettings
 from core.choices import SMSType
 
 
 class TwilioSendMessage(views.APIView):
     """View for sending SMS to user for subsequent verification"""
 
-    # @swagger_auto_schema(request_body=SMSSendSerializer, responses={200: "uuid", 400: "error_message"})
     @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
+
+        timeout_settings = TimeoutSettings.objects.all().last()
+        time_window_minutes = timeout_settings.signup_time_window_minutes or 60
+        max_signup_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window or 3
+
+        if PhoneVerification.objects.filter(
+            phone_number=phone_number,
+            creation_time__gte=timezone.now() - timedelta(minutes=time_window_minutes)
+        ).count() > max_signup_attempts_per_time_window:
+            return Response(
+                {
+                    "error": "code",
+                    "message": "Too many signup attempts. Try again later."
+                },
+                status=400)
+
+        uuid = uuid4()
         sms_code = generate_sms_code()
 
         try:
@@ -72,7 +87,6 @@ class TwilioSendMessage(views.APIView):
 class TwilioUserRegistration(views.APIView):
     """View for User registration with phone number"""
 
-    # @swagger_auto_schema(request_body=TwilioUserRegistrationSerializer)
     @extend_schema(
         request=TwilioUserRegistrationSerializer,
         responses={
@@ -117,7 +131,7 @@ class TwilioUserRegistration(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error" : "code",
+                    "error": "code",
                     "message": "invalid uuid"
                 },
                 status=400)
@@ -126,7 +140,6 @@ class TwilioUserRegistration(views.APIView):
 class PasswordRecoverySendMessage(views.APIView):
     """View for sending SMS for subsequent password recovery"""
 
-    # @swagger_auto_schema(request_body=SMSSendSerializer)
     @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
@@ -167,7 +180,6 @@ class PasswordRecoverySendMessage(views.APIView):
 class PasswordRecoveryChange(views.APIView):
     """View for changing user password through recovery"""
 
-    # @swagger_auto_schema(request_body=PasswordRecoveryChangeSerializer)
     @extend_schema(request=PasswordRecoveryChangeSerializer, responses={200: {"message": "text"}})
     def post(self, request):
         if request.user.is_authenticated:
@@ -200,15 +212,6 @@ class PasswordRecoveryChange(views.APIView):
         user = phv.user
         user.set_password(serializer.validated_data["new_password"])
         user.save()
-
-        # # Login after password change
-        # user = authenticate(
-        #     request,
-        #     phone_number=user.phone_number,
-        #     password=serializer.validated_data["new_password"],
-        # )
-        # login(request, user)
-
         return Response(
             {
                 "error": None,
@@ -219,6 +222,7 @@ class PasswordRecoveryChange(views.APIView):
 
 class PasswordChange(views.APIView):
     """View for changing user password manually"""
+
     permission_classes = (IsAuthenticated,)
 
     @extend_schema(request=PasswordChangeSerializer, responses=PasswordChangeSerializer)
@@ -248,11 +252,6 @@ class PasswordChange(views.APIView):
         request.user.set_password(new_password)
         request.user.save()
         refresh = RefreshToken.for_user(request.user)
-        # Login after password change
-        # user = authenticate(
-        #     request, phone_number=request.user.phone_number, password=new_password
-        # )
-
         return Response(
             {
                 "error": None,
@@ -273,14 +272,18 @@ class VerifySMSCode(views.APIView):
 
         uuid = serializer.validated_data["uuid"]
         sms_code = serializer.validated_data["sms_code"]
-        expiration_time = timedelta(hours=6)
+        timeout_settings = TimeoutSettings.objects.all().last()
+        activation_code_ttl_minutes = timeout_settings.signup_activation_code_ttl_minutes or 360
+
+        expiration_time = timedelta(minutes=activation_code_ttl_minutes)
         try:
             phv = PhoneVerification.objects.get(uuid=uuid)
+            # Check if activation code is not expired
             if timezone.now() > phv.creation_time + expiration_time:
                 return Response(
                     {
                         "error": "code",
-                        "message": "Verification period expired"
+                        "message": "Verification code expired"
                     },
                     status=400)
             if sms_code != phv.sms_code:

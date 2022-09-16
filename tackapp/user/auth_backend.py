@@ -1,16 +1,36 @@
 import logging
+from datetime import timedelta
 
 from django.core.exceptions import MultipleObjectsReturned
-from rest_framework import serializers, exceptions
+from django.utils import timezone
+from rest_framework import serializers, exceptions, status
+from rest_framework.response import Response
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.serializers import PasswordField
 from fcm_django.models import FCMDevice
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from socials.models import TimeoutSettings, FailedLoginAttempts
 from user.models import User
 
-logger = logging.getLogger("tackapp.urls")
-logger.setLevel(logging.CRITICAL)
+logger = logging.getLogger("user.auth_backend")
+
+
+class CustomResponseError(BaseException):
+    def __init__(self, error, message, status):
+        self.error = error
+        self.message = message
+        self.status = status
+
+
+class TooManyAttemptsError(CustomResponseError):
+    pass
+
+
+class MultipleAccountsError(CustomResponseError):
+    pass
 
 
 def create_firebase_device(device_fields, user):
@@ -23,6 +43,25 @@ def create_firebase_device(device_fields, user):
             "type": device_fields.get('device_type'),
         }
     )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (TooManyAttemptsError, MultipleAccountsError) as e:
+            return Response(
+                {
+                    "error": e.error,
+                    "message": e.message
+                },
+                status=e.status)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
 class CustomJWTSerializer(TokenObtainPairSerializer):
@@ -50,8 +89,6 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
         try:
             if isinstance(credentials['phone_number'], str):
                 credentials['phone_number'] = credentials['phone_number'].lower()
-            logger.warning(f"{attrs = }")
-            logger.warning(f"{credentials = }")
             if "@" in credentials["phone_number"]:
                 user = User.objects.get(
                     email=credentials["phone_number"]
@@ -64,19 +101,61 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 )
                 logger.warning(f"Inside else: {user = }")
 
+            if is_failed_attempt(attrs):
+                raise TooManyAttemptsError(
+                    error="code1",
+                    message="Too many unsuccessful sing-in attempts. Try again later",
+                    status=400
+                )
         except User.DoesNotExist:
+            FailedLoginAttempts.objects.create(
+                device_id=attrs.get("device_id"),
+                device_type=attrs.get("device_type"),
+                device_name=attrs.get("device_name"),
+                credentials=credentials["phone_number"]
+            )
+            if is_failed_attempt(attrs):
+                raise TooManyAttemptsError(
+                    error="code1",
+                    message="Too many unsuccessful sing-in attempts. Try again later",
+                    status=400
+                )
+            logger.warning(f"Failed login attempt with {credentials['phone_number']}")
             raise exceptions.AuthenticationFailed(
                 self.error_messages["no_active_account"],
                 "no_active_account",
             )
+
         except MultipleObjectsReturned as e:
-            return {
-                "error": "code",
-                "message": ("Multiple users with given credentials found.",
-                            "Please, contact our support.")
-            }
+            raise MultipleAccountsError(
+                error="code2",
+                message=("Multiple users with given credentials found. ",
+                         "Please, contact our support."),
+                status=400
+            )
         else:
+            logger.warning(f"INSIDE ELSE STATEMENT JWT SERIALIZER")
             data = super().validate(credentials)
             if all(name in attrs for name in ("device_id", "device_type")):
                 create_firebase_device(attrs, user)
             return data
+
+
+def is_failed_attempt(serializer_fields: dict) -> bool:
+    timeout_settings = TimeoutSettings.objects.all().last()
+    time_window_minutes = timeout_settings.signin_time_window_minutes if timeout_settings else 60
+    max_signin_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window if timeout_settings else 10
+
+    if device_id := serializer_fields.get("device_id"):
+        failed_attempts = FailedLoginAttempts.objects.filter(
+            device_id=device_id,
+            timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
+        )
+    else:
+        failed_attempts = FailedLoginAttempts.objects.filter(
+            credentials=serializer_fields.get("phone_number"),
+            timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
+        )
+    if failed_attempts.count() > max_signin_attempts_per_time_window:
+        return True
+    return False
