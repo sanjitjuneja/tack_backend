@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.core.exceptions import MultipleObjectsReturned
 from django.utils import timezone
 from rest_framework import serializers, exceptions, status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.serializers import PasswordField
@@ -101,7 +102,8 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 )
                 logger.warning(f"Inside else: {user = }")
 
-            if is_failed_attempt(attrs):
+            if is_failed_attempt(attrs, user):
+                logger.warning("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
                     error="code1",
                     message="Too many unsuccessful sing-in attempts. Try again later",
@@ -114,7 +116,8 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 device_name=attrs.get("device_name"),
                 credentials=credentials["phone_number"]
             )
-            if is_failed_attempt(attrs):
+            if is_failed_attempt(attrs, None):
+                logger.warning("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
                     error="code1",
                     message="Too many unsuccessful sing-in attempts. Try again later",
@@ -135,13 +138,27 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             )
         else:
             logger.warning(f"INSIDE ELSE STATEMENT JWT SERIALIZER")
-            data = super().validate(credentials)
-            if all(name in attrs for name in ("device_id", "device_type")):
-                create_firebase_device(attrs, user)
-            return data
+            try:
+                data = super().validate(credentials)
+            except AuthenticationFailed as e:
+                FailedLoginAttempts.objects.create(
+                    user=user,
+                    device_id=attrs.get("device_id"),
+                    device_type=attrs.get("device_type"),
+                    device_name=attrs.get("device_name"),
+                    credentials=credentials["phone_number"]
+                )
+                raise exceptions.AuthenticationFailed(
+                    self.error_messages["no_active_account"],
+                    "no_active_account",
+                )
+            else:
+                if all(name in attrs for name in ("device_id", "device_type")):
+                    create_firebase_device(attrs, user)
+                return data
 
 
-def is_failed_attempt(serializer_fields: dict) -> bool:
+def is_failed_attempt(serializer_fields: dict, user: User | None) -> bool:
     timeout_settings = TimeoutSettings.objects.all().last()
     time_window_minutes = timeout_settings.signin_time_window_minutes if timeout_settings else 60
     max_signin_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window if timeout_settings else 10
@@ -151,7 +168,14 @@ def is_failed_attempt(serializer_fields: dict) -> bool:
             device_id=device_id,
             timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
         )
+    elif user:
+        logger.warning(f"elif user: {user = }")
+        failed_attempts = FailedLoginAttempts.objects.filter(
+            user=user,
+            timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
+        )
     else:
+        logger.warning(f"else {serializer_fields.get('phone_number') = }")
         failed_attempts = FailedLoginAttempts.objects.filter(
             credentials=serializer_fields.get("phone_number"),
             timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)

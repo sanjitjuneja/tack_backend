@@ -11,6 +11,7 @@ services:
     env_file:
       - tackapp/dev.env
     command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
+#    command: ["python3", "manage.py", "runserver"]
     ports:
       - "8020:8020"
     depends_on:
