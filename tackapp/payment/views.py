@@ -255,6 +255,7 @@ class AddUserWithdrawMethod(views.APIView):
             )
             data[0]["is_primary"] = True
         serializer = DwollaPaymentMethodSerializer(data, many=True)
+        logging.getLogger().warning(f"{serializer.data = }")
         return Response({"results": serializer.data})
 
 
