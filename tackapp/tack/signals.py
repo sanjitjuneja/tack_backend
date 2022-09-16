@@ -183,7 +183,7 @@ def send_offer_expired_notification(instance: Offer, created: bool, *args, **kwa
         send_message(messages, (devices,))
     elif instance.status == OfferStatus.EXPIRED:
         data = {
-            "tack_price": instance.tack.price,  # instance.price or instance.tack.price
+            "tack_price": instance.price or instance.tack.price,
             "tack_title": instance.tack.title
         }
         messages = create_message(data, ("offer_expired",))
