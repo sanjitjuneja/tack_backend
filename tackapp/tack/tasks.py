@@ -31,12 +31,12 @@ def change_tack_status_finished(tack_id: int):
 
 @shared_task
 @transaction.atomic
-def delete_offer_task(offer_id: int) -> None:
+def set_expire_offer_task(offer_id: int) -> None:
     try:
         offer = Offer.objects.get(pk=offer_id)
     except ObjectDoesNotExist:
         return None
-    if offer.status != OfferStatus.ACCEPTED:
+    if offer.status == OfferStatus.CREATED:
         offer.set_expired_status()
 
 

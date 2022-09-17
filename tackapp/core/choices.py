@@ -88,8 +88,8 @@ class OfferStatus(models.TextChoices):
 
     CREATED = "created", "Created"
     ACCEPTED = "accepted", "Accepted"
+    IN_PROGRESS = "in_progress", "In progress"
+    FINISHED = "finished", "Finished"
     DELETED = "deleted", "Deleted"
     EXPIRED = "expired", "Expired"
     CANCELLED = "cancelled", "Cancelled"
-    IN_PROGRESS = "in_progress", "In progress"
-    FINISHED = "finished", "Finished"

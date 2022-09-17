@@ -11,7 +11,7 @@ from group.models import GroupMembers
 from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from tackapp.websocket_messages import WSSender
-from tack.tasks import delete_offer_task, tack_long_inactive, tack_expire_soon
+from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_expire_soon
 from tack.services import TACK_WITHOUT_OFFER_TIME, calculate_tack_expiring
 from tack.notification import create_message, send_message
 
@@ -28,7 +28,7 @@ logger.warning(f"in Tack signals {ws_sender = }")
 def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
     logger.warning(f"run_delete_offer_task. {instance.status = }")
     if created:
-        task = delete_offer_task.apply_async(
+        task = set_expire_offer_task.apply_async(
             countdown=instance.lifetime_seconds,
             kwargs={"offer_id": instance.id}
         )
@@ -39,7 +39,8 @@ def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
 def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     logger.warning(f"tack_status_on_offer_save. {instance.status = }")
 
-    # TODO: rethink guard statement to 1 SQL query
+    # if instance.status != OfferStatus.CREATED:
+    #     return
     if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
         return
     if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
