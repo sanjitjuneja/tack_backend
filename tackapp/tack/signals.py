@@ -135,8 +135,9 @@ def send_offer_expired_notification(instance: Offer, created: bool, *args, **kwa
 
 
 @receiver(signal=post_save, sender=Tack)
-def send_tack_finished_notification(instance: Tack, *args, **kwargs):
+def send_tack_finished_notification(instance: Tack, created: bool, *args, **kwargs):
     logger.warning(f"finish_tack_notification. {instance.status = }")
+
     data = {
         "runner_firstname": instance.runner.first_name,
         "runner_lastname": instance.runner.last_name,
@@ -144,11 +145,16 @@ def send_tack_finished_notification(instance: Tack, *args, **kwargs):
         "tack_title": instance.title,
         "tack_price": instance.price,
     } if instance.status in (
-        TackStatus.WAITING_REVIEW,
         TackStatus.IN_PROGRESS,
+        TackStatus.WAITING_REVIEW,
         TackStatus.FINISHED,
     ) or instance.is_canceled else dict()
-    if instance.status == TackStatus.IN_PROGRESS and instance.estimation_time_seconds:
+
+    if instance.is_canceled:
+        messages = create_message(data, ("canceled",))
+        devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
+        send_message(messages, (devices_tacker,))
+    elif instance.status == TackStatus.IN_PROGRESS and instance.estimation_time_seconds:
         messages = create_message(data, ("in_progress",))
         devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
         send_message(messages, (devices_tacker,))
@@ -160,25 +166,12 @@ def send_tack_finished_notification(instance: Tack, *args, **kwargs):
                 "data": data,
             }
         )
-    if instance.is_canceled:
-        messages = create_message(data, ("canceled",))
-        devices_tacker = FCMDevice.objects.filter(user=instance.tacker)
-        send_message(messages, (devices_tacker,))
-    if instance.status == TackStatus.WAITING_REVIEW:
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.update',
-            TackDetailSerializer(instance).data)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'runnertack.update',
-            TacksOffersSerializer(instance.accepted_offer).data)
         messages = create_message(data, ("waiting_review", "pending_review"))
         runner_devices = FCMDevice.objects.filter(user=instance.runner)
         tacker_devices = FCMDevice.objects.filter(user=instance.tacker)
         send_message(messages, (tacker_devices, runner_devices))
-    if instance.status == TackStatus.FINISHED:
-        messages = create_message(data, ("finished", ))
+    elif instance.status == TackStatus.FINISHED:
+        messages = create_message(data, ("finished",))
         devices = FCMDevice.objects.filter(user=instance.runner)
         logger.warning(f"INSIDE SIGNAL {devices = }")
         send_message(messages, (devices,))
@@ -209,18 +202,24 @@ def send_tack_created_notification(instance: Tack, created: bool, *args, **kwarg
             "tack_price": instance.price,
             "tack_title": instance.title
         }
-        devices = FCMDevice.objects.filter(user__in=Subquery(
-            GroupMembers.objects.filter(
-                group=instance.group,
-                is_muted=False
-            ).exclude(
-                member=instance.tacker
-            ).values_list("member", flat=True)
-        ))
+        logger.info(f"formed data on Tack creation: {data = }")
+        devices = FCMDevice.objects.filter(
+            user__in=Subquery(
+                GroupMembers.objects.filter(
+                    group=instance.group,
+                    is_muted=False
+                ).exclude(
+                    member=instance.tacker
+                ).values_list(
+                    "member",
+                    flat=True
+                )
+            )
+        )
         logger.warning(f"INSIDE SIGNAL {devices = }")
         messages = create_message(data, ("tack_created",))
 
-        send_message(messages, (devices, ))
+        send_message(messages, (devices,))
 
         tack_without_offer_seconds = 900
         tack_long_inactive.apply_async(
