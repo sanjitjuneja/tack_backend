@@ -14,7 +14,7 @@ from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from tackapp.websocket_messages import WSSender
 from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_expire_soon
-from tack.services import TACK_WITHOUT_OFFER_TIME, calculate_tack_expiring
+from tack.services import calculate_tack_expiring
 from tack.notification import create_message, send_message
 
 from core.choices import TackStatus
@@ -222,8 +222,9 @@ def send_tack_created_notification(instance: Tack, created: bool, *args, **kwarg
 
         send_message(messages, (devices, ))
 
+        tack_without_offer_seconds = 900
         tack_long_inactive.apply_async(
-            countdown=TACK_WITHOUT_OFFER_TIME,
+            countdown=tack_without_offer_seconds,
             kwargs={
                 "tack_id": instance.id,
                 "user_id": instance.tacker.id,

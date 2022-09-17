@@ -11,6 +11,8 @@ from firebase_admin.messaging import (
     APNSPayload
 )
 
+from payment.services import convert_to_decimal
+
 logger = logging.getLogger()
 
 
@@ -18,7 +20,7 @@ def build_title_body(data: dict) -> dict:
     nf_type_dict = {
         "tack_created": {
             "title": f"{data.get('group_name')} - {data.get('tack_description')}",
-            "body": f"{data.get('tack_price')} - {data.get('tack_title')}"
+            "body": f"{convert_to_decimal(data.get('tack_price'))} - {data.get('tack_title')}"
         },
         "no_offers_to_tack": {
             "title": f"No Current Offers - {data.get('tack_title')}",
@@ -42,11 +44,11 @@ def build_title_body(data: dict) -> dict:
             "body": f"{data.get('tack_title')} - Review completion of Tack before Runner receives funds",
         },
         "offer_expired": {
-            "title": f"{data.get('tack_price')} Offer Expired - {data.get('tack_title')}",
+            "title": f"{convert_to_decimal(data.get('tack_price'))} Offer Expired - {data.get('tack_title')}",
             "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
         },
         "offer_accepted": {
-            "title": f"{data.get('tack_price')} Offer Accepted - {data.get('tack_title')}",
+            "title": f"{convert_to_decimal(data.get('tack_price'))} Offer Accepted - {data.get('tack_title')}",
             "body": "Offer accepted! Mark Tack as in progress to begin completion"
         },
         "tack_expiring": {
@@ -60,9 +62,9 @@ def build_title_body(data: dict) -> dict:
                      f"Funds will be sent after review is completed")
         },
         "finished": {
-            "title": f"{data.get('tack_price')} Was Sent To Your Balance",
+            "title": f"{convert_to_decimal(data.get('tack_price'))} Was Sent To Your Balance",
             "body": (f"{data.get('tack_title')} - Tacker review complete! "
-                     f"Your Tack balance has increased by {data.get('tack_price')}")
+                     f"Your Tack balance has increased by {convert_to_decimal(data.get('tack_price'))}")
         },
         "canceled": {
             "title": f"Tack Canceled - You Have Been Fully Refunded",
@@ -75,9 +77,6 @@ def build_title_body(data: dict) -> dict:
 
 def map_body_title(nf_type_dict: dict, nf_types: tuple):
     return [nf_type_dict.get(nf_type) for nf_type in nf_types]
-
-# def map_body_title(nf_type_dict: dict, nf_type: str):
-#     return nf_type_dict.get(nf_type)
 
 
 def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[Message]:

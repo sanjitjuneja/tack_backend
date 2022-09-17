@@ -58,10 +58,18 @@ def set_tack_active_on_user_last_login(user_id: int) -> None:
 
 @shared_task
 def tack_long_inactive(tack_id, user_id, data, nf_types) -> None:
-    if not Offer.objects.filter(tack=tack_id).exists():
-        messages = create_message(data, nf_types)
-        devices = FCMDevice.objects.filter(user=user_id)
-        send_message(messages, (devices,))
+    # if this tack already had offers - do not send notification
+    if Offer.objects.filter(tack=tack_id).exists():
+        return
+    # if this tack is not in active objects(deleted) - do not send notification
+    try:
+        if Tack.active.get(id=tack_id):
+            return
+    except Tack.DoesNotExist:
+        return
+    messages = create_message(data, nf_types)
+    devices = FCMDevice.objects.filter(user=user_id)
+    send_message(messages, (devices,))
 
 
 @shared_task
