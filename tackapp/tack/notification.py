@@ -22,7 +22,7 @@ def build_title_body(data: dict) -> dict:
     nf_type_dict = {
         "tack_created": {
             "title": f"{data.get('group_name')} - {data.get('tack_description')}",
-            "body": f"${data.get('tack_price')} - {data.get('tack_title')}"
+            "body": f"{data.get('tack_price')} - {data.get('tack_title')}"
         },
         "no_offers_to_tack": {
             "title": f"No Current Offers - {data.get('tack_title')}",
