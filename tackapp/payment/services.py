@@ -68,7 +68,7 @@ def get_link_token(dwolla_id_user):
     """Get link token for FE to initiate plaid authentication"""
 
     request = LinkTokenCreateRequest(
-        products=[Products('transactions')],  # , Products("identity_verification")],
+        products=[Products('balance')],  # [Products('transactions')],  # , Products("identity_verification")],
         client_name="Plaid Test App",
         country_codes=[CountryCode('US')],
         language='en',
