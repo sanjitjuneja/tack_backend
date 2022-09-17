@@ -90,10 +90,9 @@ class Offer(CoreModel):
         self.is_active = False
         self.save()
 
-    def set_deleted_status(self):
+    def delete(self, using=None, keep_parents=False):
         self.status = OfferStatus.DELETED
-        self.is_active = False
-        self.save()
+        super().delete()
 
     class Meta:
         db_table = "offers"

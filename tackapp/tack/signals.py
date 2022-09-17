@@ -6,7 +6,9 @@ from django.dispatch import receiver
 
 from core.choices import OfferStatus
 from core.ws_actions import ws_offer_created, ws_offer_in_progress, ws_offer_finished, ws_offer_expired, \
-    ws_offer_deleted, ws_offer_cancelled, ws_offer_accepted
+    ws_offer_deleted, ws_offer_cancelled, ws_offer_accepted, ws_tack_created, ws_tack_deleted, ws_tack_cancelled, \
+    ws_tack_created_from_active, ws_tack_active, ws_tack_accepted, ws_tack_in_progress, ws_tack_waiting_review, \
+    ws_tack_finished
 from group.models import GroupMembers
 from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
@@ -47,10 +49,11 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
         related_offers = Offer.objects.filter(
             tack=instance.tack,
             status=OfferStatus.CREATED)
-        if related_offers.count() == 1:
-            instance.tack.change_status(TackStatus.ACTIVE)
-        elif related_offers.count() == 0:
-            instance.tack.change_status(TackStatus.CREATED)
+        match related_offers.count():
+            case 0:
+                instance.tack.change_status(TackStatus.CREATED)
+            case 1:
+                instance.tack.change_status(TackStatus.ACTIVE)
 
 
 @receiver(signal=post_save, sender=Offer)
@@ -73,101 +76,40 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
 
 
 @receiver(signal=post_save, sender=Tack)
-def tack_created_first_time(instance: Tack, created: bool, *args, **kwargs):
-    if created and instance.status == TackStatus.CREATED:
-        logger.warning(f"tack_created_first_time. {instance.status = }")
-
-        tack_serializer = TackDetailSerializer(instance)
-        # Workaround on a problem to fly-calculate data for every User of the Group
-        # This message model is GroupTackSerializer with hard-coded is_mine_offer_sent field
-        message = {
-            'id': instance.id,
-            'tack': tack_serializer.data,
-            'is_mine_offer_sent': False
-        }
-        ws_sender.send_message(
-            f"group_{instance.group_id}",
-            'grouptack.create',
-            message)
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.create',
-            tack_serializer.data)
-
-
-@receiver(signal=post_save, sender=Tack)
-def tack_created_active_update(instance: Tack, created: bool, *args, **kwargs):
-    if not created and instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
-        logger.warning(f"tack_created_active_update. {instance.status = }")
-        tack_serializer = TackDetailSerializer(instance)
-        logging.getLogger().warning(f"if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.update',
-            tack_serializer.data)
-
-
-@receiver(signal=post_save, sender=Tack)
-def tack_accepted(instance: Tack, created: bool, *args, **kwargs):
-    if not created and instance.status == TackStatus.ACCEPTED:
-        logger.warning(f"tack_status_accepted. {instance.status = }")
-        ws_sender.send_message(
-            f"group_{instance.group_id}",
-            'grouptack.delete',
-            instance.id)  # group_id?
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.update',
-            TackDetailSerializer(instance).data)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'runnertack.update',
-            TacksOffersSerializer(instance.accepted_offer).data)
-
-
-@receiver(signal=post_save, sender=Tack)
-def tack_accepted_in_progress_waiting_review(instance: Tack, created: bool, *args, **kwargs):
-    if not created and instance.status in (
-            TackStatus.IN_PROGRESS,
-            TackStatus.WAITING_REVIEW
-    ):
-        logger.warning(f"tack_status_accepted_in_progress_waiting_review. {instance.status = }")
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.update',
-            TackDetailSerializer(instance).data)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'runnertack.update',
-            TacksOffersSerializer(instance.accepted_offer).data)
-
-
-@receiver(signal=post_save, sender=Tack)
-def tack_finished(instance: Tack, created: bool, *args, **kwargs):
-    if not created and instance.status == TackStatus.FINISHED:
-        logger.warning(f"tack_status_finished. {instance.status = }")
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            'tack.delete',
-            instance.id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'runnertack.delete',
-            instance.accepted_offer.id)
-        ws_sender.send_message(
-            f"user_{instance.runner_id}",
-            'completedtackrunner.create',
-            TackDetailSerializer(instance).data)
-
-
-@receiver(signal=post_save, sender=Tack)
-def tack_is_not_active(instance: Tack, created: bool, *args, **kwargs):
-    if not instance.is_active and instance.status == TackStatus.CREATED:
-        ws_sender.send_message(
-            f"user_{instance.tacker_id}",
-            "tack.delete",
-            instance.id
-        )
+def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
+    # initial creation from tacker
+    if created:
+        ws_tack_created(instance)
+        return
+    # tack deletion process
+    if not instance.is_active:
+        # deletion from tacker (tack should be in status CREATED)
+        if instance.status == TackStatus.CREATED:
+            ws_tack_deleted(instance)
+            return
+        # deletion(cancellation) from runner (tack might be in status ACCEPTED, IN_PROGRESS)
+        if instance.is_canceled:
+            ws_tack_cancelled(instance)
+            return
+    match instance.status:
+        # status changed from active to created (all offers have been deleted)
+        case TackStatus.CREATED:
+            ws_tack_created_from_active(instance)
+        # status changed from created to active (first offer was sent to this tack)
+        case TackStatus.ACTIVE:
+            ws_tack_active(instance)
+        # status changed to accepted (tacker accepted offer)
+        case TackStatus.ACCEPTED:
+            ws_tack_accepted(instance)
+        # status changed to in_progress (runner began tack completion)
+        case TackStatus.IN_PROGRESS:
+            ws_tack_in_progress(instance)
+        # status changed to waiting_review (runner completed the tack)
+        case TackStatus.WAITING_REVIEW:
+            ws_tack_waiting_review(instance)
+        # status changed to finished (tacker confirmed tack completion)
+        case TackStatus.FINISHED:
+            ws_tack_finished(instance)
 
 
 @receiver(signal=post_save, sender=Offer)

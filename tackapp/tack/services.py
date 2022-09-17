@@ -14,7 +14,7 @@ TACK_WITHOUT_OFFER_TIME = 20
 @transaction.atomic
 def accept_offer(offer: Offer):
     price = offer.price if offer.price else offer.tack.price
-
+    delete_other_tack_offers(offer)
     offer.tack.runner = offer.runner
     offer.tack.accepted_offer = offer
     offer.tack.status = TackStatus.ACCEPTED
@@ -25,6 +25,17 @@ def accept_offer(offer: Offer):
     offer.tack.tacker.bankaccount.save()
     offer.save()
     offer.tack.save()
+
+
+def delete_other_tack_offers(offer: Offer):
+    Offer.active.filter(
+        tack=offer.tack
+    ).exclude(
+        id=offer.id
+    ).update(
+        status=OfferStatus.DELETED,
+        is_active=False
+    )
 
 
 @transaction.atomic
