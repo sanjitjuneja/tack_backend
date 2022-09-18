@@ -60,7 +60,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def websocket_receive(self, message):
-        logger.warning(f"Received from [{self.user} :: {self.device_info}] :: [{message['text']}]")
+        logger.warning(f"Received from [{self.user} :: {self.device_info}]\n[{message['text']}]")
 
     async def disconnect(self, close_code):
         # Leave room group
