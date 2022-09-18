@@ -74,6 +74,11 @@ def ws_offer_finished(offer: Offer):
 
 def ws_offer_expired(offer: Offer):
     logger.warning(f"offer_expired. {offer.status = }")
+    message_for_runner = {
+        'id': offer.tack_id,
+        'tack': TackDetailSerializer(offer.tack).data,
+        'is_mine_offer_sent': False
+    }
     ws_sender.send_message(
         f"user_{offer.tack.tacker_id}",  # tack_id_tacker
         'offer.delete',
@@ -82,6 +87,10 @@ def ws_offer_expired(offer: Offer):
         f"user_{offer.runner_id}",  # tack_id_runner
         'runnertack.delete',
         offer.id)
+    ws_sender.send_message(
+        f"user_{offer.runner_id}",
+        'grouptack.update',
+        message_for_runner)
 
 
 def ws_offer_deleted(offer: Offer):
