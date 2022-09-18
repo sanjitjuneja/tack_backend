@@ -302,12 +302,11 @@ class GroupViewset(
         # logging.getLogger().warning(tacks.query)
 
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
-        serializer_default = TackTemplateSerializer(tacks, many=True)
+        serializer_default = PopularTackSerializer(tacks, many=True)
         logging.getLogger().info(f"popular: {serializer_popular.data = }")
         logging.getLogger().info(f"groups: {serializer_default.data = }")
         return Response({
-            "popular": {serializer_popular.data | serializer_default.data},
-            # "groups": serializer_default.data
+            "popular": serializer_popular.data + serializer_default.data,
         })
 
     def perform_create(self, serializer):
