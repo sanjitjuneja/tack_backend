@@ -26,7 +26,7 @@ from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUse
 from plaid.model.processor_token_create_request import ProcessorTokenCreateRequest
 from plaid.model.products import Products
 
-from core.choices import OfferType, PaymentType, PaymentService, PaymentAction
+from core.choices import PaymentType, PaymentService, PaymentAction
 from dwolla_service.models import DwollaEvent
 from payment.plaid_service import plaid_client
 from payment.dwolla_service import dwolla_client
@@ -36,14 +36,20 @@ from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
 
 
+logger = logging.getLogger()
+
+
 @transaction.atomic
 def send_payment_to_runner(tack: Tack):
     """Transact money from one BankAccount to another"""
 
+    logger.warning("INSIDE send_payment_to_runner")
     if tack.is_paid:
+        logger.warning("if tack.is_paid:")
         return
     tack.runner.bankaccount.usd_balance += tack.price
     tack.is_paid = True
+    tack.runner.bankaccount.save()
     tack.save()
 
 
@@ -139,23 +145,23 @@ def get_accounts_with_processor_tokens(access_token: str) -> list[AccountBase]:
     return accounts
 
 
-def attach_all_accounts_to_dwolla(user: User, accounts: list) -> list:
+def attach_all_accounts_to_dwolla(user: User, accounts: list, access_token: str) -> list:
     """Attach and return all Dwolla payment methods to our BankAccount"""
 
     payment_methods = []
     dwolla_id = get_dwolla_id(user)
     for account in accounts:
-        payment_method_id = attach_account_to_dwolla(dwolla_id, account)
+        payment_method_id = attach_account_to_dwolla(dwolla_id, account, access_token)
         payment_methods.append(payment_method_id)
 
     return payment_methods
 
 
-def attach_account_to_dwolla(dwolla_id: str, account: dict) -> str:
+def attach_account_to_dwolla(dwolla_id: str, account: dict, access_token: str) -> str:
     """Attach one Dwolla payment method to our Tack BankAccount"""
 
     payment_method_id = get_dwolla_pm_by_plaid_token(dwolla_id, account)
-    add_dwolla_payment_method(dwolla_id, payment_method_id)
+    add_dwolla_payment_method(dwolla_id, payment_method_id, account["account_id"], access_token)
     return payment_method_id
 
 
@@ -173,25 +179,41 @@ def get_dwolla_pm_by_plaid_token(dwolla_customer_id, pm_account):
     return response.headers["Location"].split("/")[-1]
 
 
-def add_dwolla_payment_method(dwolla_id, dwolla_pm_id):
-    """Make record in DB about Dwolla payment method"""
+def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id=None, access_token=None):
+    """
+    Make record in DB about Dwolla payment method and related Plaid information
+    :param dwolla_id: User id in Dwolla API
+    :param dwolla_pm_id: Payment method id in Dwolla API
+    :param account_id: Bank id in Plaid API
+    :param access_token: access token for this Bank in Plaid API
+    :return: None
+    """
 
     try:
         ba = BankAccount.objects.get(dwolla_user=dwolla_id)
-        UserPaymentMethods.objects.create(bank_account=ba, dwolla_payment_method=dwolla_pm_id)
+        UserPaymentMethods.objects.create(
+            bank_account=ba,
+            dwolla_payment_method=dwolla_pm_id,
+            plaid_account_id=account_id,
+            dwolla_access_token=access_token
+        )
     except BankAccount.DoesNotExist:
         logging.getLogger().warning(f"Bank Account of {dwolla_id} is not found")
         # TODO: error handling
 
 
 @transaction.atomic
-def add_money_to_bank_account(payment_intent: PaymentIntent):
+def add_money_to_bank_account(payment_intent: PaymentIntent, cur_transaction: Transaction):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
-
+    logger = logging.getLogger()
     try:
-        ba = BankAccount.objects.get(stripe_user=payment_intent.customer)
-        ba.usd_balance += payment_intent.amount
+        logger.warning(f"{payment_intent.customer.id = }")
+        ba = BankAccount.objects.get(stripe_user=payment_intent.customer.id)
+        logger.warning(f"{ba = }")
+        ba.usd_balance += cur_transaction.amount_requested
+        logger.warning(f"{ba = }")
         ba.save()
+        logging.getLogger().warning(f"{ba = }")
     except BankAccount.DoesNotExist:
         # TODO: Error handling/create BA
         logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")
@@ -220,8 +242,6 @@ def get_transfer_request(
 
     if type(amount) is int:
         amount = convert_to_decimal(amount, currency)
-    logging.getLogger().warning(f"get_transfer_request {amount = }")
-    logging.getLogger().warning(f"{str(amount) = }")
     transfer_request = {
         '_links': {
             'source': {
@@ -251,12 +271,13 @@ def get_transfer_request(
 
 
 def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
-    """Check """
+    """Check Active Bank balance"""
     logger = logging.getLogger()
-    ba = BankAccount.objects.get(user=user)
+    # ba = BankAccount.objects.get(user=user)
+    pm = UserPaymentMethods.objects.get(dwolla_payment_method=payment_method)
     amount = convert_to_decimal(amount)
     request = AccountsBalanceGetRequest(
-        access_token=ba.dwolla_access_token
+        access_token=pm.dwolla_access_token
     )
     response = plaid_client.accounts_balance_get(request)
     logger.warning(f"plaid {response = }")
@@ -267,7 +288,7 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         )
         dwolla_payment_id = payment_method_qs.dwolla_payment_method
         for account in response['accounts']:
-            if account["account_id"] == dwolla_payment_id:
+            if account["account_id"] == pm.plaid_account_id:
                 logger.warning(Decimal(account["balances"]["available"]))
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
@@ -293,8 +314,8 @@ def dwolla_transaction(
         user: User,
         amount: int,
         payment_method: str,
-        channel: str,
         action: str,
+        channel: str = "ach",
         currency: str = "USD",
         *args,
         **kwargs
@@ -330,10 +351,11 @@ def dwolla_transaction(
     Transaction.objects.create(
         user=user,
         transaction_id=transaction_id,
-        is_dwolla=True,
+        service_name=PaymentService.DWOLLA,
         amount_requested=amount,
         amount_with_fees=amount_with_fees,
         service_fee=service_fee,
+        action_type=action
     )
     match action:
         case PaymentAction.WITHDRAW:
@@ -347,6 +369,12 @@ def dwolla_transaction(
 
 
 def calculate_amount_with_fees(amount: int, service: str) -> int:
+    """
+    Function that calculates new amount based on Fee that we charge users
+    :param amount: amount in absolute minimal values e.g. cents
+    :param service: service name e.g. "stripe", "dwolla"
+    :return: new calculated amount
+    """
     fees = Fee.objects.all().last()
     abs_fee = 0
     match service:
@@ -354,16 +382,15 @@ def calculate_amount_with_fees(amount: int, service: str) -> int:
             abs_fee = amount * fees.fee_percent_stripe / 100
             if abs_fee < fees.fee_min_stripe:
                 abs_fee = fees.fee_min_stripe
-            elif abs_fee > fees.fee_max_stripe:
+            elif abs_fee > fees.fee_max_stripe and fees.fee_max_stripe:
                 abs_fee = fees.fee_max_stripe
         case PaymentService.DWOLLA:
             abs_fee = amount * fees.fee_percent_dwolla / 100
             if abs_fee < fees.fee_min_dwolla:
                 abs_fee = fees.fee_min_dwolla
-            elif abs_fee > fees.fee_max_dwolla:
+            elif abs_fee > fees.fee_max_dwolla and fees.fee_max_dwolla:
                 abs_fee = fees.fee_max_dwolla
 
-    logging.getLogger().warning(f"{abs_fee = }")
     amount = int(amount + abs_fee)
     logging.getLogger().warning(f"{amount = }")
     return amount
@@ -402,6 +429,8 @@ def dwolla_webhook_handler(request):
 def detach_dwolla_funding_sources(dwolla_id):
     funding_sources = get_dwolla_payment_methods(dwolla_id)
 
+
+    logger.warning(f"in detach_dwolla_funding_sources: {funding_sources = }")
     for funding_source in funding_sources:
         detach_dwolla_funding_source(funding_source['id'])
 
@@ -464,9 +493,12 @@ def detach_payment_method(user: User, payment_type: str, payment_method: str):
 
 
 def update_dwolla_pms_with_primary(pms: dict, user: User):
+    """Enrich (data: list) of (funding_source's: dict) (is_primary: bool) values"""
+
     data = pms["_embedded"]["funding-sources"]
     dwolla_pm_ids = [funding_source["id"] for funding_source in data]
 
+    # [{"dwolla_payment_method": "id-1", "is_primary": bool}, ...]
     upms_values = UserPaymentMethods.objects.filter(
         dwolla_payment_method__in=dwolla_pm_ids
     ).values(
@@ -481,6 +513,7 @@ def update_dwolla_pms_with_primary(pms: dict, user: User):
             if dwolla_pm_id not in upms_values.values_list("dwolla_payment_method", flat=True):
                 dwolla_id = BankAccount.objects.get(user=user).dwolla_user
                 add_dwolla_payment_method(dwolla_id, dwolla_pm_id)
+
         upms_values = UserPaymentMethods.objects.filter(
             dwolla_payment_method__in=dwolla_pm_ids
         ).values(
@@ -488,11 +521,15 @@ def update_dwolla_pms_with_primary(pms: dict, user: User):
             "is_primary"
         )
 
-    # TODO: too ugly will change later (31.08.2022)
-    for upm in upms_values:
-        for funding_source in data:
-            if funding_source["id"] == upm["dwolla_payment_method"]:
-                funding_source["is_primary"] = upm["is_primary"]
+    # [{"id-1": bool}, ...]
+    upms_dict = {
+        upm['dwolla_payment_method']: upm['is_primary']
+        for upm in upms_values
+    }
+    data = [
+        funding_source | {'is_primary': upms_dict.get(funding_source['id']) or False}
+        for funding_source in data
+    ]
     return data
 
 
@@ -501,17 +538,17 @@ def calculate_service_fee(amount: int, service: str):
     match service:
         case PaymentService.DWOLLA:
             logging.getLogger().warning("calculate_service_fee, DWOLLA")
-            logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
             return int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
             logging.getLogger().warning("calculate_service_fee, STRIPE")
-            logging.getLogger().warning(int(amount * service_fee.dwolla_percent + service_fee.dwolla_const_sum))
+            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
             return int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum)
 
 
 def get_sum24h_transactions(user: User) -> int:
     sum24h = Transaction.objects.filter(
-                Q(is_stripe=True, is_succeeded=True) | Q(is_dwolla=True),
+                Q(service_name=PaymentService.STRIPE, is_succeeded=True) | Q(service_name=PaymentService.DWOLLA),
                 user=user,
                 creation_time__gt=timezone.now() - timedelta(hours=24)
             ).aggregate(
@@ -521,7 +558,6 @@ def get_sum24h_transactions(user: User) -> int:
                     )
                 )
             )['sum24h']
-    logging.getLogger().warning(f"{sum24h = }")
     return sum24h if sum24h else 0
 
 

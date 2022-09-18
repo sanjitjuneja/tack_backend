@@ -1,7 +1,9 @@
+from enum import Enum
+
 from django.db import models
-from django.templatetags.static import static
 
 from tackapp.settings import S3_BUCKET_TACKAPPSTORAGE, S3_BUCKET_CARDS, S3_BUCKET_BANKS
+
 
 images_dict = {
     "visa": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/visa.png",
@@ -81,3 +83,34 @@ class PaymentAction(models.TextChoices):
 
     DEPOSIT = "deposit", "Deposit"
     WITHDRAW = "withdraw", "Withdraw"
+
+
+class OfferStatus(models.TextChoices):
+    """Choices for Offer status"""
+
+    CREATED = "created", "Created"
+    ACCEPTED = "accepted", "Accepted"
+    IN_PROGRESS = "in_progress", "In progress"
+    FINISHED = "finished", "Finished"
+    DELETED = "deleted", "Deleted"
+    EXPIRED = "expired", "Expired"
+    CANCELLED = "cancelled", "Cancelled"
+
+
+class NotificationType(Enum):
+    TACK_CREATED = "tack_created"
+    TACK_ACCEPTED = "tack_accepted"
+    TACK_IN_PROGRESS = "tack_in_progress"
+    TACK_WAITING_REVIEW = "tack_waiting_review"
+    TACK_FINISHED = "tack_finished"
+
+    TACK_EXPIRING = "tack_expiring"
+    TACK_INACTIVE = "tack_inactive"
+    TACK_CANCELLED = "tack_canceled"
+
+    OFFER_RECEIVED = "offer_received"
+    OFFER_ACCEPTED = "offer_accepted"
+    RUNNER_FINISHED = "runner_finished"
+    OFFER_EXPIRED = "offer_expired"
+
+

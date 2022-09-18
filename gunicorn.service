@@ -1,0 +1,17 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=django
+Group=www-data
+WorkingDirectory=/app/tackapp
+ExecStart=/app/tackapp/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          tackapp.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

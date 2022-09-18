@@ -5,13 +5,13 @@ from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
 from core.choices import images_dict, PaymentType
 from core.validators import supported_currency
-from payment.models import BankAccount, StripePaymentMethodsHolder, UserPaymentMethods, Fee
+from payment.models import BankAccount, StripePaymentMethodsHolder, Fee
 
 
 class AddBalanceStripeSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4_000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
-    payment_method = serializers.CharField(min_length=6, required=False)
+    payment_method = serializers.CharField(min_length=6, required=False, allow_null=True)
 
 
 class AddBalanceDwollaSerializer(serializers.Serializer):
@@ -24,8 +24,8 @@ class AddBalanceDwollaSerializer(serializers.Serializer):
 class BankAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankAccount
-        fields = "usd_balance",
-        read_only_fields = "usd_balance",
+        fields = "id", "usd_balance"
+        read_only_fields = "id", "usd_balance"
 
 
 class PISerializer(serializers.ModelSerializer):
@@ -57,7 +57,7 @@ class StripeCardSerializer(serializers.Serializer):
     exp_month = serializers.IntegerField(read_only=True)
     image = serializers.SerializerMethodField()
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str:
         image = images_dict[obj["brand"]] if obj.get("brand") in images_dict else None
         return image
 
@@ -84,7 +84,7 @@ class DwollaMoneyWithdrawSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1_00, max_value=4000_00)
     currency = serializers.CharField(default="USD", validators=(supported_currency,))
     payment_method = serializers.CharField(min_length=6)
-    channel = serializers.CharField()
+    channel = serializers.CharField(required=False)
 
 
 class DwollaPaymentMethodSerializer(serializers.Serializer):

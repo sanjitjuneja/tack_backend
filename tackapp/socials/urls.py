@@ -25,7 +25,4 @@ urlpatterns = [
         PasswordChange.as_view(),
         name="accounts-password-change",
     ),
-    # path(r"accounts/login/", Login.as_view(), name="accounts-login"),
-    # path(r"accounts/logout/", Logout.as_view(), name="accounts-logout"),
-    # path(r"accounts/profile/", AccountProfileView.as_view(), name="accounts-profile"),
 ]

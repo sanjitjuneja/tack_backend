@@ -3,6 +3,7 @@ import logging
 from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import views, viewsets, mixins
@@ -14,9 +15,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from core.choices import TackStatus, OfferType
 from group.models import GroupTacks, Group
+from payment.models import BankAccount
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 from .tasks import change_tack_status_finished
+
+
+logger = logging.getLogger()
 
 
 class TackViewset(
@@ -33,6 +38,14 @@ class TackViewset(
     permission_classes = (TackOwnerPermission,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['status']
+
+    def get_serializer_class(self):
+        """Changing serializer class depends on actions"""
+
+        if self.action == "partial_update" or self.action == "update":
+            return TackCreateSerializer
+        else:
+            return super().get_serializer_class()
 
     @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
@@ -58,6 +71,8 @@ class TackViewset(
         serializer = self.get_serializer(tack, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
+        logger.warning(f"{serializer.validated_data = }")
+
         if tack.status != TackStatus.CREATED:
             return Response(
                 {
@@ -73,7 +88,7 @@ class TackViewset(
             # forcibly invalidate the prefetch cache on the instance.
             tack._prefetched_objects_cache = {}
 
-        return Response(serializer.data)
+        return Response(TackDetailSerializer(tack, context={"request": request}).data)
 
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
@@ -84,6 +99,11 @@ class TackViewset(
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
+        Offer.active.filter(
+            tack=tack
+        ).update(
+            status=OfferStatus.DELETED
+        )
         self.perform_destroy(tack)
         return Response(status=204)
 
@@ -91,41 +111,45 @@ class TackViewset(
     def me_as_tacker(self, request, *args, **kwargs):
         """Endpoint to display current User's Tacks as Tacker"""
 
-        queryset = Tack.active.filter(
+        tacks = Tack.active.filter(
             tacker=request.user
         ).exclude(
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).prefetch_related(
             "tacker",
             "runner",
             "group"
         )
-        queryset = self.filter_queryset(queryset)
-        page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        tacks = self.filter_queryset(tacks)
+        serializer = self.serializer_class(tacks, many=True, context={"request": request})
+        return Response(serializer.data)
 
     @action(methods=["GET"], detail=False, serializer_class=TacksOffersSerializer, url_path="me/as_runner")
     def me_as_runner(self, request, *args, **kwargs):
         """Endpoint to display current Users's Offers and related Tacks based on Offer entities"""
 
-        offers = Offer.active.filter(
+        offers = Offer.objects.filter(
+            status__in=(
+                OfferStatus.ACCEPTED,
+                OfferStatus.CREATED,
+                OfferStatus.IN_PROGRESS,
+                OfferStatus.FINISHED
+            ),
             runner=request.user
         ).exclude(
             tack__status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).select_related(
             "tack",
             "tack__tacker",
             "runner",
             "tack__group"
         )
-        page = self.paginate_queryset(offers)
-        serializer = self.get_serializer(page, many=True, context={"request": request})
-        return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(offers, many=True, context={"request": request})
+        return Response(serializer.data)
 
     @action(methods=("GET",), detail=False, url_path="me/previous_as_tacker")
     def previous_as_tacker(self, request, *args, **kwargs):
@@ -133,7 +157,7 @@ class TackViewset(
             tacker=request.user,
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).prefetch_related(
             "tacker",
             "runner",
@@ -152,7 +176,7 @@ class TackViewset(
             runner=request.user,
             status=TackStatus.FINISHED
         ).order_by(
-            "creation_time"
+            "-creation_time"
         ).select_related(
             "tacker",
             "runner",
@@ -180,7 +204,7 @@ class TackViewset(
                 },
                 status=400)
 
-        complete_tack(tack, "")
+        complete_tack(tack)
         task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
@@ -230,7 +254,11 @@ class TackViewset(
                     "message": "You already have ongoing Tack"
                 },
                 status=400)
-        tack.change_status(TackStatus.IN_PROGRESS)
+        with transaction.atomic():
+            tack.status = TackStatus.IN_PROGRESS
+            tack.accepted_offer.status = OfferStatus.IN_PROGRESS
+            tack.save()
+            tack.accepted_offer.save()
         return Response(self.get_serializer(tack).data)
 
     @action(methods=["GET"], detail=True, serializer_class=OfferSerializer,
@@ -238,9 +266,8 @@ class TackViewset(
     def offers(self, request, *args, **kwargs):
         """Endpoint to display Offers related to specific Tack"""
 
-        # TODO filter backend? maybe
         tack = self.get_object()
-        offers = Offer.active.filter(tack=tack, is_active=True).prefetch_related("runner")
+        offers = Offer.active.filter(tack=tack).prefetch_related("runner")
         page = self.paginate_queryset(offers)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -304,9 +331,15 @@ class TackViewset(
                     "message": "Cannot cancel Tack in this status"
                 },
                 status=400)
-        tack.is_active = False
-        tack.is_canceled = True
-        tack.save()
+        with transaction.atomic():
+            tack.accepted_offer.status = OfferStatus.CANCELLED
+            tack.is_active = False
+            tack.is_canceled = True
+            ba = BankAccount.objects.get(user=tack.tacker)
+            ba.usd_balance += tack.price
+            ba.save()
+            tack.accepted_offer.save()
+            tack.save()
         serializer = self.get_serializer(tack)
         return Response(serializer.data)
 
@@ -378,9 +411,6 @@ class OfferViewset(
     def accept(self, request, *args, **kwargs):
         """Endpoint for Tacker to accept Runner's offer"""
 
-        # TODO: check Tacker balance
-        # user.balance < tack.price - redirect on payment
-
         offer = self.get_object()
 
         # TODO: to service
@@ -417,7 +447,11 @@ class OfferViewset(
     def me(self, request, *args, **kwargs):
         """Endpoint for getting owned Offers"""
 
-        qs = Offer.active.filter(runner=request.user)
+        qs = Offer.active.filter(
+            runner=request.user
+        ).order_by(
+            "-creation_time"
+        )
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -426,7 +460,7 @@ class OfferViewset(
         """Endpoint for Runner to delete their own not accepted Offers"""
 
         instance = self.get_object()
-        if instance.is_accepted:
+        if instance.status == OfferStatus.ACCEPTED:
             return Response(
                 {
                     "error": "code",

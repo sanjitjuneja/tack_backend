@@ -25,21 +25,3 @@ class DwollaRemovedAccount(models.Model):
         db_table = "dwolla_removed_accounts"
         verbose_name = "Dwolla removed account"
         verbose_name_plural = "Dwolla removed accounts"
-
-
-# class DwollaPaymentMethod(models.Model):
-#     bank_account_type = models.CharField(max_length=64)
-#     bank_name = models.CharField(max_length=128)
-#     channels = models.JSONField()
-#     created = models.DateTimeField()
-#     fingerprint = models.CharField(max_length=64)
-#     source_id = models.UUIDField()
-#     name = models.CharField(max_length=128)
-#     removed = models.BooleanField(default=False)
-#     status = models.CharField(max_length=32)
-#     source_type = models.CharField(max_length=32)
-#
-#     class Meta:
-#         db_table = "dwolla_payment_methods"
-#         verbose_name = "Dwolla Payment method"
-#         verbose_name_plural = "Dwolla Payment methods"

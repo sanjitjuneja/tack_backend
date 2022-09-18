@@ -14,12 +14,14 @@ class ReadOnlyMixin:
 
 @admin.register(BankAccount)
 class BankAccountAdmin(ModelAdmin):
-    list_display = ('user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    ordering = ('id',)
 
 
 @admin.register(UserPaymentMethods)
 class UserPaymentMethodsAdmin(ModelAdmin):
     list_display = ('bank_account', 'dwolla_payment_method')
+    ordering = ('id',)
 
 
 @admin.register(Fee)
@@ -49,12 +51,13 @@ class ServiceFeeAdmin(ModelAdmin):
 class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
     list_display = (
         'user',
-        'is_stripe',
-        'is_dwolla',
-        'transaction_id',
         'amount_requested',
         'amount_with_fees',
-        'service_fee'
+        'service_fee',
+        'service_name',
+        'action_type',
+        'is_succeeded',
+        'transaction_id',
     )
-    list_filter = ('creation_time',)
+    list_filter = ('creation_time', 'service_name', 'action_type')
     search_fields = ('user', 'transaction_id')

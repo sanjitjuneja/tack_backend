@@ -1,7 +1,8 @@
-import djstripe.models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from django.db.models import CheckConstraint, Q, UniqueConstraint, Deferrable
+from django.db.models import Q, UniqueConstraint
+
+from core.choices import PaymentService, PaymentAction
 from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
@@ -24,7 +25,6 @@ class BankAccount(models.Model):
         return f"{str(self.user)}: {self.usd_balance / 100:.2f} $"
 
     class Meta:
-        db_table = "bank_account"
         verbose_name = "Bank Account"
         verbose_name_plural = "Bank Accounts"
 
@@ -32,7 +32,9 @@ class BankAccount(models.Model):
 class UserPaymentMethods(models.Model):
     bank_account = models.ForeignKey("payment.BankAccount", on_delete=models.CASCADE)
     dwolla_payment_method = models.CharField(max_length=64)
+    plaid_account_id = models.CharField(max_length=128, null=True, blank=True, default=None)
     is_primary = models.BooleanField(default=False)
+    dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
 
     class Meta:
         db_table = "payment_methods"
@@ -69,7 +71,6 @@ class Fee(models.Model):
     max_loss = models.PositiveIntegerField(default=4000)
 
     class Meta:
-        db_table = "fees"
         verbose_name = "Fee"
         verbose_name_plural = "Fees"
 
@@ -79,7 +80,6 @@ class StripePaymentMethodsHolder(models.Model):
     is_primary = models.BooleanField(default=False)
 
     class Meta:
-        db_table = "stripe_pm_holder"
         verbose_name = "Stripe Payment method holder"
         verbose_name_plural = "Stripe Payment methods holder"
 
@@ -89,8 +89,8 @@ class Transaction(models.Model):
     amount_requested = models.PositiveIntegerField()
     amount_with_fees = models.PositiveIntegerField()
     service_fee = models.PositiveIntegerField()
-    is_dwolla = models.BooleanField(default=False)
-    is_stripe = models.BooleanField(default=False)
+    service_name = models.CharField(max_length=10, choices=PaymentService.choices)
+    action_type = models.CharField(max_length=10, choices=PaymentAction.choices)
     transaction_id = models.CharField(max_length=255)
     creation_time = models.DateTimeField(auto_now_add=True)
     is_succeeded = models.BooleanField(default=False)

@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Prefetch, Q
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -17,7 +17,6 @@ from tack.models import Tack, PopularTack, Offer
 from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer, GroupTackSerializer
 from user.serializers import UserListSerializer
 from .serializers import *
-from .services import get_tacks_by_group
 
 
 class GroupViewset(
@@ -32,6 +31,11 @@ class GroupViewset(
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
 
+    def get_permissions(self):
+        if self.action == "retrieve":  # per action
+            self.permission_classes = (GroupMemberPermission,)
+        return super().get_permissions()
+
     def retrieve(self, request, *args, **kwargs):
         group = self.get_object()
         try:
@@ -45,7 +49,7 @@ class GroupViewset(
                 status=400
             )
 
-        serializer = GroupMembersSerializer(gm)
+        serializer = GroupMembersSerializer(gm, context={"request": request})
         return Response(serializer.data)
 
     @action(methods=("GET",), detail=False, serializer_class=GroupMembersSerializer)
@@ -55,12 +59,12 @@ class GroupViewset(
         qs = GroupMembers.objects.filter(
             member=request.user
         ).order_by(
-            "date_joined"
+            "-date_joined"
         ).select_related(
             "group"
         )
         page = self.paginate_queryset(qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -73,9 +77,10 @@ class GroupViewset(
         """Endpoint for setting active Group to the User (for further Tack creation)"""
 
         group = self.get_object()
-        request.user.active_group = group
-        request.user.save()
-        serializer = GroupSerializer(group)
+        if not request.user.active_group == group:
+            request.user.active_group = group
+            request.user.save()
+        serializer = GroupSerializer(group, context={"request": request})
         return Response(serializer.data)
 
     @extend_schema(
@@ -109,7 +114,24 @@ class GroupViewset(
             return Response({"invitation": invite_serializer.data})
         return Response({"group": GroupMembersSerializer(gm, context={"request": request}).data})
 
-    @extend_schema(responses={"message"})
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name="leave_200",
+                fields={
+                    "message": serializers.CharField(),
+                    "group": GroupSerializer()
+                }
+            ),
+            400: inline_serializer(
+                name="leave_400",
+                fields={
+                    "error": serializers.CharField(),
+                    "message": serializers.CharField()
+                }
+            )
+        }
+    )
     @action(methods=("POST",), detail=True, permission_classes=(GroupMemberPermission,),
             serializer_class=serializers.Serializer)
     def leave(self, request, *args, **kwargs):
@@ -122,6 +144,8 @@ class GroupViewset(
             ongoing_tacks = Tack.active.filter(
                 Q(tacker=request.user) | Q(runner=request.user),
                 status__in=(
+                    TackStatus.CREATED,
+                    TackStatus.ACTIVE,
                     TackStatus.ACCEPTED,
                     TackStatus.IN_PROGRESS,
                     TackStatus.WAITING_REVIEW
@@ -169,7 +193,7 @@ class GroupViewset(
             "runner",
             "group",
         ).order_by(
-            "creation_time"
+            "-creation_time"
         )
         page = self.paginate_queryset(tacks)
         serializer = GroupTackSerializer(page, many=True, context={"request": request})
@@ -185,7 +209,7 @@ class GroupViewset(
         group = self.get_object()
         users_qs = User.objects.filter(groupmembers__group=group)
         page = self.paginate_queryset(users_qs)
-        serializer = self.get_serializer(page, many=True)
+        serializer = self.get_serializer(page, many=True, context={"request", request})
         return self.get_paginated_response(serializer.data)
 
     @action(methods=("GET",), detail=True, permission_classes=(GroupMemberPermission,))
@@ -269,7 +293,7 @@ class GroupViewset(
         tacks_len = 10 - len(popular_tacks)
         tacks = Tack.active.filter(
             group=group,
-            status__in=[TackStatus.WAITING_REVIEW, TackStatus.FINISHED]
+            status__in=(TackStatus.WAITING_REVIEW, TackStatus.FINISHED)
         ).annotate(
             offer_count=Count('offer')
         ).order_by(

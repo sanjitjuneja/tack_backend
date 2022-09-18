@@ -6,36 +6,27 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
-    volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
-    command: ["gunicorn", "tackapp.wsgi:application", "--bind", "0.0.0.0:8000"]
-    expose:
-      - 8000
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:14.4-alpine
-    container_name: 'postgres'
-    restart: always
     env_file:
       - tackapp/prod.env
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
+    expose:
+      - 8000
 
   nginx:
     container_name: 'nginx'
+    restart: always
     build: ./nginx
+    env_file:
+      - tackapp/prod.env
     ports:
       - "80:80"
-    volumes:
-      - static_volume:/app/tackapp/staticfiles
-      - media_volume:/app/tackapp/media
     depends_on:
       - web
 
   celery:
     build: .
     container_name: 'celery'
+    restart: always
     command: celery -A tackapp worker --loglevel=info --logfile=celery.log
     environment:
       - app=prod
@@ -48,19 +39,27 @@ services:
   redis:
     container_name: 'redis'
     image: redis:7-alpine
+    restart: always
+
+  rabbit:
+    container_name: 'rabbit'
+    image: rabbitmq:3.10-management
+    restart: always
+    env_file:
+      - tackapp/prod.env
+    ports:
+      - "15672:15672"
 
   flower:
     build: .
     container_name: 'flower'
-    command: celery -A tackapp --broker=redis://redis:6379/0 flower --port=443
+    restart: always
+    command: celery -A tackapp --broker=$CELERY_BROKER flower --port=5555
+    ports:
+      - "5555:5555"
     env_file:
       - tackapp/prod.env
     depends_on:
       - web
       - redis
       - celery
-      - postgres
-
-volumes:
-  static_volume:
-  media_volume:

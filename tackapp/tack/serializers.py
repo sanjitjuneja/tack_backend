@@ -106,14 +106,9 @@ class AcceptOfferSerializer(serializers.ModelSerializer):
             "offer_type",
             "is_accepted",
             "lifetime_seconds",
-            "is_active"
+            "is_active",
+            "status"
         )
-
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     for _ in OfferType.choices:
-    #         ret["offer_type"] = _[1] if ret["offer_type"] == _[0] else ret["offer_type"]
-    #     return ret
 
 
 class OfferSerializer(serializers.ModelSerializer):
@@ -132,7 +127,7 @@ class OfferSerializer(serializers.ModelSerializer):
         model = Offer
         fields = "__all__"
         read_only_fields = (
-            "runner", "is_accepted", "offer_type", "creation_time", "lifetime_seconds", "is_active"
+            "runner", "is_accepted", "offer_type", "creation_time", "lifetime_seconds", "is_active", "status"
         )
 
 
@@ -169,19 +164,8 @@ class TacksOffersSerializer(serializers.Serializer):
     def get_id(self, obj: Offer) -> int:
         return obj.id
 
-# class TacksOffersSerializer2(serializers.ModelSerializer):
-#     tack = TackDetailSerializer()
-#     offer = OfferSerializer()
-#
-#     class Meta:
-#         model = TacksOffers
-#         fields = "__all__"
-
 
 class PopularTackSerializer(serializers.ModelSerializer):
-    # tacker = UserListSerializer(read_only=True)
-    # group = GroupSerializer(read_only=True)
-
     class Meta:
         model = PopularTack
         fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
@@ -208,7 +192,7 @@ class GroupTackSerializer(serializers.Serializer):
     def get_id(self, obj) -> int:
         return obj.id
 
-    def get_tack(self, obj) -> TackDetailSerializer:
+    def get_tack(self, obj: Tack) -> TackDetailSerializer:
         return TackDetailSerializer(obj, many=False).data
 
     def get_is_mine_offer_sent(self, obj) -> bool:

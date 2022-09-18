@@ -6,7 +6,7 @@ from django.core.validators import (
 from django.db.models import UniqueConstraint, Q
 
 from core.abstract_models import CoreModel
-from core.choices import TackStatus, OfferType, TackType
+from core.choices import TackStatus, OfferType, TackType, OfferStatus
 from user.models import User
 
 
@@ -27,7 +27,10 @@ class Tack(CoreModel):
             MaxValueValidator(999_999_99),
         ),
     )
-    group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
+    group = models.ForeignKey(
+        "group.Group",
+        on_delete=models.CASCADE
+    )
     description = models.CharField(max_length=512)
     allow_counter_offer = models.BooleanField()
     status = models.CharField(
@@ -56,7 +59,7 @@ class Tack(CoreModel):
     # runner rating
 
     def __str__(self):
-        return f"{self.pk}: {self.title}"
+        return f"Tack {self.pk}: {self.title}"
 
     class Meta:
         db_table = "tacks"
@@ -76,9 +79,20 @@ class Offer(CoreModel):
         blank=True
     )
     offer_type = models.CharField(max_length=13, choices=OfferType.choices, default=OfferType.OFFER)
-    is_accepted = models.BooleanField(default=False)
     lifetime_seconds = models.PositiveIntegerField(default=900)
-    is_active = models.BooleanField(default=True)
+    status = models.CharField(max_length=12, choices=OfferStatus.choices, default=OfferStatus.CREATED)
+
+    def __str__(self):
+        return f"Offer {self.id}: on {self.tack} from {self.runner}"
+
+    def set_expired_status(self):
+        self.status = OfferStatus.EXPIRED
+        self.is_active = False
+        self.save()
+
+    def delete(self, using=None, keep_parents=False):
+        self.status = OfferStatus.DELETED
+        super().delete()
 
     class Meta:
         db_table = "offers"
