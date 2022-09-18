@@ -205,7 +205,6 @@ class TackViewset(
                 status=400)
 
         complete_tack(tack)
-        task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
     @extend_schema(request=None, responses={

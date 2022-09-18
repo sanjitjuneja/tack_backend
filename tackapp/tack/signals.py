@@ -13,7 +13,7 @@ from group.models import GroupMembers
 from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from tackapp.websocket_messages import WSSender
-from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_will_expire_soon
+from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_will_expire_soon, change_tack_status_finished
 from tack.services import calculate_tack_expiring, notification_on_tack_finished, notification_on_tack_waiting_review, \
     notification_on_tack_in_progress, notification_on_tack_cancelled, deferred_notification_tack_inactive, \
     notification_on_tack_created, notification_on_offer_expired, deferred_notification_tack_will_expire_soon, \
@@ -118,7 +118,9 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
         case TackStatus.WAITING_REVIEW:
             ws_tack_waiting_review(instance)
             notification_on_tack_waiting_review(instance)
+            change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": instance.id})
         # status changed to finished (tacker confirmed tack completion)
         case TackStatus.FINISHED:
             ws_tack_finished(instance)
             notification_on_tack_finished(instance)
+
