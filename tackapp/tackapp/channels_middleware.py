@@ -11,7 +11,8 @@ from django.conf import settings
 from user.models import User
 
 
-logger = logging.getLogger()
+logger = logging.getLogger("tackapp.channels_middleware")
+logger.setLevel("CRITICAL")
 
 
 @database_sync_to_async
