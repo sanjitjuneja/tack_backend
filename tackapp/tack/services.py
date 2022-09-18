@@ -99,7 +99,7 @@ def notification_on_tack_created(tack: Tack):
 
 def deferred_notification_tack_inactive(tack: Tack):
     logger.warning(f"INSIDE deferred_notification_tack_inactive")
-    tack_without_offer_seconds = 5
+    tack_without_offer_seconds = 900
     tack_long_inactive.apply_async(
         countdown=tack_without_offer_seconds,
         kwargs={
