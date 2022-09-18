@@ -11,79 +11,74 @@ from firebase_admin.messaging import (
     APNSPayload
 )
 
+from core.choices import NotificationType
 from payment.services import convert_to_decimal
 from tack.models import Tack, Offer
 
 logger = logging.getLogger("tack.notification")
 
 
-def build_title_body_from_offer(message_type: str, offer: Offer) -> tuple:
+def build_title_body(message_type: NotificationType) -> tuple:
     ntf_type_dict = {
-        "offer_received": {
-            "title": "Offer Received - {runner_first_name} {runner_last_name}",
-            "body": "{tack_title} - Accept Runner’s offer to start Tack"
+        NotificationType.TACK_CREATED: {
+            "title": "${tack_price} - {tack_title}",
+            "body": "{group_name} - {tack_description}"
         },
-        "offer_accepted": {
-            "title": "${tack_or_offer_price} Offer Accepted - {tack_title}",
-            "body": "Offer accepted! Mark Tack as in progress to begin completion"
-        },
-        "tack_expiring": {
-            "title": "TACK EXPIRING - {tack_title}",
-            "body": ("Tack’s estimated completion time will expire soon. "
-                     "Please complete Tack as soon as possible")
-        },
-        "offer_expired": {
-            "title": "${tack_or_offer_price} Offer Expired - {tack_title}",
-            "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
-        },
-    }
-    pickled_message = ntf_type_dict.get(message_type)
-    return (
-        pickled_message.get("title"),
-        pickled_message.get("body"),
-        pickled_message.get("image_url")
-    )
-
-
-def build_title_body_from_tack(message_type: str, tack: Tack) -> tuple:
-    ntf_type_dict = {
-        "tack_created": {
-            "title": "{group_name} - {tack_description}",
-            "body": "${tack_price} - {tack_title}"
-        },
-        "no_offers_to_tack": {
+        NotificationType.TACK_INACTIVE: {
             "title": "No Current Offers - {tack_title}",
             "body": "{group_name} - Try increasing your Tack price to attract more Runners"
         },
-        "in_preparing": {
+        NotificationType.OFFER_RECEIVED: {
+            "title": "Offer Received - {runner_first_name} {runner_last_name}",
+            "body": "{tack_title} - Accept Runner’s offer to start Tack"
+        },
+        NotificationType.TACK_ACCEPTED: {
             "title": "Tack Started - {runner_first_name} Is Preparing",
             "body": ("{tack_title} - {runner_first_name} {runner_last_name} "
                      "is preparing to begin completion")
         },
-        "in_progress": {
+        NotificationType.TACK_IN_PROGRESS: {
             "title": "Tack Completing - {runner_first_name} Is Completing",
-            "body": "{tack_title} - {runner_first_name}"
+            "body": "{tack_title} - {runner_first_name} {runner_last_name} has begun completion"
         },
-        "waiting_review": {
+        NotificationType.RUNNER_FINISHED: {
             "title": "Review Completion - {runner_first_name} Is Done",
             "body": "{tack_title} - Review completion of Tack before Runner receives funds",
         },
-        "finished": {
+        NotificationType.TACK_CANCELLED: {
+            "title": "Tack Canceled - You Have Been Fully Refunded",
+            "body": ("{tack_title} - Runner canceled Tack. We have fully "
+                     "refunded the listed Tack price into your Tack Balance.")
+        },
+        NotificationType.OFFER_ACCEPTED: {
+            "title": "${tack_or_offer_price} Offer Accepted - {tack_title}",
+            "body": "Offer accepted! Mark Tack as in progress to begin completion"
+        },
+        NotificationType.OFFER_EXPIRED: {
+            "title": "${tack_or_offer_price} Offer Expired - {tack_title}",
+            "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
+        },
+        NotificationType.TACK_EXPIRING: {
+            "title": "TACK EXPIRING",
+            "body": ("{tack_title} - Tack’s estimated completion time will expire soon. "
+                     "Please complete Tack as soon as possible")
+        },
+        NotificationType.TACK_WAITING_REVIEW: {
+            "title": "Pending Review - {tack_title}",
+            "body": "{tacker_first_name} is reviewing Tack’s completion. "
+                    "Funds will be sent after review is completed",
+        },
+        NotificationType.TACK_FINISHED: {
             "title": "${tack_price} Was Sent To Your Balance",
             "body": ("{tack_title} - Tacker review complete! "
                      "Your Tack balance has increased by ${tack_price}")
         },
-        "canceled": {
-            "title": "Tack Canceled - You Have Been Fully Refunded",
-            "body": ("{tack_title} - Runner canceled Tack. We have fully "
-                     "refunded the listed Tack price into your Tack Balance.")
-        }
     }
-    pickled_message = ntf_type_dict.get(message_type)
+    selected_template = ntf_type_dict.get(message_type)
     return (
-        pickled_message.get("title"),
-        pickled_message.get("body"),
-        pickled_message.get("image_url")
+        selected_template.get("title"),
+        selected_template.get("body"),
+        selected_template.get("image_url")
     )
 
 

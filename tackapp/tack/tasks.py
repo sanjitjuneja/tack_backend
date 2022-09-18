@@ -9,8 +9,8 @@ from django.utils import timezone
 
 from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
-from core.choices import TackStatus, OfferStatus
-from tack.notification import build_title_body_from_tack, build_ntf_message, build_title_body_from_offer, \
+from core.choices import TackStatus, OfferStatus, NotificationType
+from tack.notification import build_title_body, build_ntf_message, \
     get_formatted_ntf_title_body_from_tack, get_formatted_ntf_title_body_from_offer
 from user.models import User
 
@@ -72,7 +72,7 @@ def tack_long_inactive(tack_id) -> None:
         if tack := Tack.active.get(id=tack_id):
             if tack.status != TackStatus.CREATED:
                 return
-            ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("no_offers_to_tack", tack)
+            ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_INACTIVE)
             formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
             message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
             FCMDevice.objects.filter(
@@ -91,7 +91,7 @@ def tack_will_expire_soon(offer_id) -> None:
         return
     if offer.status != OfferStatus.IN_PROGRESS:
         return
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_offer("tack_expiring", offer)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_EXPIRING)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(

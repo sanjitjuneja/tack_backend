@@ -6,11 +6,11 @@ from django.db.models import Subquery
 from django.utils import timezone
 from fcm_django.models import FCMDevice
 
-from core.choices import TackStatus, OfferStatus
+from core.choices import TackStatus, OfferStatus, NotificationType
 from group.models import GroupMembers
 from payment.services import send_payment_to_runner
 from .models import Offer, Tack
-from .notification import build_ntf_message, build_title_body_from_tack, build_title_body_from_offer, \
+from .notification import build_ntf_message, build_title_body, \
     get_formatted_ntf_title_body_from_tack, get_formatted_ntf_title_body_from_offer
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
@@ -79,7 +79,7 @@ def calculate_tack_expiring(estimation_time_seconds: int) -> int:
 
 
 def notification_on_tack_created(tack: Tack):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("tack_created", tack)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_CREATED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     not_muted_members = GroupMembers.objects.filter(
@@ -109,7 +109,7 @@ def deferred_notification_tack_inactive(tack: Tack):
 
 
 def notification_on_tack_cancelled(tack: Tack):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("canceled", tack)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_CANCELLED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -119,7 +119,7 @@ def notification_on_tack_cancelled(tack: Tack):
 
     
 def notification_on_tack_in_progress(tack: Tack):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("in_progress", tack)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_IN_PROGRESS)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -129,7 +129,7 @@ def notification_on_tack_in_progress(tack: Tack):
     
     
 def notification_on_tack_waiting_review(tack: Tack):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("waiting_review", tack)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.RUNNER_FINISHED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -139,7 +139,7 @@ def notification_on_tack_waiting_review(tack: Tack):
     
     
 def notification_on_tack_finished(tack: Tack):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("finished", tack)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_FINISHED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -149,7 +149,7 @@ def notification_on_tack_finished(tack: Tack):
 
 
 def notification_on_offer_created(offer: Offer):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_offer("offer_received", offer)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_RECEIVED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -159,7 +159,7 @@ def notification_on_offer_created(offer: Offer):
 
 
 def notification_on_offer_accepted(offer: Offer):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_offer("offer_accepted", offer)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_ACCEPTED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
@@ -180,7 +180,7 @@ def deferred_notification_tack_will_expire_soon(offer: Offer):
 
 
 def notification_on_offer_expired(offer: Offer):
-    ntf_title, ntf_body, ntf_image_url = build_title_body_from_offer("offer_expired", offer)
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_EXPIRED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
