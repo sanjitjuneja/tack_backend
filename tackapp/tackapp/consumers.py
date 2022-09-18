@@ -71,6 +71,9 @@ class MainConsumer(AsyncWebsocketConsumer):
             logging.getLogger().warning(f"{self.user} Added to tack_{offer.tack_id}_offer")
         await self.accept()
 
+    async def websocket_receive(self, message):
+        logger.warning(f"Received from [{self.user}] - [{message}]")
+
     async def disconnect(self, close_code):
         # Leave room group
         # TODO: leave all groups
@@ -79,7 +82,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        logging.getLogger().warning(f"{self.user} Discarded to {self.room_group_name}")
+        logger.warning(f"{self.user} Discarded [{self.room_group_name}]")
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
