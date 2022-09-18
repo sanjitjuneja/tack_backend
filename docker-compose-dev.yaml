@@ -10,10 +10,10 @@ services:
       - .:/app/
     env_file:
       - tackapp/dev.env
-    command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
-#    command: ["python3", "manage.py", "runserver"]
+#    command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
+    command: ["python3", "manage.py", "runserver", "0.0.0.0:80"]
     ports:
-      - "8020:8020"
+      - "80:80"
     depends_on:
       - postgres
 

@@ -28,6 +28,38 @@ django.utils.encoding.force_text = force_str
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+        },
+        'myproject.custom': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    }
+}
+
 
 logger = logging.getLogger()
 
@@ -38,6 +70,7 @@ if app == "dev":
     env = environ.Env(DEBUG=(bool, True))
     env.read_env(os.path.join(BASE_DIR, "dev.env"))
     logger.warning(f"{env = }")
+    DEBUG = env.get_value("DEBUG")
     # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
@@ -48,7 +81,7 @@ else:
         temp_env("AWS_SECRET_ACCESS_KEY"),
         temp_env("AWS_REGION")
     )
-
+    DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -66,18 +99,26 @@ allowed_hosts, celery_broker, _, crsf_trusted_origins = receive_setting_paramete
 SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
-logging.getLogger().warning(f"{DEBUG = }")
+logger.warning(f"{DEBUG = }")
 
 ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
 
-INTERNAL_IPS = [
-    "127.0.0.1"
-]
+if DEBUG:
+    import socket  # only if you haven't already imported this
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+    INTERNAL_IPS += ["172.25.0.5"]
+    logger.warning(f"{INTERNAL_IPS = }")
+
+# INTERNAL_IPS = [
+#     "127.0.0.1",
+#     "localhost",
+#     "172.25.0.5"
+# ]
 # Application definition
 
 INSTALLED_APPS = [
+    "debug_toolbar",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -94,7 +135,6 @@ INSTALLED_APPS = [
     "dwolla_service.apps.DwollaServiceConfig",
     "drf_spectacular",
     "rest_framework",
-    "debug_toolbar",
     "sslserver",
     "phonenumber_field",
     "django_filters",
@@ -107,7 +147,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
-    "tackapp.middleware.RequestTimeMiddleware",
+    # "tackapp.middleware.RequestTimeMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -140,7 +180,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "tackapp.wsgi.application"
+# WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
 CHANNEL_LAYERS = {
     'default': {
@@ -333,3 +373,13 @@ S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
 S3_BUCKET_CARDS = "/media/payment_methods/cards"
 S3_BUCKET_BANKS = "/media/payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "/media/payment_methods/digital_wallets"
+
+
+# def show_toolbar(request):
+#     logger.warning("IP Address for debug-toolbar: " + request.META['REMOTE_ADDR'])
+#     return True
+#
+#
+# DEBUG_TOOLBAR_CONFIG = {
+#     'SHOW_TOOLBAR_CALLBACK': show_toolbar
+# }

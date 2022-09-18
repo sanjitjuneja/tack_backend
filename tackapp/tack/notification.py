@@ -12,116 +12,219 @@ from firebase_admin.messaging import (
 )
 
 from payment.services import convert_to_decimal
+from tack.models import Tack, Offer
 
-logger = logging.getLogger()
+logger = logging.getLogger("tack.notification")
 
 
-def build_title_body(data: dict) -> dict:
-    logger.info(f"INSIDE build_title_body")
-    logger.info(f"{data = }")
-    nf_type_dict = {
-        "tack_created": {
-            "title": f"{data.get('group_name')} - {data.get('tack_description')}",
-            "body": f"{data.get('tack_price')} - {data.get('tack_title')}"
-        },
-        "no_offers_to_tack": {
-            "title": f"No Current Offers - {data.get('tack_title')}",
-            "body": f"{data.get('group_name')} - Try increasing your Tack price to attract more Runners"
-        },
+def build_title_body_from_offer(message_type: str, offer: Offer) -> tuple:
+    ntf_type_dict = {
         "offer_received": {
-            "title": f"Offer Received - {data.get('runner_firstname')} {data.get('runner_lastname')}",
-            "body": f"{data.get('tack_title')} - Accept Runner’s offer to start Tack"
-        },
-        "in_preparing": {
-            "title": f"Tack Started - {data.get('runner_firstname')} Is Preparing",
-            "body": (f"{data.get('tack_title')} - {data.get('runner_firstname')} "
-                     f"{data.get('runner_lastname')} is preparing to begin completion")
-        },
-        "in_progress": {
-            "title": f"Tack Completing - {data.get('runner_firstname')} Is Completing",
-            "body": f"{data.get('tack_title')} - {data.get('runner_firstname')}"
-        },
-        "waiting_review": {
-            "title": f"Review Completion - {data.get('runner_firstname')} Is Done",
-            "body": f"{data.get('tack_title')} - Review completion of Tack before Runner receives funds",
-        },
-        "offer_expired": {
-            "title": f"{data.get('tack_price')} Offer Expired - {data.get('tack_title')}",
-            "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
+            "title": "Offer Received - {runner_first_name} {runner_last_name}",
+            "body": "{tack_title} - Accept Runner’s offer to start Tack"
         },
         "offer_accepted": {
-            "title": f"{data.get('tack_price')} Offer Accepted - {data.get('tack_title')}",
+            "title": "${tack_or_offer_price} Offer Accepted - {tack_title}",
             "body": "Offer accepted! Mark Tack as in progress to begin completion"
         },
         "tack_expiring": {
-            "title": f"TACK EXPIRING - {data.get('tack_title')}",
+            "title": "TACK EXPIRING - {tack_title}",
             "body": ("Tack’s estimated completion time will expire soon. "
                      "Please complete Tack as soon as possible")
         },
-        "pending_review": {
-            "title": f"Pending Review - {data.get('tack_title')}",
-            "body": (f"{data.get('tacker_firstname')} is reviewing Tack’s completion. "
-                     f"Funds will be sent after review is completed")
+        "offer_expired": {
+            "title": "${tack_or_offer_price} Offer Expired - {tack_title}",
+            "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
+        },
+    }
+    pickled_message = ntf_type_dict.get(message_type)
+    return (
+        pickled_message.get("title"),
+        pickled_message.get("body"),
+        pickled_message.get("image_url")
+    )
+
+
+def build_title_body_from_tack(message_type: str, tack: Tack) -> tuple:
+    ntf_type_dict = {
+        "tack_created": {
+            "title": "{group_name} - {tack_description}",
+            "body": "${tack_price} - {tack_title}"
+        },
+        "no_offers_to_tack": {
+            "title": "No Current Offers - {tack_title}",
+            "body": "{group_name} - Try increasing your Tack price to attract more Runners"
+        },
+        "in_preparing": {
+            "title": "Tack Started - {runner_first_name} Is Preparing",
+            "body": ("{tack_title} - {runner_first_name} {runner_last_name} "
+                     "is preparing to begin completion")
+        },
+        "in_progress": {
+            "title": "Tack Completing - {runner_first_name} Is Completing",
+            "body": "{tack_title} - {runner_first_name}"
+        },
+        "waiting_review": {
+            "title": "Review Completion - {runner_first_name} Is Done",
+            "body": "{tack_title} - Review completion of Tack before Runner receives funds",
         },
         "finished": {
-            "title": f"{data.get('tack_price')} Was Sent To Your Balance",
-            "body": (f"{data.get('tack_title')} - Tacker review complete! "
-                     f"Your Tack balance has increased by {data.get('tack_price')}")
+            "title": "${tack_price} Was Sent To Your Balance",
+            "body": ("{tack_title} - Tacker review complete! "
+                     "Your Tack balance has increased by ${tack_price}")
         },
         "canceled": {
-            "title": f"Tack Canceled - You Have Been Fully Refunded",
-            "body": (f"{data.get('tack_title')} - Runner canceled Tack. We have fully "
-                     f"refunded the listed Tack price into your Tack Balance.")
+            "title": "Tack Canceled - You Have Been Fully Refunded",
+            "body": ("{tack_title} - Runner canceled Tack. We have fully "
+                     "refunded the listed Tack price into your Tack Balance.")
         }
     }
-    return nf_type_dict
+    pickled_message = ntf_type_dict.get(message_type)
+    return (
+        pickled_message.get("title"),
+        pickled_message.get("body"),
+        pickled_message.get("image_url")
+    )
 
 
-def map_body_title(nf_type_dict: dict, nf_types: tuple):
-    return [nf_type_dict.get(nf_type) for nf_type in nf_types]
+def get_formatted_ntf_title_body_from_tack(ntf_title: str, ntf_body: str, tack: Tack):
+    tacker = tack.tacker
+    runner = tack.runner
+    group = tack.group
+
+    tack_dict = {
+        "tack_title": tack.title,
+        "tack_type": tack.type,
+        "tack_price": str(convert_to_decimal(tack.price)),
+        "tack_description": tack.description,
+        "tack_status": tack.status,
+        "tack_completion_message": tack.completion_message,
+    } if tack else dict()
+    tacker_dict = {
+        "tacker_first_name": tacker.first_name,
+        "tacker_last_name": tacker.last_name,
+        "tacker_image": tacker.profile_picture,
+        "tacker_phone_number": tacker.phone_number,
+        "tacker_email": tacker.email,
+        "tacker_birthday": tacker.birthday,
+        "tacker_rating": tacker.tacks_rating,
+        "tacker_tacks_completed": tacker.tacks_amount,
+        "tacker_last_login": tacker.last_login,
+    } if tacker else dict()
+    runner_dict = {
+        "runner_first_name": runner.first_name,
+        "runner_last_name": runner.last_name,
+        "runner_image": runner.profile_picture,
+        "runner_phone_number": runner.phone_number,
+        "runner_email": runner.email,
+        "runner_birthday": runner.birthday,
+        "runner_rating": runner.tacks_rating,
+        "runner_tacks_completed": runner.tacks_amount,
+        "runner_last_login": runner.last_login,
+    } if runner else dict()
+    group_dict = {
+        "group_name": group.name,
+        "group_description": group.description,
+        "group_image": group.image,
+        "group_invitation_link": group.invitation_link,
+    } if group else dict()
+    formatted_ntf_title = ntf_title.format(
+        **tack_dict,
+        **tacker_dict,
+        **runner_dict,
+        **group_dict,
+    )
+    formatted_ntf_body = ntf_body.format(
+        **tack_dict,
+        **tacker_dict,
+        **runner_dict,
+        **group_dict,
+    )
+    return formatted_ntf_title, formatted_ntf_body
 
 
-def create_message(data: dict, nf_types: tuple, image_url: str = None) -> list[Message]:
-    title_body_list = map_body_title(build_title_body(data), nf_types)
-    logger.warning(f"{data = }")
-    logger.warning(f"{nf_types = }")
-    logger.warning(f"{image_url = }")
-    logger.warning(f"{title_body_list = }")
-    logger.warning(f"{type(title_body_list) = }")
-    for obj in title_body_list:
-        logger.warning(f"{obj = }")
-    return [
-            Message(
-                notification=Notification(
-                    title=message.get("title"),
-                    body=message.get("body"),
-                    image=image_url
+def get_formatted_ntf_title_body_from_offer(ntf_title: str, ntf_body: str, offer: Offer):
+    tack = offer.tack
+    tacker = tack.tacker
+    runner = offer.runner
+    group = tack.group
+    tack_or_offer_price = str(convert_to_decimal(offer.price or tack.price))
+
+
+    tack_dict = {
+        "tack_title": tack.title,
+        "tack_type": tack.type,
+        "tack_price": str(convert_to_decimal(tack.price)),
+        "tack_description": tack.description,
+        "tack_status": tack.status,
+        "tack_completion_message": tack.completion_message,
+    } if tack else dict()
+    tacker_dict = {
+        "tacker_first_name": tacker.first_name,
+        "tacker_last_name": tacker.last_name,
+        "tacker_image": tacker.profile_picture,
+        "tacker_phone_number": tacker.phone_number,
+        "tacker_email": tacker.email,
+        "tacker_birthday": tacker.birthday,
+        "tacker_rating": tacker.tacks_rating,
+        "tacker_tacks_completed": tacker.tacks_amount,
+        "tacker_last_login": tacker.last_login,
+    } if tacker else dict()
+    runner_dict = {
+        "runner_first_name": runner.first_name,
+        "runner_last_name": runner.last_name,
+        "runner_image": runner.profile_picture,
+        "runner_phone_number": runner.phone_number,
+        "runner_email": runner.email,
+        "runner_birthday": runner.birthday,
+        "runner_rating": runner.tacks_rating,
+        "runner_tacks_completed": runner.tacks_amount,
+        "runner_last_login": runner.last_login,
+    } if runner else dict()
+    group_dict = {
+        "group_name": group.name,
+        "group_description": group.description,
+        "group_image": group.image,
+        "group_invitation_link": group.invitation_link,
+    } if group else dict()
+    formatted_ntf_title = ntf_title.format(
+        **tack_dict,
+        **tacker_dict,
+        **runner_dict,
+        **group_dict,
+        tack_or_offer_price=tack_or_offer_price
+    )
+    formatted_ntf_body = ntf_body.format(
+        **tack_dict,
+        **tacker_dict,
+        **runner_dict,
+        **group_dict,
+        tack_or_offer_price=tack_or_offer_price
+    )
+    return formatted_ntf_title, formatted_ntf_body
+
+
+def build_ntf_message(title: str = None, body: str = None, image_url: str = None):
+    return Message(
+        notification=Notification(
+            title=title,
+            body=body,
+            image=image_url
+        ),
+        android=AndroidConfig(
+            ttl=datetime.timedelta(seconds=3600),
+            priority='high',
+            notification=AndroidNotification(
+                icon='stock_ticker_update',
+                sound="default"
+            ),
+        ),
+        apns=APNSConfig(
+            payload=APNSPayload(
+                aps=Aps(
+                    sound="default",
+                    content_available=1
                 ),
-                android=AndroidConfig(
-                    ttl=datetime.timedelta(seconds=3600),
-                    priority='high',
-                    notification=AndroidNotification(
-                        icon='stock_ticker_update',
-                        color='#54bca0',
-                        sound="default"
-                    ),
-                ),
-                apns=APNSConfig(
-                    payload=APNSPayload(
-                        aps=Aps(
-                            sound="default",
-                            content_available=1
-                        ),
-                    ),
-                )
-            ) for message in title_body_list
-    ]
-
-
-def send_message(messages: list, devices_list_of_queryset: tuple) -> None:
-    logger.warning(f"Message inside send_message {messages = }")
-    logger.warning(f" inside send_message {devices_list_of_queryset = }")
-    for message, devices in zip(messages, devices_list_of_queryset):
-        logger.warning(f"---send_message---")
-        # logger.warning(f"Sent {message} for {devices}")
-        devices.send_message(message,)
+            ),
+        )
+    )

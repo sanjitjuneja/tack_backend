@@ -23,11 +23,11 @@ class Group(CoreModel):
     )
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default=uuid4)
-    # members_count
 
-    # def save(self, *args, **kwargs):
-    #     self.invitation_link = uuid4()
-    #     super(Group, self).save(*args, **kwargs)
+    def members_count(self):
+        return GroupMembers.objects.filter(
+            group_id=self.id
+        ).count()
 
     def __str__(self):
         return f"{self.id}: {self.name}"

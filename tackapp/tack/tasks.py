@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from celery import shared_task
@@ -9,10 +10,14 @@ from django.utils import timezone
 from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
 from core.choices import TackStatus, OfferStatus
+from tack.notification import build_title_body_from_tack, build_ntf_message, build_title_body_from_offer, \
+    get_formatted_ntf_title_body_from_tack, get_formatted_ntf_title_body_from_offer
 from user.models import User
 
 from fcm_django.models import FCMDevice
-from .notification import create_message, send_message
+
+
+logger_services = logging.getLogger("tack.services")
 
 
 @shared_task
@@ -57,23 +62,39 @@ def set_tack_active_on_user_last_login(user_id: int) -> None:
 
 
 @shared_task
-def tack_long_inactive(tack_id, user_id, data, nf_types) -> None:
+def tack_long_inactive(tack_id) -> None:
     # if this tack already had offers - do not send notification
+    logger_services.warning("INSIDE tack_long_inactive")
     if Offer.objects.filter(tack=tack_id).exists():
         return
     # if this tack is not in active objects(deleted) - do not send notification
     try:
-        if Tack.active.get(id=tack_id):
-            return
+        if tack := Tack.active.get(id=tack_id):
+            if tack.status != TackStatus.CREATED:
+                return
+            ntf_title, ntf_body, ntf_image_url = build_title_body_from_tack("no_offers_to_tack", tack)
+            formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
+            message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+            FCMDevice.objects.filter(
+                user_id=tack.tacker_id
+            ).send_message(message)
+            logger_services.info(f"Sent [{ntf_title} : {ntf_body} :{ntf_image_url}] to {tack.tacker}")
     except Tack.DoesNotExist:
         return
-    messages = create_message(data, nf_types)
-    devices = FCMDevice.objects.filter(user=user_id)
-    send_message(messages, (devices,))
 
 
 @shared_task
-def tack_expire_soon(user_id, data, nf_types) -> None:
-    messages = create_message(data, nf_types)
-    devices = FCMDevice.objects.filter(user=user_id)
-    send_message(messages, (devices,))
+def tack_will_expire_soon(offer_id) -> None:
+    try:
+        offer = Offer.active.get(id=offer_id)
+    except Offer.DoesNotExist:
+        return
+    if offer.status != OfferStatus.IN_PROGRESS:
+        return
+    ntf_title, ntf_body, ntf_image_url = build_title_body_from_offer("tack_expiring", offer)
+    formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
+    message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+    FCMDevice.objects.filter(
+        user_id=offer.runner_id
+    ).send_message(message)
+    logger_services.info(f"Sent [{ntf_title} : {ntf_body} : {ntf_image_url}] to {offer.runner}")
