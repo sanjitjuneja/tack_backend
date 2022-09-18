@@ -178,6 +178,10 @@ def ws_tack_created_from_active(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.update',
         tack_serializer.data)
+    ws_sender.send_message(
+        f"group_{tack.group_id}",
+        'grouptack.update',
+        tack_serializer.data)
 
 
 def ws_tack_active(tack: Tack):
