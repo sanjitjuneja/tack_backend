@@ -11,19 +11,9 @@ logger = logging.getLogger()
 
 class MainConsumer(AsyncWebsocketConsumer):
     async def websocket_connect(self, event):
-        # logger.warning(f"async def websocket_connect: ")
-        # logger.warning(f"{self.scope = }")
-        # if 'user' not in self.scope:
-        #     logger.warning(f"if not hasattr(self.scope, 'user'):")
-        #     raise
-            # await self.disconnect(close_code=3000)
-            # await self.close(code=3000)
         self.user = self.scope['user']
         self.device_info = self.scope['device_info']
-        # logger = logging.getLogger()
-        # logger.warning(f"Inside websocket_connect")
         logger.warning(f"WS connected for {self.user.id}")
-        # logger.warning(f"{self.channel_name = }")
         if self.user.is_anonymous:
             await self.close()
 
@@ -36,14 +26,12 @@ class MainConsumer(AsyncWebsocketConsumer):
             self.channel_name)
         logger.warning(f"{self.user} Added to {self.room_group_name}")
 
-        # group_members = await self.get_user_groups(self.user)
         group_members = await get_user_groups(self.user)
         for gm in group_members:
             await self.channel_layer.group_add(
                 f"group_{gm.group_id}",
                 self.channel_name
             )
-            # logger.warning(f"{gm = }")
             logger.warning(f"{self.user} Added to group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
@@ -72,7 +60,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def websocket_receive(self, message):
-        logger.warning(f"Received from [{self.user}] - [{message}]")
+        logger.warning(f"Received from [{self.user} :: {self.device_info}] :: [{message['text']}]")
 
     async def disconnect(self, close_code):
         # Leave room group
@@ -82,7 +70,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        logger.warning(f"{self.user} Discarded [{self.room_group_name}]")
+        logger.warning(f"[{self.user} :: {self.device_info}] Discarded [{self.room_group_name}]")
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
