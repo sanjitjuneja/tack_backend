@@ -2,15 +2,14 @@ from enum import Enum
 
 from django.db import models
 
-from tackapp.settings import S3_BUCKET_TACKAPPSTORAGE, S3_BUCKET_CARDS, S3_BUCKET_BANKS
-
+from tackapp.settings import S3_BUCKET_CARDS, S3_BUCKET_BANKS, STATIC_URL
 
 images_dict = {
-    "visa": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/visa.png",
-    "mastercard": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/mastercard.png",
-    "discover": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/discover.png",
-    "american-express": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/american-express.png",
-    # "CHASE": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_BANKS}/chase.png",
+    "visa": f"{STATIC_URL}{S3_BUCKET_CARDS}/visa.png",
+    "mastercard": f"{STATIC_URL}{S3_BUCKET_CARDS}/mastercard.png",
+    "discover": f"{STATIC_URL}{S3_BUCKET_CARDS}/discover.png",
+    "american-express": f"{STATIC_URL}{S3_BUCKET_CARDS}/american-express.png",
+    # "CHASE": f"{STATIC_URL}{S3_BUCKET_BANKS}/chase.png",
 }
 
 
