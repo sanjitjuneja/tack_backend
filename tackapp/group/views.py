@@ -7,14 +7,13 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from core.choices import TackStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
 from tack.models import Tack, PopularTack, Offer
-from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer, GroupTackSerializer
+from tack.serializers import TackDetailSerializer, PopularTackSerializer, GroupTackSerializer
 from user.serializers import UserListSerializer
 from .serializers import *
 

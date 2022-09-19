@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 import dwollav2
@@ -9,7 +10,7 @@ from rest_framework import views
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from uuid import uuid4
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -94,7 +95,17 @@ class TwilioUserRegistration(views.APIView):
     @transaction.atomic
     def post(self, request):
         serializer = TwilioUserRegistrationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            logging.getLogger().error(f"TwilioUserRegistration {e = }")
+            return Response(
+                {
+                    "error": "Ux2",
+                    "meesage": "User with given email already exists"
+                },
+                status=400)
+
         try:
             # Creating new User with given info
             # and updating user_id in PhoneVerification model

@@ -247,7 +247,7 @@ class AddUserWithdrawMethod(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response(
                 {
-                    "error": "Ox2",
+                    "error": "Ox1",
                     "message": "Can not find DB user"
                 },
                 status=400)
