@@ -87,7 +87,7 @@ def get_message_template(message_type: NotificationType) -> tuple:
 
 
 def get_properties_dict(instance: Tack | Offer):
-    match type(instance):
+    match instance:
         case Tack() as tack:
             tack = tack
             tacker = tack.tacker
