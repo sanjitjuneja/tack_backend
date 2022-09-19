@@ -330,15 +330,7 @@ class TackViewset(
                     "message": "Cannot cancel Tack in this status"
                 },
                 status=400)
-        with transaction.atomic():
-            tack.accepted_offer.status = OfferStatus.CANCELLED
-            tack.is_active = False
-            tack.is_canceled = True
-            ba = BankAccount.objects.get(user=tack.tacker)
-            ba.usd_balance += tack.price
-            ba.save()
-            tack.accepted_offer.save()
-            tack.save()
+        tack.cancel()
         serializer = self.get_serializer(tack)
         return Response(serializer.data)
 

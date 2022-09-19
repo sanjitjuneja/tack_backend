@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
@@ -7,6 +7,7 @@ from django.db.models import UniqueConstraint, Q
 
 from core.abstract_models import CoreModel
 from core.choices import TackStatus, OfferType, TackType, OfferStatus
+from payment.models import BankAccount
 from user.models import User
 
 
@@ -45,6 +46,19 @@ class Tack(CoreModel):
     # setting after Runner completed the Tack
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
+
+    def cancel(self):
+        with transaction.atomic():
+            if self.accepted_offer:
+                self.accepted_offer.status = OfferStatus.CANCELLED
+                self.accepted_offer.is_active = False
+            self.is_active = False
+            self.is_canceled = True
+            ba = BankAccount.objects.get(user=self.tacker)
+            ba.usd_balance += self.price
+            ba.save()
+            self.accepted_offer.save()
+            self.save()
 
     def change_status(self, status: str):
         self.status = status
