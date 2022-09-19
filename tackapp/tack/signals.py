@@ -14,14 +14,14 @@ from tack.models import Offer, Tack
 from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersSerializer
 from tackapp.websocket_messages import WSSender
 from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_will_expire_soon, change_tack_status_finished
-from tack.services import calculate_tack_expiring, notification_on_tack_finished, notification_on_tack_waiting_review, \
+from tack.services import notification_on_tack_finished, notification_on_tack_waiting_review, \
     notification_on_tack_in_progress, notification_on_tack_cancelled, deferred_notification_tack_inactive, \
     notification_on_tack_created, notification_on_offer_expired, deferred_notification_tack_will_expire_soon, \
-    notification_on_offer_accepted, notification_on_offer_created, notification_on_tack_accepted
+    notification_on_offer_accepted, notification_on_offer_created, notification_on_tack_accepted, \
+    notification_on_offer_finished
 
 from core.choices import TackStatus
 
-from fcm_django.models import FCMDevice
 
 ws_sender = WSSender()
 logger = logging.getLogger()

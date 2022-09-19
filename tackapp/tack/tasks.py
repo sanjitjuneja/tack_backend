@@ -10,8 +10,7 @@ from django.utils import timezone
 from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
 from core.choices import TackStatus, OfferStatus, NotificationType
-from tack.notification import build_title_body, build_ntf_message, \
-    get_formatted_ntf_title_body_from_tack, get_formatted_ntf_title_body_from_offer
+from tack.notification import build_ntf_message
 from user.models import User
 
 from fcm_django.models import FCMDevice
@@ -72,13 +71,10 @@ def tack_long_inactive(tack_id) -> None:
         if tack := Tack.active.get(id=tack_id):
             if tack.status != TackStatus.CREATED:
                 return
-            ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_INACTIVE)
-            formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
-            message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+            message = build_ntf_message(NotificationType.TACK_INACTIVE, tack)
             FCMDevice.objects.filter(
                 user_id=tack.tacker_id
             ).send_message(message)
-            logger_services.info(f"Sent [{ntf_title} : {ntf_body} :{ntf_image_url}] to {tack.tacker}")
     except Tack.DoesNotExist:
         return
 
@@ -91,10 +87,7 @@ def tack_will_expire_soon(offer_id) -> None:
         return
     if offer.status != OfferStatus.IN_PROGRESS:
         return
-    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_EXPIRING)
-    formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
-    message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+    message = build_ntf_message(NotificationType.TACK_EXPIRING, offer)
     FCMDevice.objects.filter(
         user_id=offer.runner_id
     ).send_message(message)
-    logger_services.info(f"Sent [{ntf_title} : {ntf_body} : {ntf_image_url}] to {offer.runner}")

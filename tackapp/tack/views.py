@@ -1,24 +1,13 @@
-import datetime
 import logging
-from decimal import Decimal
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
-from rest_framework import views, viewsets, mixins
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.fields import empty
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
-from core.choices import TackStatus, OfferType
-from group.models import GroupTacks, Group
-from payment.models import BankAccount
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
-from .tasks import change_tack_status_finished
 
 
 logger = logging.getLogger()
@@ -56,7 +45,7 @@ class TackViewset(
         except GroupMembers.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Gx1",
                     "message": "You are not a member of this Group"
                 },
                 status=400)
@@ -76,7 +65,7 @@ class TackViewset(
         if tack.status != TackStatus.CREATED:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx1",
                     "message": "You cannot change Tack with active offers"
                 },
                 status=400)
@@ -95,7 +84,7 @@ class TackViewset(
         if tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx2",
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
@@ -199,7 +188,7 @@ class TackViewset(
         if tack.status != TackStatus.IN_PROGRESS:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx3",
                     "detail": "Current Tack status is not In Progress"
                 },
                 status=400)
@@ -228,6 +217,7 @@ class TackViewset(
         return Response(
             {
                 "error": None,
+                "message": None,
                 "is_ongoing_runner_tack": ongoing_runner_tacks.exists()
             },
             status=200)
@@ -249,7 +239,7 @@ class TackViewset(
         if ongoing_runner_tacks.exists():
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx4",
                     "message": "You already have ongoing Tack"
                 },
                 status=400)
@@ -294,7 +284,7 @@ class TackViewset(
         else:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx5",
                     "message": "Tack status is not in status Waiting Review"
                 },
                 status=400)
@@ -310,7 +300,7 @@ class TackViewset(
         if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx6",
                     "message": "You cannot get contact data for Unaccepted Offer"
                 },
                 status=400)
@@ -326,7 +316,7 @@ class TackViewset(
         if tack.status not in (TackStatus.ACCEPTED, TackStatus.IN_PROGRESS):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx7",
                     "message": "Cannot cancel Tack in this status"
                 },
                 status=400)
@@ -363,28 +353,28 @@ class OfferViewset(
         if serializer.validated_data.get("price") and (not tack.allow_counter_offer):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx8",
                     "message": "Counter offering is not allowed to this Tack"
                 },
-                status=403)
+                status=400)
         if tack.tacker == request.user:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx9",
                     "message": "You are not allowed to create Offers to your own Tacks"
                 },
-                status=403)
+                status=400)
         if Offer.active.filter(tack=tack, runner=request.user):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx10",
                     "message": "You already have an offer for this Tack"
                 },
-                status=409)
+                status=400)
         if tack.status not in (TackStatus.ACTIVE, TackStatus.CREATED):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx11",
                     "message": "You can create Offers only on Active Tacks"
                 },
                 status=400)
@@ -409,7 +399,7 @@ class OfferViewset(
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px2",
                     "message": "Not enough money",
                     "balance": request.user.bankaccount.usd_balance,
                     "tack_price": price
@@ -454,7 +444,7 @@ class OfferViewset(
         if instance.status == OfferStatus.ACCEPTED:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx12",
                     "message": "Cannot delete accepted Offers"
                 },
                 status=400)

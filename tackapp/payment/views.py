@@ -64,7 +64,7 @@ class AddBalanceStripe(views.APIView):
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
@@ -121,14 +121,18 @@ class AddBalanceDwolla(views.APIView):
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
 
         is_enough_funds = check_dwolla_balance(request.user, amount, payment_method)
         if not is_enough_funds:
-            return Response({"error": "code", "message": "Insufficient funds"}, status=400)
+            return Response(
+                {
+                    "error": "Px2",
+                    "message": "Insufficient funds"
+                }, status=400)
         try:
             response_body = dwolla_transaction(
                 user=request.user,
@@ -170,7 +174,11 @@ class GetUserPaymentMethods(views.APIView):
         )
         logging.getLogger().warning(f"{pms = }")
         serializer = StripePaymentMethodSerializer(pms, many=True)
-        return Response({"results": serializer.data})
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class GetUserWithdrawMethods(views.APIView):
@@ -187,7 +195,7 @@ class GetUserWithdrawMethods(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ox1",
                     "message": "Can not find DB user"
                 },
                 status=400)
@@ -199,7 +207,11 @@ class GetUserWithdrawMethods(views.APIView):
 
         data = update_dwolla_pms_with_primary(pms, request.user)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        return Response({"results": serializer.data})
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class GetLinkToken(views.APIView):
@@ -208,7 +220,11 @@ class GetLinkToken(views.APIView):
     def get(self, request):
         dwolla_id = get_dwolla_id(request.user)
         link_token = get_link_token(dwolla_id)
-        return Response({"link_token": link_token})
+        return Response(
+            {
+                "link_token": link_token
+            }
+        )
 
 
 class AddUserWithdrawMethod(views.APIView):
@@ -231,7 +247,7 @@ class AddUserWithdrawMethod(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ox1",
                     "message": "Can not find DB user"
                 },
                 status=400)
@@ -256,7 +272,11 @@ class AddUserWithdrawMethod(views.APIView):
             data[0]["is_primary"] = True
         serializer = DwollaPaymentMethodSerializer(data, many=True)
         logging.getLogger().warning(f"{serializer.data = }")
-        return Response({"results": serializer.data})
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class DwollaMoneyWithdraw(views.APIView):
@@ -270,7 +290,12 @@ class DwollaMoneyWithdraw(views.APIView):
         try:
             ba = BankAccount.objects.get(user=request.user)
             if ba.usd_balance < serializer.validated_data["amount"]:
-                return Response({"error": "code", "message": "Not enough money"}, status=400)
+                return Response(
+                    {
+                        "error": "Px2",
+                        "message": "Insufficient funds"
+                    },
+                    status=400)
         except BankAccount.DoesNotExist:
             pass
 
@@ -283,7 +308,7 @@ class DwollaMoneyWithdraw(views.APIView):
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
@@ -312,7 +337,7 @@ class GetPaymentMethodById(views.APIView):
         except dsPaymentMethod.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px3",
                     "message": "Payment method not found"
                 },
                 status=400)
@@ -339,7 +364,7 @@ class DetachPaymentMethod(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px4",
                     "message": "Payment method doesn't exist",
                     "payment_method": serializer.data["payment_method"]
                 },
@@ -349,8 +374,8 @@ class DetachPaymentMethod(views.APIView):
                 "error": None,
                 "message": "Successfully detached",
                 "payment_method": serializer.data["payment_method"]
-            }
-        )
+            },
+            status=200)
 
 
 class SetPrimaryPaymentMethod(views.APIView):
@@ -369,7 +394,7 @@ class SetPrimaryPaymentMethod(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px4}",
                     "message": "Payment method does not exist",
                     "payment_method": serializer.validated_data["payment_method"]
                 },
@@ -379,8 +404,8 @@ class SetPrimaryPaymentMethod(views.APIView):
                 "error": None,
                 "message": "Successfully updated primary method",
                 "payment_method": serializer.validated_data["payment_method"]
-            }
-        )
+            },
+            status=200)
 
 
 class GetFees(views.APIView):

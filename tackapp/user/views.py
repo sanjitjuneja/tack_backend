@@ -61,7 +61,7 @@ class UsersViewset(
         if not dwolla_pms:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px5",
                     "message": "You don't have Dwolla Bank Accounts"
                 },
                 status=400)
@@ -70,7 +70,7 @@ class UsersViewset(
         except UserPaymentMethods.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px6",
                     "message": "You don't have Dwolla primary Bank Account"
                 },
                 status=400)
@@ -81,8 +81,8 @@ class UsersViewset(
         if active_tacks:
             return Response(
                 {
-                    "error": "code",
-                    "message": "You have active Tacks"
+                    "error": "Ux5",
+                    "message": "Cannot delete User. You have active Tacks"
                 },
                 status=400)
 
