@@ -370,9 +370,9 @@ FCM_DJANGO_SETTINGS = {
 
 S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
 
-S3_BUCKET_CARDS = "media/payment_methods/cards"
-S3_BUCKET_BANKS = "media/payment_methods/banks"
-S3_BUCKET_DIGITAL_WALLETS = "media/payment_methods/digital_wallets"
+S3_BUCKET_CARDS = "payment_methods/cards"
+S3_BUCKET_BANKS = "payment_methods/banks"
+S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
 
 # def show_toolbar(request):
