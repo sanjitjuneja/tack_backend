@@ -13,7 +13,7 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def websocket_connect(self, event):
         self.user = self.scope['user']
         self.device_info = self.scope['device_info']
-        logger.warning(f"WS connected for {self.user.id}")
+        logger.warning(f"WS connected for [{self.user.id} :: {self.device_info}]")
         if self.user.is_anonymous:
             await self.close()
 
@@ -24,7 +24,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name)
-        logger.warning(f"{self.user} Added to {self.room_group_name}")
+        logger.warning(f"[{self.user} :: {self.device_info}] Added to {self.room_group_name}")
 
         group_members = await get_user_groups(self.user)
         for gm in group_members:
@@ -32,7 +32,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"group_{gm.group_id}",
                 self.channel_name
             )
-            logger.warning(f"{self.user} Added to group_{gm.group_id}")
+            logger.warning(f"[{self.user} :: {self.device_info}] Added to group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
         for tack in tacks_tacker:
@@ -40,7 +40,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_tacker",
                 self.channel_name
             )
-            logger.warning(f"{self.user} Added to tack_{tack.id}_tacker")
+            logger.warning(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_tacker")
 
         tacks_runner = await get_tacks_runner(self.user)
         for tack in tacks_runner:
@@ -48,7 +48,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_runner",
                 self.channel_name
             )
-            logger.warning(f"{self.user} Added to tack_{tack.id}_runner")
+            logger.warning(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_runner")
 
         offers = await get_user_offers(self.user)
         for offer in offers:
@@ -56,7 +56,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{offer.tack_id}_offer",
                 self.channel_name
             )
-            logging.getLogger().warning(f"{self.user} Added to tack_{offer.tack_id}_offer")
+            logging.getLogger().warning(f"[{self.user} :: {self.device_info}] Added to tack_{offer.tack_id}_offer")
         await self.accept()
 
     async def websocket_receive(self, message):
