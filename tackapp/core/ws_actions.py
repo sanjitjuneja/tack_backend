@@ -177,6 +177,16 @@ def ws_tack_cancelled(tack: Tack):
         "runnertack.delete",
         tack.accepted_offer_id
     )
+    ws_sender.send_message(
+        f"user_{tack.tacker_id}",
+        "grouptack.delete",
+        tack.id
+    )
+    ws_sender.send_message(
+        f"user_{tack.runner_id}",
+        "grouptack.delete",
+        tack.id
+    )
 
 
 def ws_tack_created_from_active(tack: Tack):
