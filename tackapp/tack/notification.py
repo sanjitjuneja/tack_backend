@@ -19,11 +19,11 @@ logger = logging.getLogger("tack.notification")
 ntf_type_dict = {
         NotificationType.TACK_CREATED: {
             "title": "Tack",
-            "body": "{group_name}: {tack_price} - {tack_title}"
+            "body": "{group_name}: ${tack_price} - {tack_title}"
         },
         NotificationType.TACK_INACTIVE: {
             "title": "Tack",
-            "body": "No Current Offers - {tack_title"
+            "body": "No Current Offers - {tack_title}"
         },
         NotificationType.OFFER_RECEIVED: {
             "title": "ACCEPT OFFER",
@@ -53,11 +53,11 @@ ntf_type_dict = {
         },
         NotificationType.OFFER_ACCEPTED: {
             "title": "BEGIN TACK",
-            "body": "{tack_title} - Your {tack_or_offer_price} offer was accepted. Begin Tack to start completion"
+            "body": "{tack_title} - Your ${tack_or_offer_price} offer was accepted. Begin Tack to start completion"
         },
         NotificationType.OFFER_EXPIRED: {
             "title": "Tack",
-            "body": "{tack_or_offer_price} Offer Expired - {tack_title}",
+            "body": "${tack_or_offer_price} Offer Expired - {tack_title}",
         },
         NotificationType.TACK_EXPIRING: {
             "title": "TACK EXPIRING",
@@ -72,7 +72,7 @@ ntf_type_dict = {
         NotificationType.TACK_FINISHED: {
             "title": "Tack",
             "body": ("{tack_title} - Tacker review complete! "
-                     "Tack Complete: {tack_price} Was Sent To Your Balance - {tack_title}")
+                     "Tack Complete: ${tack_price} Was Sent To Your Balance - {tack_title}")
         },
     }
 
