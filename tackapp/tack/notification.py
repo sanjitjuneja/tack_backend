@@ -151,6 +151,7 @@ def get_properties_dict(instance: Tack | Offer):
 def get_formatted_ntf_title_and_body(ntf_title: str, ntf_body: str, instance: Tack | Offer):
     properties = get_properties_dict(instance)
     # TODO: map function?
+    logger.warning(f"{properties = }")
     formatted_ntf_title = ntf_title.format(
         **properties.get("tack"),
         **properties.get("tacker"),
