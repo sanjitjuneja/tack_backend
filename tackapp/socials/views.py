@@ -43,7 +43,7 @@ class TwilioSendMessage(views.APIView):
         ).count() > max_signup_attempts_per_time_window:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx1",
                     "message": "Too many signup attempts. Try again later."
                 },
                 status=400)
@@ -55,7 +55,7 @@ class TwilioSendMessage(views.APIView):
             User.objects.get(phone_number=phone_number)
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ux3",
                     "message": "User already exists"
                 },
                 status=400)
@@ -67,7 +67,7 @@ class TwilioSendMessage(views.APIView):
         except TwilioRestException:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ox2",
                     "message": "Twilio service temporarily unavailable"
                 },
                 status=503)
@@ -102,7 +102,7 @@ class TwilioUserRegistration(views.APIView):
             if not phv.is_verified:
                 return Response(
                     {
-                        "error": "code",
+                        "error": "Sx2",
                         "message": "SMS code wasn't verified in previous step"
                     },
                     status=400)
@@ -114,7 +114,7 @@ class TwilioUserRegistration(views.APIView):
                 User.objects.get(email=serializer.validated_data["user"]["email"])
                 return Response(
                     {
-                        "error": "code",
+                        "error": "Ux2",
                         "message": "User with given email already exists"
                     },
                     status=400)
@@ -131,7 +131,7 @@ class TwilioUserRegistration(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx3",
                     "message": "invalid uuid"
                 },
                 status=400)
@@ -153,12 +153,16 @@ class PasswordRecoverySendMessage(views.APIView):
         except User.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx4",
                     "message": "User with the given phone number is not found"
                 },
                 status=400)
         except TwilioRestException:
-            return Response({"error": "Twilio service temporarily unavailable"}, status=503)
+            return Response(
+                {
+                    "error": "Ox2",
+                    "message": "Twilio service temporarily unavailable"
+                }, status=503)
 
         message_sid = twilio_client.send_recovery_message(phone_number, sms_code)
         PhoneVerification(
@@ -185,7 +189,7 @@ class PasswordRecoveryChange(views.APIView):
         if request.user.is_authenticated:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx5",
                     "message": "Can not recover password when authorized"
                 },
                 status=400)
@@ -198,14 +202,14 @@ class PasswordRecoveryChange(views.APIView):
         except PhoneVerification.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx3",
                     "message": "Row with given uuid does not exist"
                 },
                 status=400)
         if not phv.is_verified:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx6",
                     "message": "You did not verify your SMS code"
                 },
                 status=400)
@@ -237,14 +241,14 @@ class PasswordChange(views.APIView):
         if not request.user.check_password(old_password):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx7",
                     "message": "Incorrect password"
                 },
                 status=400)
         if old_password == new_password:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx8",
                     "message": "Your passwords are identical"
                 },
                 status=400)
@@ -282,14 +286,14 @@ class VerifySMSCode(views.APIView):
             if timezone.now() > phv.creation_time + expiration_time:
                 return Response(
                     {
-                        "error": "code",
+                        "error": "Sx9",
                         "message": "Verification code expired"
                     },
                     status=400)
             if sms_code != phv.sms_code:
                 return Response(
                     {
-                        "error": "code",
+                        "error": "Sx10",
                         "message": "SMS code is wrong"
                     },
                     status=400)
@@ -298,7 +302,7 @@ class VerifySMSCode(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Sx3",
                     "message": "Row with given uuid is not found"
                 },
                 status=400)

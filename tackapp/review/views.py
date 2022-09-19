@@ -27,7 +27,7 @@ class ReviewViewset(
         if not tack.is_participant(request.user):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Rx1",
                     "message": "You do not have permission to perform this action."
                 },
                 status=400)
@@ -38,7 +38,7 @@ class ReviewViewset(
             review = Review.objects.get(tack=tack, user=request.user)
             return Response(
                 {
-                    "error": "code",
+                    "error": "Rx2",
                     "message": "You are already have a review on this Tack",
                     "review": ReviewSerializer(review).data
                 },
@@ -47,14 +47,6 @@ class ReviewViewset(
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=201, headers=headers)
-        except MultipleObjectsReturned:
-            logging.getLogger().error(f"Multiple reviews found, {serializer.data}")
-            return Response(
-                {
-                    "error": "code",
-                    "message": "Multiple reviews found"
-                },
-                status=400)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
