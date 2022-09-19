@@ -364,22 +364,8 @@ FCM_DJANGO_SETTINGS = {
     "DELETE_INACTIVE_DEVICES": False,
 }
 
-# GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
-
-# logging.getLogger().warning(f"{GOOGLE_APPLICATION_CREDENTIALS = }")
-
 S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
 
 S3_BUCKET_CARDS = "payment_methods/cards"
 S3_BUCKET_BANKS = "payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
-
-
-# def show_toolbar(request):
-#     logger.warning("IP Address for debug-toolbar: " + request.META['REMOTE_ADDR'])
-#     return True
-#
-#
-# DEBUG_TOOLBAR_CONFIG = {
-#     'SHOW_TOOLBAR_CALLBACK': show_toolbar
-# }
