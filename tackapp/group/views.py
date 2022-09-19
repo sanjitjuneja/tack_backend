@@ -43,7 +43,7 @@ class GroupViewset(
         except GroupMembers.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Gx1",
                     "message": "You are not a member of this Group"
                 },
                 status=400

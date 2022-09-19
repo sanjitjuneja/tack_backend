@@ -78,7 +78,7 @@ def calculate_tack_expiring(estimation_time_seconds: int) -> int:
     return int(estimation_time_seconds * 0.9)
 
 
-def notification_on_tack_created(tack: Tack):
+def notification_on_tack_created(tack: Tack):  # TACK_CREATED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_CREATED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -97,7 +97,7 @@ def notification_on_tack_created(tack: Tack):
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {not_muted_members}")
 
 
-def deferred_notification_tack_inactive(tack: Tack):
+def deferred_notification_tack_inactive(tack: Tack):  # TACK_INACTIVE
     logger.warning(f"INSIDE deferred_notification_tack_inactive")
     tack_without_offer_seconds = 900
     tack_long_inactive.apply_async(
@@ -108,7 +108,7 @@ def deferred_notification_tack_inactive(tack: Tack):
     )
 
 
-def notification_on_tack_cancelled(tack: Tack):
+def notification_on_tack_cancelled(tack: Tack):  # TACK_CANCELLED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_CANCELLED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -117,8 +117,18 @@ def notification_on_tack_cancelled(tack: Tack):
     ).send_message(message)
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {tack.tacker}")
 
+
+def notification_on_tack_accepted(tack: Tack):  # TACK_ACCEPTED
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_ACCEPTED)
+    formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
+    message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+    FCMDevice.objects.filter(
+        user_id=tack.tacker_id
+    ).send_message(message)
+    logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {tack.tacker}")
+
     
-def notification_on_tack_in_progress(tack: Tack):
+def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_IN_PROGRESS)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -128,7 +138,7 @@ def notification_on_tack_in_progress(tack: Tack):
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {tack.tacker}")
     
     
-def notification_on_tack_waiting_review(tack: Tack):
+def notification_on_tack_waiting_review(tack: Tack):  # RUNNER_FINISHED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.RUNNER_FINISHED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -138,7 +148,7 @@ def notification_on_tack_waiting_review(tack: Tack):
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {tack.tacker}")
     
     
-def notification_on_tack_finished(tack: Tack):
+def notification_on_tack_finished(tack: Tack):  # TACK_FINISHED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.TACK_FINISHED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_tack(ntf_title, ntf_body, tack)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -148,7 +158,7 @@ def notification_on_tack_finished(tack: Tack):
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {tack.runner}")
 
 
-def notification_on_offer_created(offer: Offer):
+def notification_on_offer_created(offer: Offer):  # OFFER_RECEIVED
     if offer.price:
         ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.COUNTEROFFER_RECEIVED)
         formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
@@ -157,7 +167,7 @@ def notification_on_offer_created(offer: Offer):
             user_id=offer.tack.tacker_id
         ).send_message(message)
         logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.tack.tacker}")
-    else:
+    else:  # COUNTEROFFER_RECEIVED
         ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_RECEIVED)
         formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
         message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -167,7 +177,7 @@ def notification_on_offer_created(offer: Offer):
         logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.tack.tacker}")
 
 
-def notification_on_offer_accepted(offer: Offer):
+def notification_on_offer_accepted(offer: Offer):  # OFFER_ACCEPTED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_ACCEPTED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
@@ -177,7 +187,7 @@ def notification_on_offer_accepted(offer: Offer):
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.runner}")
 
 
-def deferred_notification_tack_will_expire_soon(offer: Offer):
+def deferred_notification_tack_will_expire_soon(offer: Offer):  # TACK_EXPIRING
     if not offer.tack.estimation_time_seconds:
         return
     tack_will_expire_soon.apply_async(
@@ -188,11 +198,21 @@ def deferred_notification_tack_will_expire_soon(offer: Offer):
     )
 
 
-def notification_on_offer_expired(offer: Offer):
+def notification_on_offer_expired(offer: Offer):  # OFFER_EXPIRED
     ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_EXPIRED)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
     message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
     FCMDevice.objects.filter(
         user_id=offer.runner_id
+    ).send_message(message)
+    logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.runner}")
+
+
+def notification_on_offer_finished(offer: Offer):  # RUNNER_FINISHED
+    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.RUNNER_FINISHED)
+    formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
+    message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+    FCMDevice.objects.filter(
+        user_id=offer.tack.tacker_id
     ).send_message(message)
     logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.runner}")

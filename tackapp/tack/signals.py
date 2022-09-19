@@ -17,7 +17,7 @@ from tack.tasks import set_expire_offer_task, tack_long_inactive, tack_will_expi
 from tack.services import calculate_tack_expiring, notification_on_tack_finished, notification_on_tack_waiting_review, \
     notification_on_tack_in_progress, notification_on_tack_cancelled, deferred_notification_tack_inactive, \
     notification_on_tack_created, notification_on_offer_expired, deferred_notification_tack_will_expire_soon, \
-    notification_on_offer_accepted, notification_on_offer_created
+    notification_on_offer_accepted, notification_on_offer_created, notification_on_tack_accepted
 
 from core.choices import TackStatus
 
@@ -72,6 +72,7 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
             deferred_notification_tack_will_expire_soon(instance)
         case OfferStatus.FINISHED:
             ws_offer_finished(instance)
+            notification_on_offer_finished(instance)
         case OfferStatus.EXPIRED:
             ws_offer_expired(instance)
             notification_on_offer_expired(instance)
@@ -110,6 +111,7 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
         # status changed to accepted (tacker accepted offer)
         case TackStatus.ACCEPTED:
             ws_tack_accepted(instance)
+            notification_on_tack_accepted(instance)
         # status changed to in_progress (runner began tack completion)
         case TackStatus.IN_PROGRESS:
             ws_tack_in_progress(instance)
