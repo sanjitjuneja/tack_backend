@@ -21,42 +21,46 @@ logger = logging.getLogger("tack.notification")
 def build_title_body(message_type: NotificationType) -> tuple:
     ntf_type_dict = {
         NotificationType.TACK_CREATED: {
-            "title": "${tack_price} - {tack_title}",
-            "body": "{group_name} - {tack_description}"
+            "title": "Tack",
+            "body": "{group_name}: {tack_price} - {tack_title}"
         },
         NotificationType.TACK_INACTIVE: {
-            "title": "No Current Offers - {tack_title}",
-            "body": "{group_name} - Try increasing your Tack price to attract more Runners"
+            "title": "Tack",
+            "body": "No Current Offers - {tack_title"
         },
         NotificationType.OFFER_RECEIVED: {
-            "title": "Offer Received - {runner_first_name} {runner_last_name}",
-            "body": "{tack_title} - Accept Runner’s offer to start Tack"
+            "title": "ACCEPT OFFER",
+            "body": "{tack_title} - Received Offer From {runner_first_name} {runner_last_name}"
+        },
+        NotificationType.COUNTEROFFER_RECEIVED: {
+            "title": "ACCEPT OFFER",
+            "body": ("{tack_title} - Received {tack_or_offer_price} Counter Offer From "
+                     "{runner_first_name} {runner_last_name}. Accept now to begin Tack")
         },
         NotificationType.TACK_ACCEPTED: {
-            "title": "Tack Started - {runner_first_name} Is Preparing",
-            "body": ("{tack_title} - {runner_first_name} {runner_last_name} "
-                     "is preparing to begin completion")
+            "title": "Tack",
+            "body": "{runner_first_name} {runner_last_name} Is Preparing - {tack_title}"
         },
         NotificationType.TACK_IN_PROGRESS: {
-            "title": "Tack Completing - {runner_first_name} Is Completing",
-            "body": "{tack_title} - {runner_first_name} {runner_last_name} has begun completion"
+            "title": "Tack",
+            "body": "{runner_first_name} {runner_last_name} Is Completing - {tack_title}"
         },
         NotificationType.RUNNER_FINISHED: {
-            "title": "Review Completion - {runner_first_name} Is Done",
-            "body": "{tack_title} - Review completion of Tack before Runner receives funds",
+            "title": "REVIEW COMPLETION",
+            "body": ("{runner_first_name} {runner_last_name} Is Done: "
+                     "Review Tack’s completion before funds are sent - {tack_title}")
         },
         NotificationType.TACK_CANCELLED: {
-            "title": "Tack Canceled - You Have Been Fully Refunded",
-            "body": ("{tack_title} - Runner canceled Tack. We have fully "
-                     "refunded the listed Tack price into your Tack Balance.")
+            "title": "Tack",
+            "body": "Runner Canceled Tack: You Have Been Fully Refunded - {tack_title}"
         },
         NotificationType.OFFER_ACCEPTED: {
-            "title": "${tack_or_offer_price} Offer Accepted - {tack_title}",
-            "body": "Offer accepted! Mark Tack as in progress to begin completion"
+            "title": "BEGIN TACK",
+            "body": "{tack_title} - Your {tack_or_offer_price} offer was accepted. Begin Tack to start completion"
         },
         NotificationType.OFFER_EXPIRED: {
-            "title": "${tack_or_offer_price} Offer Expired - {tack_title}",
-            "body": "Your offer has expired, browse other Tacks on the home feed or place another offer",
+            "title": "Tack",
+            "body": "{tack_or_offer_price} Offer Expired - {tack_title}",
         },
         NotificationType.TACK_EXPIRING: {
             "title": "TACK EXPIRING",
@@ -64,14 +68,14 @@ def build_title_body(message_type: NotificationType) -> tuple:
                      "Please complete Tack as soon as possible")
         },
         NotificationType.TACK_WAITING_REVIEW: {
-            "title": "Pending Review - {tack_title}",
-            "body": "{tacker_first_name} is reviewing Tack’s completion. "
-                    "Funds will be sent after review is completed",
+            "title": "Tack",
+            "body": ("{tacker_first_name} {tacker_last_name} is reviewing Tack’s completion. "
+                     "Funds will be sent after review is completed - {tack_title}")
         },
         NotificationType.TACK_FINISHED: {
-            "title": "${tack_price} Was Sent To Your Balance",
+            "title": "Tack",
             "body": ("{tack_title} - Tacker review complete! "
-                     "Your Tack balance has increased by ${tack_price}")
+                     "Tack Complete: {tack_price} Was Sent To Your Balance - {tack_title}")
         },
     }
     selected_template = ntf_type_dict.get(message_type)
@@ -144,7 +148,6 @@ def get_formatted_ntf_title_body_from_offer(ntf_title: str, ntf_body: str, offer
     runner = offer.runner
     group = tack.group
     tack_or_offer_price = str(convert_to_decimal(offer.price or tack.price))
-
 
     tack_dict = {
         "tack_title": tack.title,

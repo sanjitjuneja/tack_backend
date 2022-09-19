@@ -149,13 +149,22 @@ def notification_on_tack_finished(tack: Tack):
 
 
 def notification_on_offer_created(offer: Offer):
-    ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_RECEIVED)
-    formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
-    message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
-    FCMDevice.objects.filter(
-        user_id=offer.tack.tacker_id
-    ).send_message(message)
-    logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.tack.tacker}")
+    if offer.price:
+        ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.COUNTEROFFER_RECEIVED)
+        formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
+        message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+        FCMDevice.objects.filter(
+            user_id=offer.tack.tacker_id
+        ).send_message(message)
+        logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.tack.tacker}")
+    else:
+        ntf_title, ntf_body, ntf_image_url = build_title_body(NotificationType.OFFER_RECEIVED)
+        formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_body_from_offer(ntf_title, ntf_body, offer)
+        message = build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)
+        FCMDevice.objects.filter(
+            user_id=offer.tack.tacker_id
+        ).send_message(message)
+        logger.info(f"Sent [{formatted_ntf_title} : {formatted_ntf_body} : {ntf_image_url}] to {offer.tack.tacker}")
 
 
 def notification_on_offer_accepted(offer: Offer):

@@ -109,6 +109,7 @@ class NotificationType(Enum):
     TACK_CANCELLED = "tack_canceled"
 
     OFFER_RECEIVED = "offer_received"
+    COUNTEROFFER_RECEIVED = "counteroffer_received"
     OFFER_ACCEPTED = "offer_accepted"
     RUNNER_FINISHED = "runner_finished"
     OFFER_EXPIRED = "offer_expired"
