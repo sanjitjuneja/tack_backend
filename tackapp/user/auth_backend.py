@@ -59,6 +59,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     "message": e.message
                 },
                 status=e.status)
+        except AuthenticationFailed as e:
+            return Response(
+                {
+                    "error": "Sx1",
+                    "message": "Wrong authentication credentials"
+                },
+                status=400)
         except TokenError as e:
             raise InvalidToken(e.args[0])
 
@@ -105,7 +112,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             if is_failed_attempt(attrs, user):
                 logger.warning("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
-                    error="code1",
+                    error="Sx12",
                     message="Too many unsuccessful sing-in attempts. Try again later",
                     status=400
                 )
@@ -119,7 +126,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
             if is_failed_attempt(attrs, None):
                 logger.warning("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
-                    error="code1",
+                    error="Sx12",
                     message="Too many unsuccessful sing-in attempts. Try again later",
                     status=400
                 )
@@ -131,7 +138,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
 
         except MultipleObjectsReturned as e:
             raise MultipleAccountsError(
-                error="code2",
+                error="Sx13",
                 message=("Multiple users with given credentials found. ",
                          "Please, contact our support."),
                 status=400

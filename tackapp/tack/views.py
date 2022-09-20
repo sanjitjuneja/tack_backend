@@ -189,7 +189,7 @@ class TackViewset(
             return Response(
                 {
                     "error": "Tx3",
-                    "detail": "Current Tack status is not In Progress"
+                    "message": "Current Tack status is not In Progress"
                 },
                 status=400)
 
