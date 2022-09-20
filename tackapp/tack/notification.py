@@ -77,6 +77,13 @@ ntf_type_dict = {
     }
 
 
+def human_readable_price(amount: int, currency: str = "USD"):
+    decimal_amount = convert_to_decimal(amount, currency)
+    if decimal_amount % 1:
+        return f"{decimal_amount:.2f}"
+    return str(decimal_amount)
+
+
 def get_message_template(message_type: NotificationType) -> tuple:
     selected_template = ntf_type_dict.get(message_type)
     return (
@@ -93,20 +100,20 @@ def get_properties_dict(instance: Tack | Offer):
             tacker = tack.tacker
             runner = tack.runner
             group = tack.group
-            tack_or_offer_price = tack.price
+            tack_or_offer_price = human_readable_price(tack.price)
         case Offer() as offer:
             tack = offer.tack
             tacker = tack.tacker
             runner = offer.runner
             group = tack.group
-            tack_or_offer_price = str(convert_to_decimal(offer.price or offer.tack.price))
+            tack_or_offer_price = human_readable_price(offer.price or offer.tack.price)
         case _:
             return dict()
 
     tack_dict = {
         "tack_title": tack.title,
         "tack_type": tack.type,
-        "tack_price": str(convert_to_decimal(tack.price)),
+        "tack_price": human_readable_price(tack.price),
         "tack_description": tack.description,
         "tack_status": tack.status,
         "tack_completion_message": tack.completion_message,
