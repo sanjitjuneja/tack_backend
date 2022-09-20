@@ -3,6 +3,7 @@ import logging
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
@@ -39,7 +40,16 @@ class TackViewset(
     @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
         serializer = TackCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         try:
             GroupMembers.objects.get(member=request.user, group=serializer.validated_data["group"])
         except GroupMembers.DoesNotExist:

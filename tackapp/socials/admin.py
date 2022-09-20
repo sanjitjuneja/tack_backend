@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
-from .models import PhoneVerification, TimeoutSettings, FailedLoginAttempts
+from .models import PhoneVerification, TimeoutSettings, FailedLoginAttempts, NotificationSettings
 
 
 @admin.register(PhoneVerification)
@@ -25,3 +25,8 @@ class TimeoutSettingsAdmin(ModelAdmin):
         'signin_time_window_minutes',
         'signin_max_attempts_per_window'
     )
+
+
+@admin.register(NotificationSettings)
+class NotificationSettingsAdmin(ModelAdmin):
+    list_display = ('type', 'title_template', 'body_template')

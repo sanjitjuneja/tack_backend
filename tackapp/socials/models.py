@@ -1,8 +1,9 @@
 from django.db import models
+from django.db.models import UniqueConstraint
 from phonenumber_field.modelfields import PhoneNumberField
 
 from core.abstract_models import CoreModel
-from core.choices import SMSType
+from core.choices import SMSType, NotificationType
 
 
 class PhoneVerification(CoreModel):
@@ -47,4 +48,20 @@ class TimeoutSettings(models.Model):
         db_table = "timeout_settings"
         verbose_name = "Timeout setting"
         verbose_name_plural = "Timeout settings"
-        
+
+
+class NotificationSettings(models.Model):
+    type = models.CharField(max_length=32, choices=NotificationType.choices)
+    title_template = models.TextField(max_length=100, null=True, blank=True)
+    body_template = models.TextField(max_length=256, null=True, blank=True)
+
+    class Meta:
+        db_table = "notification_settings"
+        verbose_name = "Notification settings"
+        verbose_name_plural = "Notification settings"
+        constraints = [
+            UniqueConstraint(
+                fields=('type',),
+                name='unique_type_for_settings'
+            )
+        ]

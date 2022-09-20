@@ -13,6 +13,7 @@ from firebase_admin.messaging import (
 
 from core.choices import NotificationType
 from payment.services import convert_to_decimal
+from socials.models import NotificationSettings
 from tack.models import Tack, Offer
 
 logger = logging.getLogger("tack.notification")
@@ -85,7 +86,15 @@ def human_readable_price(amount: int, currency: str = "USD"):
 
 
 def get_message_template(message_type: NotificationType) -> tuple:
-    selected_template = ntf_type_dict.get(message_type)
+    try:
+        ntf_setting = NotificationSettings.objects.get(type=message_type)
+        selected_template = {
+            "title": ntf_setting.title_template,
+            "body": ntf_setting.body_template,
+            "image_url": None
+        }
+    except NotificationSettings.DoesNotExist:
+        selected_template = ntf_type_dict.get(message_type)
     return (
         selected_template.get("title"),
         selected_template.get("body"),
@@ -100,13 +109,13 @@ def get_properties_dict(instance: Tack | Offer):
             tacker = tack.tacker
             runner = tack.runner
             group = tack.group
-            tack_or_offer_price = human_readable_price(tack.price)
+            tack_or_offer_price = tack.price
         case Offer() as offer:
             tack = offer.tack
             tacker = tack.tacker
             runner = offer.runner
             group = tack.group
-            tack_or_offer_price = human_readable_price(offer.price or offer.tack.price)
+            tack_or_offer_price = offer.price or offer.tack.price
         case _:
             return dict()
 
@@ -117,7 +126,7 @@ def get_properties_dict(instance: Tack | Offer):
         "tack_description": tack.description,
         "tack_status": tack.status,
         "tack_completion_message": tack.completion_message,
-        "tack_or_offer_price": tack_or_offer_price
+        "tack_or_offer_price": human_readable_price(tack_or_offer_price)
     } if tack else dict()
     tacker_dict = {
         "tacker_first_name": tacker.first_name,

@@ -96,21 +96,21 @@ class OfferStatus(models.TextChoices):
     CANCELLED = "cancelled", "Cancelled"
 
 
-class NotificationType(Enum):
-    TACK_CREATED = "tack_created"
-    TACK_ACCEPTED = "tack_accepted"
-    TACK_IN_PROGRESS = "tack_in_progress"
-    TACK_WAITING_REVIEW = "tack_waiting_review"
-    TACK_FINISHED = "tack_finished"
+class NotificationType(models.TextChoices):
+    TACK_CREATED = "tack_created", "Tack created"
+    TACK_ACCEPTED = "tack_accepted", "Tack accepted"
+    TACK_IN_PROGRESS = "tack_in_progress", "Tack in progress"
+    TACK_WAITING_REVIEW = "tack_waiting_review", "Tack waiting for review"
+    TACK_FINISHED = "tack_finished", "Tack finished"
 
-    TACK_EXPIRING = "tack_expiring"
-    TACK_INACTIVE = "tack_inactive"
-    TACK_CANCELLED = "tack_canceled"
+    TACK_EXPIRING = "tack_expiring", "Tack expiring"
+    TACK_INACTIVE = "tack_inactive", "Tack inactive"
+    TACK_CANCELLED = "tack_canceled", "Tack cancelled"
 
-    OFFER_RECEIVED = "offer_received"
-    COUNTEROFFER_RECEIVED = "counteroffer_received"
-    OFFER_ACCEPTED = "offer_accepted"
-    RUNNER_FINISHED = "runner_finished"
-    OFFER_EXPIRED = "offer_expired"
+    OFFER_RECEIVED = "offer_received", "Offer received"
+    COUNTEROFFER_RECEIVED = "counteroffer_received", "Counter-offer received"
+    OFFER_ACCEPTED = "offer_accepted", "Offer accepted"
+    RUNNER_FINISHED = "runner_finished", "Runner finished"
+    OFFER_EXPIRED = "offer_expired", "Offer expired"
 
 
