@@ -6,7 +6,7 @@ from django.db.models import Subquery
 from django.utils import timezone
 from fcm_django.models import FCMDevice
 
-from core.choices import TackStatus, OfferStatus, NotificationType
+from core.choices import TackStatus, OfferStatus, NotificationType, OfferType
 from group.models import GroupMembers
 from payment.services import send_payment_to_runner
 from .models import Offer, Tack
@@ -139,17 +139,18 @@ def notification_on_tack_finished(tack: Tack):  # TACK_FINISHED
     ).send_message(message)
 
 
-def notification_on_offer_created(offer: Offer):  # OFFER_RECEIVED
-    if offer.price:
-        message = build_ntf_message(NotificationType.OFFER_RECEIVED, offer)
-        FCMDevice.objects.filter(
-            user_id=offer.tack.tacker_id
-        ).send_message(message)
-    else:  # COUNTEROFFER_RECEIVED
-        message = build_ntf_message(NotificationType.COUNTEROFFER_RECEIVED, offer)
-        FCMDevice.objects.filter(
-            user_id=offer.tack.tacker_id
-        ).send_message(message)
+def notification_on_offer_created(offer: Offer):
+    match offer.offer_type:
+        case OfferType.OFFER:  # OFFER_RECEIVED
+            ntf_type = NotificationType.OFFER_RECEIVED
+        case OfferType.COUNTER_OFFER:  # COUNTEROFFER_RECEIVED
+            ntf_type = NotificationType.COUNTEROFFER_RECEIVED
+        case _:
+            return
+    message = build_ntf_message(ntf_type, offer)
+    FCMDevice.objects.filter(
+        user_id=offer.tack.tacker_id
+    ).send_message(message)
 
 
 def notification_on_offer_accepted(offer: Offer):  # OFFER_ACCEPTED
