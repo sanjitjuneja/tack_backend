@@ -168,7 +168,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
 def is_failed_attempt(serializer_fields: dict, user: User | None) -> bool:
     timeout_settings = TimeoutSettings.objects.all().last()
     time_window_minutes = timeout_settings.signin_time_window_minutes if timeout_settings else 60
-    max_signin_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window if timeout_settings else 10
+    max_signin_attempts_per_time_window = timeout_settings.signin_max_attempts_per_window if timeout_settings else 10
 
     if device_id := serializer_fields.get("device_id"):
         failed_attempts = FailedLoginAttempts.objects.filter(

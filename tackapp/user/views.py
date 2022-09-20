@@ -75,7 +75,11 @@ class UsersViewset(
     def me_delete(self, request, *args, **kwargs):
         active_tacks = Tack.active.filter(
             Q(tacker=request.user) | Q(runner=request.user),
-            status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
+            status__in=(
+                TackStatus.ACCEPTED,
+                TackStatus.IN_PROGRESS,
+                TackStatus.WAITING_REVIEW
+            )
         )
         if active_tacks:
             return Response(
