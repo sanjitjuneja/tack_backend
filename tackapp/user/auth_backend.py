@@ -62,7 +62,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except AuthenticationFailed as e:
             return Response(
                 {
-                    "error": "Sx1",
+                    "error": "Ux1",
                     "message": "Wrong authentication credentials"
                 },
                 status=400)
