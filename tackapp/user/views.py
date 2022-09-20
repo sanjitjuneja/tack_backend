@@ -1,6 +1,7 @@
 import logging
 
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -55,8 +56,42 @@ class UsersViewset(
 
         return Response(self.get_serializer(user).data)
 
-    @action(methods=("DELETE",), detail=False, url_path="me")
+    @extend_schema(request=None, responses={
+        204: inline_serializer(
+            name="Deleted successfully",
+            fields={
+                "error": serializers.CharField(allow_null=True),
+                "message": serializers.CharField(allow_null=True),
+            }
+        ),
+        400: inline_serializer(
+            name="Error",
+            fields={
+                "error": serializers.CharField(allow_null=True),
+                "message": serializers.CharField(allow_null=True),
+            }
+        )})
+    @action(methods=("POST",), detail=False, url_path="me/delete_account")
     def me_delete(self, request, *args, **kwargs):
+        active_tacks = Tack.active.filter(
+            Q(tacker=request.user) | Q(runner=request.user),
+            status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
+        )
+        if active_tacks:
+            return Response(
+                {
+                    "error": "Ux5",
+                    "message": "Cannot delete User. You have active Tacks"
+                },
+                status=400)
+        ba = BankAccount.objects.get(user=request.user)
+        if ba.usd_balance > 0:
+            return Response(
+                {
+                    "error": "Ux6",
+                    "message": "User balance is not 0"
+                },
+                status=400)
         dwolla_pms = UserPaymentMethods.objects.filter(bank_account__user=request.user)
         if not dwolla_pms:
             return Response(
@@ -74,19 +109,7 @@ class UsersViewset(
                     "message": "You don't have Dwolla primary Bank Account"
                 },
                 status=400)
-        active_tacks = Tack.active.filter(
-            Q(tacker=request.user) | Q(runner=request.user),
-            status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
-        )
-        if active_tacks:
-            return Response(
-                {
-                    "error": "Ux5",
-                    "message": "Cannot delete User. You have active Tacks"
-                },
-                status=400)
 
-        ba = BankAccount.objects.get(user=request.user)
         min_withdraw_amount = 100
         if ba.usd_balance >= min_withdraw_amount:
             dwolla_transaction(
@@ -100,7 +123,7 @@ class UsersViewset(
         return Response(
             {
                 "error": None,
-                "message": "Successfuly deleted"
+                "message": "Successfully deleted"
             },
             status=204)
 

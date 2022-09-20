@@ -7,6 +7,7 @@ from core.validators import password_validator
 class SMSSendSerializer(serializers.Serializer):
     phone_number = PhoneNumberField(write_only=True)
     uuid = serializers.CharField(read_only=True)
+    device_id = serializers.CharField(max_length=64, allow_null=True, write_only=True)
 
 
 class TwilioUserRegistrationSerializer(serializers.Serializer):
