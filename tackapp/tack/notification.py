@@ -31,7 +31,7 @@ ntf_type_dict = {
         },
         NotificationType.COUNTEROFFER_RECEIVED: {
             "title": "ACCEPT OFFER",
-            "body": ("{tack_title} - Received {tack_or_offer_price} Counter Offer From "
+            "body": ("{tack_title} - Received ${tack_or_offer_price} Counter Offer From "
                      "{runner_first_name} {runner_last_name}. Accept now to begin Tack")
         },
         NotificationType.TACK_ACCEPTED: {
