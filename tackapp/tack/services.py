@@ -22,6 +22,10 @@ logger = logging.getLogger("myproject.custom")
 
 @transaction.atomic
 def accept_offer(offer: Offer):
+    delete_other_tack_offers(offer)
+    offer.status = OfferStatus.ACCEPTED
+    offer.save()
+
     price = offer.price if offer.price else offer.tack.price
     offer.tack.runner = offer.runner
     offer.tack.accepted_offer = offer
@@ -29,10 +33,6 @@ def accept_offer(offer: Offer):
     offer.tack.accepted_time = timezone.now()
     offer.tack.price = price
     offer.tack.save()
-
-    delete_other_tack_offers(offer)
-    offer.status = OfferStatus.ACCEPTED
-    offer.save()
 
     offer.tack.tacker.bankaccount.usd_balance -= price
     offer.tack.tacker.bankaccount.save()
