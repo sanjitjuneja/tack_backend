@@ -63,6 +63,7 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
     logger.error(f"### INSIDE offer_ws_actions signal ###")
     logger.error(f"### OFFER {instance = }")
     logger.error(f"### OFFER {instance.status = }")
+    logger.error(f"### OFFER.TACK {instance.tack.status = }")
     match instance.status:
         case OfferStatus.CREATED:
             ws_offer_created(instance)
