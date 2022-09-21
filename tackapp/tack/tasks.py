@@ -24,7 +24,7 @@ logger_services = logging.getLogger("tack.services")
 def change_tack_status_finished(tack_id: int):
     tack = Tack.objects.get(pk=tack_id)
     if tack.status != TackStatus.FINISHED:
-        send_payment_to_runner(tack)
+        tack.is_paid = send_payment_to_runner(tack)
         tack.status = TackStatus.FINISHED
         tack.tacker.tacks_amount += 1
         tack.runner.tacks_amount += 1

@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Subquery
 from django.utils import timezone
 from fcm_django.models import FCMDevice
@@ -14,7 +14,7 @@ from .notification import build_ntf_message, get_message_template
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
 
-logger = logging.getLogger("myproject.custom")
+logger = logging.getLogger("payments")
 # logger.setLevel("INFO")
 # sh = logging.StreamHandler(sys.stdout)
 # logger.addHandler(sh)
@@ -60,15 +60,18 @@ def complete_tack(tack: Tack, message: str = None):
     tack.accepted_offer.save()
 
 
-@transaction.atomic
 def confirm_complete_tack(tack: Tack):
-    send_payment_to_runner(tack)
-    tack.status = TackStatus.FINISHED
-    tack.tacker.tacks_amount += 1
-    tack.runner.tacks_amount += 1
-    tack.save()
-    tack.tacker.save()
-    tack.runner.save()
+    try:
+        with transaction.atomic():
+            tack.status = TackStatus.FINISHED
+            tack.tacker.tacks_amount += 1
+            tack.runner.tacks_amount += 1
+            tack.is_paid = send_payment_to_runner(tack)
+            tack.tacker.save()
+            tack.runner.save()
+            tack.save()
+    except IntegrityError as e:
+        logger.error(f"{e = }")
 
 
 def deactivate_related_offers(tack: Tack):

@@ -47,11 +47,10 @@ def send_payment_to_runner(tack: Tack):
     logger.warning("INSIDE send_payment_to_runner")
     if tack.is_paid:
         logger.warning("if tack.is_paid:")
-        return
+        return True
     tack.runner.bankaccount.usd_balance += tack.price
-    tack.is_paid = True
     tack.runner.bankaccount.save()
-    tack.save()
+    return True
 
 
 def get_dwolla_payment_methods(dwolla_user_id):
