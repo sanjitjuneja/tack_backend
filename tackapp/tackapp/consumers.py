@@ -57,7 +57,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{offer.tack_id}_offer",
                 self.channel_name
             )
-            logging.getLogger().warning(f"[{self.user} :: {self.device_info}] Added to tack_{offer.tack_id}_offer")
+            logger.info(f"[{self.user} :: {self.device_info}] Added to tack_{offer.tack_id}_offer")
         await self.accept()
 
     async def websocket_receive(self, message):

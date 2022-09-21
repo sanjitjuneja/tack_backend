@@ -20,11 +20,13 @@ def ws_offer_created(offer: Offer):
     ws_sender.send_message(
         f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
         'offer.create',
-        OfferSerializer(offer).data)
+        OfferSerializer(offer).data
+    )
     ws_sender.send_message(
         f"user_{offer.runner_id}",
         'runnertack.create',
-        TacksOffersSerializer(offer).data)
+        TacksOffersSerializer(offer).data
+    )
     ws_sender.send_message(
         f"tack_{offer.tack_id}_offer",
         "grouptack.update",
@@ -33,7 +35,8 @@ def ws_offer_created(offer: Offer):
     ws_sender.send_message(
         f"user_{offer.runner_id}",
         'grouptack.update',
-        message_for_runner)
+        message_for_runner
+    )
 
 
 def ws_offer_accepted(offer: Offer):
@@ -220,6 +223,11 @@ def ws_tack_active(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.update',
         tack_serializer.data)
+    ws_sender.send_message(
+        f"user_{tack.tacker_id}",
+        "grouptack.update",
+        TackDetailSerializer(tack).data
+    )
 
 
 def ws_tack_accepted(tack: Tack):
