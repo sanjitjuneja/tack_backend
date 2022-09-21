@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q, F, Sum
 from django.utils import timezone
 
+from core.exceptions import InvalidActionError
 from djstripe.models import PaymentIntent
 from djstripe.models import PaymentMethod as dsPaymentMethod
 from plaid.model.account_base import AccountBase
@@ -331,7 +332,11 @@ def dwolla_transaction(
         destination = DWOLLA_MAIN_FUNDING_SOURCE
         amount_with_fees = amount
     else:
-        return {"error": "code", "message": f"Invalid action: {action}"}
+        raise InvalidActionError(
+            error="Px7",
+            message=f"Invalied action: {action}",
+            status=400
+        )
 
     transfer_request = get_transfer_request(
         source=source,

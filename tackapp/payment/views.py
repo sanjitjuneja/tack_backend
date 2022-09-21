@@ -15,6 +15,7 @@ import stripe
 from django.core.exceptions import ObjectDoesNotExist
 
 from core.choices import PaymentType, PaymentService, PaymentAction
+from core.exceptions import InvalidActionError
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
@@ -140,6 +141,14 @@ class AddBalanceDwolla(views.APIView):
                 user=request.user,
                 action=PaymentAction.DEPOSIT,
                 **serializer.validated_data
+            )
+        except InvalidActionError as e:
+            return Response(
+                {
+                    "error": e.error,
+                    "message": e.message,
+                },
+                status=e.status
             )
         except dwollav2.Error as e:
             return Response(e.body)

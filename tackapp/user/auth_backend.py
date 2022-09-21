@@ -13,25 +13,11 @@ from fcm_django.models import FCMDevice
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from core.exceptions import TooManyAttemptsError, MultipleAccountsError
 from socials.models import TimeoutSettings, FailedLoginAttempts
 from user.models import User
 
 logger = logging.getLogger("user.auth_backend")
-
-
-class CustomResponseError(BaseException):
-    def __init__(self, error, message, status):
-        self.error = error
-        self.message = message
-        self.status = status
-
-
-class TooManyAttemptsError(CustomResponseError):
-    pass
-
-
-class MultipleAccountsError(CustomResponseError):
-    pass
 
 
 def create_firebase_device(device_fields, user):
