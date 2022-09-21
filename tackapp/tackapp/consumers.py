@@ -7,7 +7,7 @@ from tackapp.services import form_websocket_message, get_user_groups, get_tacks_
     get_tacks_runner
 
 logger = logging.getLogger("tackapp.consumers")
-logger.setLevel("INFO")
+logger.setLevel("DEBUG")
 
 
 class MainConsumer(AsyncWebsocketConsumer):

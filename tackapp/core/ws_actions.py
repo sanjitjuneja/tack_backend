@@ -218,6 +218,11 @@ def ws_tack_created_from_active(tack: Tack):
 def ws_tack_active(tack: Tack):
     logger.warning(f"tack_created_active_update. {tack.status = }")
     tack_serializer = TackDetailSerializer(tack)
+    message_for_tacker = {
+        'id': tack.id,
+        'tack': tack_serializer.data,
+        'is_mine_offer_sent': False
+    }
     logging.getLogger().warning(f"if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
@@ -226,12 +231,13 @@ def ws_tack_active(tack: Tack):
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         "grouptack.update",
-        TackDetailSerializer(tack).data
+        message_for_tacker
     )
 
 
 def ws_tack_accepted(tack: Tack):
     logger.warning(f"tack_status_accepted. {tack.status = }")
+
     ws_sender.send_message(
         f"group_{tack.group_id}",
         'grouptack.delete',
