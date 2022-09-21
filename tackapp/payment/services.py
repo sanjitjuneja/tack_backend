@@ -431,8 +431,7 @@ def dwolla_webhook_handler(request):
 
 
 def detach_dwolla_funding_sources(dwolla_id):
-    funding_sources = get_dwolla_payment_methods(dwolla_id)
-
+    funding_sources = get_dwolla_payment_methods(dwolla_id)['_embedded']['funding-sources']
 
     logger.warning(f"in detach_dwolla_funding_sources: {funding_sources = }")
     for funding_source in funding_sources:
