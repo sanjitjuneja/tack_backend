@@ -247,10 +247,6 @@ class MainConsumer(AsyncWebsocketConsumer):
                 model='RunnerTack', action='update', obj=message
             )
         )
-        await self.channel_layer.group_add(
-            f"tack_{message['id']}_offer",
-            self.channel_name)
-        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_delete(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")

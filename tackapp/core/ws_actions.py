@@ -69,14 +69,10 @@ def ws_offer_in_progress(offer: Offer):
 
 def ws_offer_finished(offer: Offer):
     logger.warning(f"offer_finished. {offer.status = }")
-    # ws_sender.send_message(
-    #     f"user_{offer.tack.tacker_id}",  # tack_id_tacker
-    #     'offer.delete',
-    #     offer.id)
-    # ws_sender.send_message(
-    #     f"user_{offer.runner_id}",  # tack_id_runner
-    #     'runnertack.delete',
-    #     offer.id)
+    ws_sender.send_message(
+        f"user_{offer.runner_id}",  # tack_id_runner
+        'runnertack.delete',
+        offer.id)
 
 
 def ws_offer_expired(offer: Offer):
@@ -282,10 +278,6 @@ def ws_tack_finished(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.delete',
         tack.id)
-    ws_sender.send_message(
-        f"user_{tack.runner_id}",
-        'runnertack.delete',
-        tack.accepted_offer.id)
     ws_sender.send_message(
         f"user_{tack.runner_id}",
         'completedtackrunner.create',
