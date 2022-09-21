@@ -34,6 +34,9 @@ from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link
     calculate_transaction_loss, calculate_service_fee
 
 
+logger = logging.getLogger("payments")
+
+
 class AddBalanceStripe(views.APIView):
     """Endpoint for money refill from Stripe"""
 
@@ -43,7 +46,6 @@ class AddBalanceStripe(views.APIView):
     def post(self, request):
         serializer = AddBalanceStripeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        logger = logging.getLogger()
 
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
 
@@ -59,7 +61,7 @@ class AddBalanceStripe(views.APIView):
             service=PaymentService.STRIPE
         )
 
-        logging.getLogger().warning(f"{current_transaction_loss = }")
+        logger.debug(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
@@ -71,7 +73,7 @@ class AddBalanceStripe(views.APIView):
 
         # TODO: try-except block
         payment_method = serializer.validated_data["payment_method"] or None
-        logger.warning(f"{payment_method = }")
+        logger.info(f"{payment_method = }")
         pi_request = {
             "customer": customer.id,
             "receipt_email": customer.email,
@@ -80,7 +82,7 @@ class AddBalanceStripe(views.APIView):
         }
         if payment_method:
             pi_request["payment_method"] = payment_method
-        logger.warning(f"{pi_request = }")
+        logger.info(f"{pi_request = }")
         with transaction.atomic():
             pi = stripe.PaymentIntent.create(**pi_request)
             Transaction.objects.create(
@@ -94,8 +96,8 @@ class AddBalanceStripe(views.APIView):
                     service=PaymentService.STRIPE),
                 transaction_id=pi["id"]
             )
-            logger.warning(f"{pi = }")
-            logger.warning(f"{type(pi) = }")
+            logger.info(f"{pi = }")
+            logger.debug(f"{type(pi) = }")
             return Response(pi)
 
 
@@ -116,7 +118,7 @@ class AddBalanceDwolla(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.DWOLLA
         )
-        logging.getLogger().warning(f"{current_transaction_loss = }")
+        logger.debug(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
@@ -166,13 +168,13 @@ class GetUserPaymentMethods(views.APIView):
         ds_customer, created = djstripe.models.Customer.get_or_create(
             subscriber=request.user
         )
-        logging.getLogger().warning(f"{ds_customer = }")
+        logger.debug(f"{ds_customer = }")
         pms = dsPaymentMethod.objects.filter(
             customer=ds_customer
         ).order_by(
             "-created"
         )
-        logging.getLogger().warning(f"{pms = }")
+        logger.debug(f"{pms = }")
         serializer = StripePaymentMethodSerializer(pms, many=True)
         return Response(
             {
@@ -271,7 +273,7 @@ class AddUserWithdrawMethod(views.APIView):
             )
             data[0]["is_primary"] = True
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        logging.getLogger().warning(f"{serializer.data = }")
+        logger.debug(f"{serializer.data = }")
         return Response(
             {
                 "results": serializer.data

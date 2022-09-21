@@ -39,37 +39,41 @@ def ws_offer_created(offer: Offer):
 def ws_offer_accepted(offer: Offer):
     logger.warning(f"offer_accepted. {offer.status = }")
     ws_sender.send_message(
-        f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
-        'tack.update',
-        TackDetailSerializer(offer.tack).data)
-    ws_sender.send_message(
-        f"user_{offer.tack.runner_id}",  # tack_{offer.tack_id}_runner
-        'runnertack.update',
-        TacksOffersSerializer(offer).data)
+        f"user_{offer.tack_id}_tacker",
+        'offer.delete',
+        offer.id)
+    # ws_sender.send_message(
+    #     f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
+    #     'tack.update',
+    #     TackDetailSerializer(offer.tack).data)
+    # ws_sender.send_message(
+    #     f"user_{offer.tack.runner_id}",  # tack_{offer.tack_id}_runner
+    #     'runnertack.update',
+    #     TacksOffersSerializer(offer).data)
 
 
 def ws_offer_in_progress(offer: Offer):
     logger.warning(f"offer_in_progress. {offer.status = }")
-    ws_sender.send_message(
-        f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
-        'tack.update',
-        TackDetailSerializer(offer.tack).data)
-    ws_sender.send_message(
-        f"user_{offer.tack.runner_id}",  # tack_{offer.tack_id}_runner
-        'runnertack.update',
-        TacksOffersSerializer(offer).data)
+    # ws_sender.send_message(
+    #     f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
+    #     'tack.update',
+    #     TackDetailSerializer(offer.tack).data)
+    # ws_sender.send_message(
+    #     f"user_{offer.tack.runner_id}",  # tack_{offer.tack_id}_runner
+    #     'runnertack.update',
+    #     TacksOffersSerializer(offer).data)
 
 
 def ws_offer_finished(offer: Offer):
     logger.warning(f"offer_finished. {offer.status = }")
-    ws_sender.send_message(
-        f"user_{offer.tack.tacker_id}",  # tack_id_tacker
-        'offer.delete',
-        offer.id)
-    ws_sender.send_message(
-        f"user_{offer.runner_id}",  # tack_id_runner
-        'runnertack.delete',
-        offer.id)
+    # ws_sender.send_message(
+    #     f"user_{offer.tack.tacker_id}",  # tack_id_tacker
+    #     'offer.delete',
+    #     offer.id)
+    # ws_sender.send_message(
+    #     f"user_{offer.runner_id}",  # tack_id_runner
+    #     'runnertack.delete',
+    #     offer.id)
 
 
 def ws_offer_expired(offer: Offer):

@@ -59,7 +59,7 @@ def complete_tack(tack: Tack, message: str = None):
 
 @transaction.atomic
 def confirm_complete_tack(tack: Tack):
-    tack.completion_time = timezone.now()
+    # tack.completion_time = timezone.now()
     send_payment_to_runner(tack)
     tack.status = TackStatus.FINISHED
     tack.tacker.tacks_amount += 1
