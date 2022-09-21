@@ -60,6 +60,9 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
+    logger.error(f"### INSIDE offer_ws_actions signal ###")
+    logger.error(f"### OFFER {instance = }")
+    logger.error(f"### OFFER {instance.status = }")
     match instance.status:
         case OfferStatus.CREATED:
             ws_offer_created(instance)
@@ -84,6 +87,9 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
+    logger.error(f"### INSIDE tack_ws_actions signal ###")
+    logger.error(f"### TACK {instance = }")
+    logger.error(f"### TACK {instance.status = }")
     # initial creation from tacker
     if created:
         ws_tack_created(instance)
