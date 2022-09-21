@@ -46,6 +46,11 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
@@ -56,6 +61,10 @@ LOGGING = {
         'myproject.custom': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'payments': {
+            'handlers': ['console'],
+            'level': 'DEBUG'
         }
     }
 }

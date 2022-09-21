@@ -131,6 +131,7 @@ class AddBalanceDwolla(views.APIView):
 
         is_enough_funds = check_dwolla_balance(request.user, amount, payment_method)
         if not is_enough_funds:
+            logger.info(f"NOT ENOUGH FUNDS from {request.user = }, {amount = }. {total_loss = }")
             return Response(
                 {
                     "error": "Px2",
@@ -142,7 +143,9 @@ class AddBalanceDwolla(views.APIView):
                 action=PaymentAction.DEPOSIT,
                 **serializer.validated_data
             )
+            logger.info(f"AddBalanceDwolla {response_body = }")
         except InvalidActionError as e:
+            logger.warning(f"InvalidActionError {e = }")
             return Response(
                 {
                     "error": e.error,
@@ -151,6 +154,7 @@ class AddBalanceDwolla(views.APIView):
                 status=e.status
             )
         except dwollav2.Error as e:
+            logger.warning(f"dwollav2.Error {e = }")
             return Response(e.body)
 
         return Response(response_body)

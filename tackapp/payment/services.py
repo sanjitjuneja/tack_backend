@@ -37,7 +37,7 @@ from tackapp.settings import DWOLLA_MAIN_FUNDING_SOURCE
 from user.models import User
 
 
-logger = logging.getLogger()
+logger = logging.getLogger("payments")
 
 
 @transaction.atomic
@@ -272,15 +272,14 @@ def get_transfer_request(
 
 def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
     """Check Active Bank balance"""
-    logger = logging.getLogger()
-    # ba = BankAccount.objects.get(user=user)
+
     pm = UserPaymentMethods.objects.get(dwolla_payment_method=payment_method)
     amount = convert_to_decimal(amount)
     request = AccountsBalanceGetRequest(
         access_token=pm.dwolla_access_token
     )
     response = plaid_client.accounts_balance_get(request)
-    logger.warning(f"plaid {response = }")
+    logger.info(f"plaid {response = }")
     try:
         payment_method_qs = UserPaymentMethods.objects.get(
             bank_account__user=user,
@@ -289,12 +288,12 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         dwolla_payment_id = payment_method_qs.dwolla_payment_method
         for account in response['accounts']:
             if account["account_id"] == pm.plaid_account_id:
-                logger.warning(Decimal(account["balances"]["available"]))
+                logger.warning(f"{Decimal(account['balances']['available']) = }")
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
                     return True
     except UserPaymentMethods.DoesNotExist:
-        logger.warning("Balance check: UserPaymentMethods.DoesNotExist")
+        logger.error("payment.services.check_dwolla_balance: UserPaymentMethods.DoesNotExist")
     return False
 
 
@@ -331,6 +330,7 @@ def dwolla_transaction(
         destination = DWOLLA_MAIN_FUNDING_SOURCE
         amount_with_fees = amount
     else:
+        logger.error("payment.services.dwolla_transaction: InvalidActionError")
         raise InvalidActionError(
             error="Px7",
             message=f"Invalied action: {action}",
@@ -344,7 +344,7 @@ def dwolla_transaction(
         amount=amount_with_fees,
         channel=channel
     )
-
+    logger.debug(f"payment.services.dwolla_transaction: {transfer_request = }")
     token = dwolla_client.Auth.client()
     response = token.post('transfers', transfer_request)
     transaction_id = response.headers["Location"].split("/")[-1]
