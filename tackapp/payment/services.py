@@ -464,9 +464,7 @@ def _deactivate_dwolla_account(dwolla_id):
 def is_user_have_dwolla_pending_transfers(dwolla_id):
     token = dwolla_client.Auth.client()
     response = token.get(f"customers/{dwolla_id}/transfers?status=pending")
-    if response.body["total"] == 0:
-        return False
-    return True
+    return bool(response.body["total"])
 
 
 def set_primary_method(user: User, payment_type: str, payment_method: str):

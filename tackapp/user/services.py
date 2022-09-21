@@ -124,9 +124,9 @@ def deactivate_dwolla_customer(user: User):
     # Deactivate account if User have no pending transfers
     if not is_user_have_dwolla_pending_transfers(dwolla_user_id):
         deactivate_dwolla_account(dwolla_user_id)
-
-    # If Dwolla user have pending transfers - create row with his account
-    DwollaRemovedAccount.objects.create(dwolla_id=dwolla_user_id)
+    else:
+        # If Dwolla user have pending transfers - create row with his account
+        DwollaRemovedAccount.objects.create(dwolla_id=dwolla_user_id)
 
 
 def deactivate_dwolla_account(dwolla_user_id):
