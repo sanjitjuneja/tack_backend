@@ -17,6 +17,7 @@ from socials.models import NotificationSettings
 from tack.models import Tack, Offer
 
 logger = logging.getLogger("tack.notification")
+logger.setLevel("CRITICAL")
 ntf_type_dict = {
         NotificationType.TACK_CREATED: {
             "title": "Tack",
