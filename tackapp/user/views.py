@@ -14,7 +14,8 @@ from payment.services import dwolla_transaction
 from review.serializers import ReviewSerializer
 from tack.models import Tack
 from .serializers import *
-from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio, deactivate_dwolla_customer
+from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio, deactivate_dwolla_customer, \
+    delete_stripe_customer
 
 
 class UsersViewset(
@@ -96,34 +97,9 @@ class UsersViewset(
                     "message": "User balance is not 0"
                 },
                 status=400)
-        dwolla_pms = UserPaymentMethods.objects.filter(bank_account__user=request.user)
-        if not dwolla_pms:
-            return Response(
-                {
-                    "error": "Px5",
-                    "message": "You don't have Dwolla Bank Accounts"
-                },
-                status=400)
-        try:
-            primary_pm = dwolla_pms.get(primary=True)
-        except UserPaymentMethods.DoesNotExist:
-            return Response(
-                {
-                    "error": "Px6",
-                    "message": "You don't have Dwolla primary Bank Account"
-                },
-                status=400)
 
-        min_withdraw_amount = 100
-        if ba.usd_balance >= min_withdraw_amount:
-            dwolla_transaction(
-                user=request.user,
-                amount=ba.usd_balance,
-                payment_method=primary_pm,
-                action="withdraw"
-            )
-
-        deactivate_dwolla_customer(request.user)
+        # deactivate_dwolla_customer(request.user)
+        request.user.delete()  # delete_stripe_dwolla_account signal will do the job
         return Response(
             {
                 "error": None,
