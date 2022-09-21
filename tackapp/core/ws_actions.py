@@ -70,9 +70,9 @@ def ws_offer_in_progress(offer: Offer):
 def ws_offer_finished(offer: Offer):
     logger.warning(f"offer_finished. {offer.status = }")
     ws_sender.send_message(
-        f"user_{offer.runner_id}",  # tack_id_runner
-        'runnertack.delete',
-        offer.id)
+        f"user_{offer.runner_id}",
+        'runnertack.update',
+        TacksOffersSerializer(offer).data)
 
 
 def ws_offer_expired(offer: Offer):
@@ -266,10 +266,6 @@ def ws_tack_waiting_review(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.update',
         TackDetailSerializer(tack).data)
-    ws_sender.send_message(
-        f"user_{tack.runner_id}",
-        'runnertack.update',
-        TacksOffersSerializer(tack.accepted_offer).data)
 
 
 def ws_tack_finished(tack: Tack):
@@ -278,6 +274,11 @@ def ws_tack_finished(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.delete',
         tack.id)
+    ws_sender.send_message(
+        f"user_{tack.runner_id}",
+        'runnertack.delete',
+        tack.accepted_offer_id
+    )
     ws_sender.send_message(
         f"user_{tack.runner_id}",
         'completedtackrunner.create',
