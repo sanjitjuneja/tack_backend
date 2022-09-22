@@ -140,12 +140,12 @@ def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
     ).send_message(message)
     
     
-def notification_on_tack_waiting_review(tack: Tack):  # RUNNER_FINISHED
+def notification_on_tack_waiting_review(tack: Tack):  # TACK_WAITING_REVIEW
     if not tack.tacker or not tack.runner:
         return
-    message = build_ntf_message(NotificationType.RUNNER_FINISHED, tack)
+    message = build_ntf_message(NotificationType.TACK_WAITING_REVIEW, tack)
     FCMDevice.objects.filter(
-        user_id=tack.tacker_id
+        user_id=tack.runner_id
     ).send_message(message)
     
     
