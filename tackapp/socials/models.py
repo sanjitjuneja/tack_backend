@@ -9,7 +9,7 @@ from core.choices import SMSType, NotificationType
 class PhoneVerification(CoreModel):
     uuid = models.CharField(max_length=36)
     user = models.ForeignKey(
-        "user.User", on_delete=models.CASCADE, blank=True, null=True
+        "user.User", null=True, on_delete=models.SET_NULL, blank=True,
     )
     phone_number = PhoneNumberField()
     sms_code = models.CharField(max_length=6)

@@ -111,7 +111,7 @@ SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 logger.warning(f"{DEBUG = }")
 
 ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
-
+logger.info(f"{ALLOWED_HOSTS = }")
 if DEBUG:
     import socket  # only if you haven't already imported this
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())

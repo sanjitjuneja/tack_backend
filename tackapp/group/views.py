@@ -10,12 +10,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
 from tack.models import Tack, PopularTack, Offer
 from tack.serializers import TackDetailSerializer, PopularTackSerializer, GroupTackSerializer
 from user.serializers import UserListSerializer
 from .serializers import *
+
+
+logger = logging.getLogger("myproject.custom")
 
 
 class GroupViewset(
@@ -316,12 +319,10 @@ class GroupViewset(
             group=group,
             status__in=(TackStatus.WAITING_REVIEW, TackStatus.FINISHED)
         ).annotate(
-            offer_count=Count('offer')
+            offer_count=Count('offer', filter=~Q(offer__status=OfferStatus.DELETED))
         ).order_by(
             "-offer_count"
         )[:tacks_len]
-        # logging.getLogger().warning(tacks.query)
-
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
         serializer_default = PopularTackSerializer(tacks, many=True)
         return Response(

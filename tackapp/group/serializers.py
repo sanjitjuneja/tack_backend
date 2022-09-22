@@ -1,10 +1,11 @@
 from rest_framework import serializers
 
+from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from user.models import User
 from .models import *
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class GroupSerializer(CustomModelSerializer):
 
     class Meta:
         model = Group
@@ -12,7 +13,7 @@ class GroupSerializer(serializers.ModelSerializer):
         read_only_fields = "owner",
 
 
-class GroupInvitationsSerializer(serializers.ModelSerializer):
+class GroupInvitationsSerializer(CustomModelSerializer):
     group = GroupSerializer()
 
     class Meta:
@@ -20,21 +21,21 @@ class GroupInvitationsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GroupInvitationsPostSerializer(serializers.ModelSerializer):
+class GroupInvitationsPostSerializer(CustomModelSerializer):
     class Meta:
         model = GroupInvitations
         fields = "__all__"
 
 
-class UserInviteSerializer(serializers.Serializer):
+class UserInviteSerializer(CustomSerializer):
     user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
 
-class GroupInviteLinkSerializer(serializers.Serializer):
+class GroupInviteLinkSerializer(CustomSerializer):
     uuid = serializers.CharField(max_length=36, required=True)
 
 
-class GroupMembersSerializer(serializers.ModelSerializer):
+class GroupMembersSerializer(CustomModelSerializer):
     group = GroupSerializer()
 
     class Meta:
