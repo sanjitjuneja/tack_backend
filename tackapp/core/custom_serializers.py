@@ -15,7 +15,7 @@ class CustomSerializer(serializers.Serializer):
                         "id": 0,
                         "first_name": "Deleted",
                         "last_name": "User",
-                        "tacks_rating": Decimal(0, Context(prec=2)),
+                        "tacks_rating": "0.00",
                         "tacks_amount": 0
                     }
             except KeyError:
