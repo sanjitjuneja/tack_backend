@@ -33,7 +33,7 @@ class CustomModelSerializer(serializers.ModelSerializer):
                         "id": 0,
                         "first_name": "Deleted",
                         "last_name": "User",
-                        "tacks_rating": 0,
+                        "tacks_rating": "0.00",
                         "tacks_amount": 0
                     }
             except KeyError:
