@@ -15,7 +15,7 @@ def upload_path_group_image(instance, filename: str):
 
 
 class Group(CoreModel):
-    owner = models.ForeignKey("user.User", null=True, on_delete=models.SET_NULL)
+    owner = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=256, null=True, blank=True)
     image = models.ImageField(
@@ -40,7 +40,7 @@ class Group(CoreModel):
 
 class GroupMembers(models.Model):
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
-    member = models.ForeignKey("user.User", null=True, on_delete=models.SET_NULL)
+    member = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL)
     is_muted = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
@@ -54,7 +54,7 @@ class GroupMembers(models.Model):
 
 
 class GroupInvitations(models.Model):
-    invitee = models.ForeignKey("user.User", null=True, on_delete=models.SET_NULL, related_name="gi_invitee")
+    invitee = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="gi_invitee")
     group = models.ForeignKey("group.Group", on_delete=models.CASCADE)
 
     class Meta:

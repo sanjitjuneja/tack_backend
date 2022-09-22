@@ -13,10 +13,10 @@ from user.models import User
 
 class Tack(CoreModel):
     tacker = models.ForeignKey(
-        "user.User", null=True, on_delete=models.SET_NULL, related_name="tack_tacker"
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="tack_tacker"
     )
     runner = models.ForeignKey(
-        "user.User", null=True, on_delete=models.SET_NULL, related_name="tack_runner", blank=True
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="tack_runner",
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
@@ -83,7 +83,7 @@ class Tack(CoreModel):
 
 class Offer(CoreModel):
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
-    runner = models.ForeignKey("user.User", null=True, on_delete=models.SET_NULL)
+    runner = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL)
     price = models.IntegerField(
         validators=(
             MinValueValidator(0),
@@ -123,7 +123,7 @@ class Offer(CoreModel):
 
 class PopularTack(models.Model):
     tacker = models.ForeignKey(
-        "user.User", null=True, on_delete=models.SET_NULL, blank=True, default=None
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, default=None
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
