@@ -1,3 +1,5 @@
+from decimal import Decimal, Context
+
 from rest_framework import serializers
 
 nullable_user_fields = ('tacker', 'runner', 'user', 'member', 'owner')
@@ -13,7 +15,7 @@ class CustomSerializer(serializers.Serializer):
                         "id": 0,
                         "first_name": "Deleted",
                         "last_name": "User",
-                        "tacks_rating": 0,
+                        "tacks_rating": Decimal(0, Context(prec=2)),
                         "tacks_amount": 0
                     }
             except KeyError:
