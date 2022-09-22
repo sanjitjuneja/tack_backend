@@ -99,8 +99,8 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
         return
     # tack deletion process
     if not instance.is_active:
-        # deletion from tacker (tack should be in status CREATED)
-        if instance.status == TackStatus.CREATED:
+        # deletion from tacker (tack should be in status CREATED or ACTIVE)
+        if instance.status in (TackStatus.CREATED, TackStatus.ACTIVE):
             ws_tack_deleted(instance)
             return
         # deletion(cancellation) from runner (tack might be in status ACCEPTED, IN_PROGRESS)

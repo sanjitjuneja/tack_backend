@@ -123,7 +123,7 @@ def notification_on_tack_cancelled(tack: Tack):  # TACK_CANCELLED
 
 
 def notification_on_tack_accepted(tack: Tack):  # TACK_ACCEPTED
-    if not tack.tacker:
+    if not tack.tacker or not tack.runner:
         return
     message = build_ntf_message(NotificationType.TACK_ACCEPTED, tack)
     FCMDevice.objects.filter(
@@ -132,7 +132,7 @@ def notification_on_tack_accepted(tack: Tack):  # TACK_ACCEPTED
 
     
 def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
-    if not tack.tacker:
+    if not tack.tacker or not tack.runner:
         return
     message = build_ntf_message(NotificationType.TACK_IN_PROGRESS, tack)
     FCMDevice.objects.filter(
@@ -141,7 +141,7 @@ def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
     
     
 def notification_on_tack_waiting_review(tack: Tack):  # RUNNER_FINISHED
-    if not tack.tacker:
+    if not tack.tacker or not tack.runner:
         return
     message = build_ntf_message(NotificationType.RUNNER_FINISHED, tack)
     FCMDevice.objects.filter(
