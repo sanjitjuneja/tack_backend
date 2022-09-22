@@ -83,6 +83,8 @@ def calculate_tack_expiring(estimation_time_seconds: int) -> int:
 
 
 def notification_on_tack_created(tack: Tack):  # TACK_CREATED
+    if not tack.tacker:
+        return
     message = build_ntf_message(NotificationType.TACK_CREATED, tack)
     not_muted_members = GroupMembers.objects.filter(
         group=tack.group_id,
@@ -99,6 +101,8 @@ def notification_on_tack_created(tack: Tack):  # TACK_CREATED
 
 
 def deferred_notification_tack_inactive(tack: Tack):  # TACK_INACTIVE
+    if not tack.tacker:
+        return
     logger.warning(f"INSIDE deferred_notification_tack_inactive")
     tack_without_offer_seconds = 900
     tack_long_inactive.apply_async(
@@ -110,6 +114,8 @@ def deferred_notification_tack_inactive(tack: Tack):  # TACK_INACTIVE
 
 
 def notification_on_tack_cancelled(tack: Tack):  # TACK_CANCELLED
+    if not tack.tacker:
+        return
     message = build_ntf_message(NotificationType.TACK_CANCELLED, tack)
     FCMDevice.objects.filter(
         user_id=tack.tacker_id
@@ -117,6 +123,8 @@ def notification_on_tack_cancelled(tack: Tack):  # TACK_CANCELLED
 
 
 def notification_on_tack_accepted(tack: Tack):  # TACK_ACCEPTED
+    if not tack.tacker:
+        return
     message = build_ntf_message(NotificationType.TACK_ACCEPTED, tack)
     FCMDevice.objects.filter(
         user_id=tack.tacker_id
@@ -124,6 +132,8 @@ def notification_on_tack_accepted(tack: Tack):  # TACK_ACCEPTED
 
     
 def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
+    if not tack.tacker:
+        return
     message = build_ntf_message(NotificationType.TACK_IN_PROGRESS, tack)
     FCMDevice.objects.filter(
         user_id=tack.tacker_id
@@ -131,6 +141,8 @@ def notification_on_tack_in_progress(tack: Tack):  # TACK_IN_PROGRESS
     
     
 def notification_on_tack_waiting_review(tack: Tack):  # RUNNER_FINISHED
+    if not tack.tacker:
+        return
     message = build_ntf_message(NotificationType.RUNNER_FINISHED, tack)
     FCMDevice.objects.filter(
         user_id=tack.tacker_id
@@ -138,6 +150,8 @@ def notification_on_tack_waiting_review(tack: Tack):  # RUNNER_FINISHED
     
     
 def notification_on_tack_finished(tack: Tack):  # TACK_FINISHED
+    if not tack.tacker or not tack.runner:
+        return
     message = build_ntf_message(NotificationType.TACK_FINISHED, tack)
     FCMDevice.objects.filter(
         user_id=tack.runner_id
@@ -145,6 +159,8 @@ def notification_on_tack_finished(tack: Tack):  # TACK_FINISHED
 
 
 def notification_on_offer_created(offer: Offer):
+    if not offer.runner or not offer.tack.tacker:
+        return
     match offer.offer_type:
         case OfferType.OFFER:  # OFFER_RECEIVED
             ntf_type = NotificationType.OFFER_RECEIVED
@@ -159,6 +175,8 @@ def notification_on_offer_created(offer: Offer):
 
 
 def notification_on_offer_accepted(offer: Offer):  # OFFER_ACCEPTED
+    if not offer.runner or not offer.tack.tacker:
+        return
     message = build_ntf_message(NotificationType.OFFER_ACCEPTED, offer)
     FCMDevice.objects.filter(
         user_id=offer.runner_id
@@ -166,6 +184,8 @@ def notification_on_offer_accepted(offer: Offer):  # OFFER_ACCEPTED
 
 
 def deferred_notification_tack_will_expire_soon(offer: Offer):  # TACK_EXPIRING
+    if not offer.runner or not offer.tack.tacker:
+        return
     if not offer.tack.estimation_time_seconds:
         return
     tack_will_expire_soon.apply_async(
@@ -177,6 +197,8 @@ def deferred_notification_tack_will_expire_soon(offer: Offer):  # TACK_EXPIRING
 
 
 def notification_on_offer_expired(offer: Offer):  # OFFER_EXPIRED
+    if not offer.runner or not offer.tack.tacker:
+        return
     message = build_ntf_message(NotificationType.OFFER_EXPIRED, offer)
     FCMDevice.objects.filter(
         user_id=offer.runner_id
@@ -184,6 +206,8 @@ def notification_on_offer_expired(offer: Offer):  # OFFER_EXPIRED
 
 
 def notification_on_offer_finished(offer: Offer):  # RUNNER_FINISHED
+    if not offer.runner or not offer.tack.tacker:
+        return
     message = build_ntf_message(NotificationType.RUNNER_FINISHED, offer)
     FCMDevice.objects.filter(
         user_id=offer.tack.tacker_id
