@@ -28,6 +28,7 @@ def create_firebase_device(device_fields, user):
             "user": user,
             "registration_id": device_fields.get('firebase_token'),
             "type": device_fields.get('device_type'),
+            "active": True
         }
     )
 
