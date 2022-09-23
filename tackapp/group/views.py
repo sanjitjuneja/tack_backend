@@ -7,6 +7,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -103,7 +104,16 @@ class GroupViewset(
         """Endpoint for accepting invitation from Invitation Link"""
 
         serializer = self.get_serializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         uuid = serializer.validated_data["uuid"]
         try:
             group = self.get_queryset().get(invitation_link=uuid)

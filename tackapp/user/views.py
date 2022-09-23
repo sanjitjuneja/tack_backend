@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -52,7 +53,16 @@ class UsersViewset(
     def me_change_bio(self, request, *args, **kwargs):
         self.queryset = User.objects.all()
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         user = user_change_bio(request.user, serializer.validated_data)
 
         return Response(self.get_serializer(user).data)

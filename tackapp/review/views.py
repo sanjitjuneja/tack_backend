@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework import viewsets, mixins
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
@@ -20,7 +21,16 @@ class ReviewViewset(
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         # If User is not Tacker or Runner of the Tack - he is not allowed to create Review
         tack = serializer.validated_data["tack"]

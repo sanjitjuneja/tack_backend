@@ -68,7 +68,16 @@ class TackViewset(
         partial = kwargs.pop('partial', False)
         tack = self.get_object()
         serializer = self.get_serializer(tack, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         logger.warning(f"{serializer.validated_data = }")
 
@@ -357,7 +366,16 @@ class OfferViewset(
         """Endpoint for creating Runner-side offers. Provide price ONLY for Counter-offering"""
 
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         tack = serializer.validated_data["tack"]
 
         if serializer.validated_data.get("price") and (not tack.allow_counter_offer):

@@ -6,6 +6,7 @@ from channels.layers import get_channel_layer
 from django.db import transaction
 from django.db.models import Sum, Q, F
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 import djstripe.models
@@ -46,7 +47,16 @@ class AddBalanceStripe(views.APIView):
     @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
     def post(self, request):
         serializer = AddBalanceStripeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
 
@@ -110,7 +120,16 @@ class AddBalanceDwolla(views.APIView):
     @extend_schema(request=AddBalanceDwollaSerializer, responses=AddBalanceDwollaSerializer)
     def post(self, request):
         serializer = AddBalanceDwollaSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         amount = serializer.validated_data["amount"]
         payment_method = serializer.validated_data["payment_method"]
 
@@ -248,7 +267,16 @@ class AddUserWithdrawMethod(views.APIView):
     @extend_schema(request=AddWithdrawMethodSerializer, responses=DwollaPaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = AddWithdrawMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         public_token = serializer.validated_data['public_token']
 
         access_token = get_access_token(public_token)
@@ -300,7 +328,16 @@ class DwollaMoneyWithdraw(views.APIView):
     @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
     def post(self, request, *args, **kwargs):
         serializer = DwollaMoneyWithdrawSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         try:
             ba = BankAccount.objects.get(user=request.user)
@@ -342,7 +379,16 @@ class GetPaymentMethodById(views.APIView):
     @extend_schema(request=GetCardByIdSerializer, responses=StripePaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = GetCardByIdSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         payment_method_id = serializer["pm_id"]
         ds_customer, created = djstripe.models.Customer.get_or_create(
             subscriber=request.user
@@ -366,7 +412,16 @@ class DetachPaymentMethod(views.APIView):
     @extend_schema(request=DeletePaymentMethodSerializer, responses=DeletePaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = DeletePaymentMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         try:
             detach_payment_method(
@@ -399,7 +454,16 @@ class SetPrimaryPaymentMethod(views.APIView):
     @extend_schema(request=SetPrimaryPaymentMethodSerializer, responses=SetPrimaryPaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = SetPrimaryPaymentMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         try:
             set_primary_method(
                 user=request.user,

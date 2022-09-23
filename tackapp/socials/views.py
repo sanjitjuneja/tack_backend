@@ -1,16 +1,18 @@
 import logging
 from datetime import datetime, timedelta
 
+import django
 import dwollav2
 from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from uuid import uuid4
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -31,7 +33,16 @@ class TwilioSendMessage(views.APIView):
     @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         phone_number = serializer.validated_data["phone_number"]
 
         timeout_settings = TimeoutSettings.objects.all().last()
@@ -119,7 +130,16 @@ class TwilioUserRegistration(views.APIView):
                     status=400)
             user_data = serializer.validated_data["user"].copy() | {"phone_number": phv.phone_number.as_e164}
             user_serializer = UserSerializer(data=user_data)
-            user_serializer.is_valid(raise_exception=True)
+            try:
+                user_serializer.is_valid(raise_exception=True)
+            except ValidationError as e:
+                return Response(
+                    {
+                        "error": "Ox3",
+                        "message": "Validation error. Some of the fields have invalid values",
+                        "details": e.detail,
+                    },
+                    status=400)
 
             try:
                 User.objects.get(email=serializer.validated_data["user"]["email"])
@@ -154,7 +174,16 @@ class PasswordRecoverySendMessage(views.APIView):
     @extend_schema(request=SMSSendSerializer, responses=SMSSendSerializer)
     def post(self, request):
         serializer = SMSSendSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
         sms_code = generate_sms_code()
@@ -205,7 +234,16 @@ class PasswordRecoveryChange(views.APIView):
                 },
                 status=400)
         serializer = PasswordRecoveryChangeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         uuid = serializer.validated_data["uuid"]
 
         try:
@@ -244,7 +282,16 @@ class PasswordChange(views.APIView):
     def post(self, request):
 
         serializer = PasswordChangeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         old_password = serializer.validated_data["old_password"]
         new_password = serializer.validated_data["new_password"]
@@ -283,7 +330,16 @@ class VerifySMSCode(views.APIView):
     @extend_schema(request=VerifySMSCodeSerializer, responses=VerifySMSCodeSerializer)
     def post(self, request):
         serializer = VerifySMSCodeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         uuid = serializer.validated_data["uuid"]
         sms_code = serializer.validated_data["sms_code"]
