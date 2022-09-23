@@ -43,7 +43,7 @@ services:
 
   rabbit:
     container_name: 'rabbit'
-    image: rabbitmq:3.10-management
+    build: ./rabbitmq
     restart: always
     env_file:
       - tackapp/prod.env
