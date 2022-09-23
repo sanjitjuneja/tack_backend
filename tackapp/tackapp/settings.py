@@ -77,9 +77,9 @@ else:
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
 
     env = receive_setting_secrets(
-        temp_env("AWS_ACCESS_KEY_ID"),
-        temp_env("AWS_SECRET_ACCESS_KEY"),
-        temp_env("AWS_REGION")
+        os.getenv("AWS_ACCESS_KEY_ID"),
+        os.getenv("AWS_SECRET_ACCESS_KEY"),
+        os.getenv("AWS_REGION")
     )
     DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
 
