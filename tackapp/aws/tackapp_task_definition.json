@@ -1,7 +1,9 @@
 {
-    "taskDefinition": {
-        "taskDefinitionArn": "arn:aws:ecs:us-east-1:409937427980:task-definition/tackapp:32",
-        "containerDefinitions": [
+    "family": "tackapp",
+    "taskRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+    "networkMode": "bridge",
+    "containerDefinitions": [
             {
                 "name": "rabbit",
                 "image": "rabbitmq:3.10-management",
@@ -227,49 +229,64 @@
                 }
             }
         ],
-        "family": "tackapp",
-        "taskRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
-        "executionRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
-        "networkMode": "bridge",
-        "revision": 32,
-        "volumes": [],
-        "status": "ACTIVE",
-        "requiresAttributes": [
-            {
-                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    "volumes": [
+        {
+            "name": "",
+            "host": {
+                "sourcePath": ""
             },
-            {
-                "name": "ecs.capability.execution-role-awslogs"
+            "dockerVolumeConfiguration": {
+                "scope": "task",
+                "autoprovision": true,
+                "driver": "",
+                "driverOpts": {
+                    "KeyName": ""
+                },
+                "labels": {
+                    "KeyName": ""
+                }
             },
-            {
-                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.ecr-auth"
-            },
-            {
-                "name": "ecs.capability.secrets.asm.environment-variables"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
-            },
-            {
-                "name": "com.amazonaws.ecs.capability.task-iam-role"
-            },
-            {
-                "name": "ecs.capability.container-ordering"
-            },
-            {
-                "name": "ecs.capability.execution-role-ecr-pull"
+            "efsVolumeConfiguration": {
+                "fileSystemId": "",
+                "rootDirectory": "",
+                "transitEncryption": "ENABLED",
+                "transitEncryptionPort": 0,
+                "authorizationConfig": {
+                    "accessPointId": "",
+                    "iam": "DISABLED"
+                }
             }
-        ],
-        "placementConstraints": [],
-        "compatibilities": [
-            "EXTERNAL",
-            "EC2"
-        ],
-        "requiresCompatibilities": [
-            "EC2"
+        }
+    ],
+    "placementConstraints": [
+    ],
+    "requiresCompatibilities": [
+         "EC2"
+    ],
+    "cpu": "",
+    "memory": "",
+    "tags": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ],
+    "pidMode": "host",
+    "ipcMode": "host",
+    "proxyConfiguration": {
+        "type": "APPMESH",
+        "containerName": "",
+        "properties": [
+            {
+                "name": "",
+                "value": ""
+            }
         ]
-    }
+    },
+    "inferenceAccelerators": [
+        {
+            "deviceName": "",
+            "deviceType": ""
+        }
+    ]
 }
