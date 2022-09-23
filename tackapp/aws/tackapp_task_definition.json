@@ -1,431 +1,275 @@
 {
-  "ipcMode": null,
-  "executionRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
-  "containerDefinitions": [
-    {
-      "dnsSearchDomains": null,
-      "environmentFiles": null,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/tackapp",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "entryPoint": null,
-      "portMappings": [
-        {
-          "hostPort": 0,
-          "protocol": "tcp",
-          "containerPort": 15672
-        }
-      ],
-      "command": null,
-      "linuxParameters": null,
-      "cpu": 0,
-      "environment": [],
-      "resourceRequirements": null,
-      "ulimits": null,
-      "dnsServers": null,
-      "mountPoints": [],
-      "workingDirectory": null,
-      "secrets": [
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:RABBITMQ_DEFAULT_PASS::",
-          "name": "RABBITMQ_DEFAULT_PASS"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:RABBITMQ_DEFAULT_USER::",
-          "name": "RABBITMQ_DEFAULT_USER"
-        }
-      ],
-      "dockerSecurityOptions": null,
-      "memory": 300,
-      "memoryReservation": null,
-      "volumesFrom": [],
-      "stopTimeout": null,
-      "image": "rabbitmq:3.10-management",
-      "startTimeout": null,
-      "firelensConfiguration": null,
-      "dependsOn": null,
-      "disableNetworking": null,
-      "interactive": null,
-      "healthCheck": null,
-      "essential": true,
-      "links": null,
-      "hostname": "rabbit",
-      "extraHosts": null,
-      "pseudoTerminal": null,
-      "user": null,
-      "readonlyRootFilesystem": null,
-      "dockerLabels": null,
-      "systemControls": null,
-      "privileged": null,
-      "name": "rabbit"
-    },
-    {
-      "dnsSearchDomains": null,
-      "environmentFiles": null,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/tackapp",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "entryPoint": null,
-      "portMappings": [
-        {
-          "hostPort": 0,
-          "protocol": "tcp",
-          "containerPort": 6379
-        }
-      ],
-      "command": null,
-      "linuxParameters": null,
-      "cpu": 0,
-      "environment": [],
-      "resourceRequirements": null,
-      "ulimits": null,
-      "dnsServers": null,
-      "mountPoints": [],
-      "workingDirectory": null,
-      "secrets": null,
-      "dockerSecurityOptions": null,
-      "memory": 300,
-      "memoryReservation": null,
-      "volumesFrom": [],
-      "stopTimeout": null,
-      "image": "redis:7-alpine",
-      "startTimeout": null,
-      "firelensConfiguration": null,
-      "dependsOn": null,
-      "disableNetworking": null,
-      "interactive": null,
-      "healthCheck": null,
-      "essential": true,
-      "links": null,
-      "hostname": "redis",
-      "extraHosts": null,
-      "pseudoTerminal": null,
-      "user": null,
-      "readonlyRootFilesystem": null,
-      "dockerLabels": null,
-      "systemControls": null,
-      "privileged": null,
-      "name": "redis"
-    },
-    {
-      "dnsSearchDomains": null,
-      "environmentFiles": null,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/tackapp",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "entryPoint": [
-        "/app/docker-entrypoint.sh"
-      ],
-      "portMappings": [
-        {
-          "hostPort": 0,
-          "protocol": "tcp",
-          "containerPort": 8000
-        }
-      ],
-      "command": [
-        "daphne",
-        "-b",
-        "0.0.0.0",
-        "-p",
-        "8000",
-        "tackapp.asgi:application"
-      ],
-      "linuxParameters": null,
-      "cpu": 0,
-      "environment": [],
-      "resourceRequirements": null,
-      "ulimits": null,
-      "dnsServers": null,
-      "mountPoints": [],
-      "workingDirectory": "/app/tackapp",
-      "secrets": [
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:APP::",
-          "name": "APP"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_ACCESS_KEY_ID::",
-          "name": "AWS_ACCESS_KEY_ID"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_REGION::",
-          "name": "AWS_REGION"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_SECRET_ACCESS_KEY::",
-          "name": "AWS_SECRET_ACCESS_KEY"
-        }
-      ],
-      "dockerSecurityOptions": null,
-      "memory": 500,
-      "memoryReservation": null,
-      "volumesFrom": [],
-      "stopTimeout": null,
-      "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
-      "startTimeout": null,
-      "firelensConfiguration": null,
-      "dependsOn": [
-        {
-          "containerName": "redis",
-          "condition": "START"
-        }
-      ],
-      "disableNetworking": null,
-      "interactive": null,
-      "healthCheck": null,
-      "essential": true,
-      "links": [
-        "redis"
-      ],
-      "hostname": "web",
-      "extraHosts": null,
-      "pseudoTerminal": null,
-      "user": null,
-      "readonlyRootFilesystem": null,
-      "dockerLabels": null,
-      "systemControls": null,
-      "privileged": null,
-      "name": "web"
-    },
-    {
-      "dnsSearchDomains": null,
-      "environmentFiles": null,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/tackapp",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "entryPoint": [
-        "/app/run_worker.sh"
-      ],
-      "portMappings": [],
-      "command": [],
-      "linuxParameters": null,
-      "cpu": 0,
-      "environment": [],
-      "resourceRequirements": null,
-      "ulimits": null,
-      "dnsServers": null,
-      "mountPoints": [],
-      "workingDirectory": "/app/tackapp",
-      "secrets": [
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:APP::",
-          "name": "APP"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_ACCESS_KEY_ID::",
-          "name": "AWS_ACCESS_KEY_ID"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_REGION::",
-          "name": "AWS_REGION"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_SECRET_ACCESS_KEY::",
-          "name": "AWS_SECRET_ACCESS_KEY"
-        }
-      ],
-      "dockerSecurityOptions": null,
-      "memory": 400,
-      "memoryReservation": null,
-      "volumesFrom": [],
-      "stopTimeout": null,
-      "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
-      "startTimeout": null,
-      "firelensConfiguration": null,
-      "dependsOn": [
-        {
-          "containerName": "rabbit",
-          "condition": "START"
-        }
-      ],
-      "disableNetworking": null,
-      "interactive": null,
-      "healthCheck": null,
-      "essential": true,
-      "links": [
-        "rabbit"
-      ],
-      "hostname": "celery",
-      "extraHosts": null,
-      "pseudoTerminal": null,
-      "user": null,
-      "readonlyRootFilesystem": null,
-      "dockerLabels": null,
-      "systemControls": null,
-      "privileged": null,
-      "name": "celery"
-    },
-    {
-      "dnsSearchDomains": null,
-      "environmentFiles": null,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-          "awslogs-group": "/ecs/tackapp",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      },
-      "entryPoint": null,
-      "portMappings": [
-        {
-          "hostPort": 80,
-          "protocol": "tcp",
-          "containerPort": 80
-        }
-      ],
-      "command": null,
-      "linuxParameters": null,
-      "cpu": 0,
-      "environment": [],
-      "resourceRequirements": null,
-      "ulimits": null,
-      "dnsServers": null,
-      "mountPoints": [],
-      "workingDirectory": null,
-      "secrets": [
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:BASIC_PASSWORD::",
-          "name": "BASIC_PASSWORD"
-        },
-        {
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:BASIC_USERNAME::",
-          "name": "BASIC_USERNAME"
-        }
-      ],
-      "dockerSecurityOptions": null,
-      "memory": 300,
-      "memoryReservation": null,
-      "volumesFrom": [],
-      "stopTimeout": null,
-      "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/nginx_tackapp:v1",
-      "startTimeout": null,
-      "firelensConfiguration": null,
-      "dependsOn": [
-        {
-          "containerName": "web",
-          "condition": "START"
-        }
-      ],
-      "disableNetworking": null,
-      "interactive": null,
-      "healthCheck": null,
-      "essential": true,
-      "links": [
-        "web"
-      ],
-      "hostname": "nginx",
-      "extraHosts": null,
-      "pseudoTerminal": null,
-      "user": null,
-      "readonlyRootFilesystem": null,
-      "dockerLabels": null,
-      "systemControls": null,
-      "privileged": null,
-      "name": "nginx"
+    "taskDefinition": {
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:409937427980:task-definition/tackapp:32",
+        "containerDefinitions": [
+            {
+                "name": "rabbit",
+                "image": "rabbitmq:3.10-management",
+                "cpu": 0,
+                "memory": 300,
+                "portMappings": [
+                    {
+                        "containerPort": 15672,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "RABBITMQ_DEFAULT_PASS",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:RABBITMQ_DEFAULT_PASS::"
+                    },
+                    {
+                        "name": "RABBITMQ_DEFAULT_USER",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:RABBITMQ_DEFAULT_USER::"
+                    }
+                ],
+                "hostname": "rabbit",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "redis",
+                "image": "redis:7-alpine",
+                "cpu": 0,
+                "memory": 300,
+                "portMappings": [
+                    {
+                        "containerPort": 6379,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "hostname": "redis",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "web",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
+                "cpu": 0,
+                "memory": 500,
+                "links": [
+                    "redis"
+                ],
+                "portMappings": [
+                    {
+                        "containerPort": 8000,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "entryPoint": [
+                    "/app/docker-entrypoint.sh"
+                ],
+                "command": [
+                    "daphne",
+                    "-b",
+                    "0.0.0.0",
+                    "-p",
+                    "8000",
+                    "tackapp.asgi:application"
+                ],
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "APP",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:APP::"
+                    },
+                    {
+                        "name": "AWS_ACCESS_KEY_ID",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_ACCESS_KEY_ID::"
+                    },
+                    {
+                        "name": "AWS_REGION",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_REGION::"
+                    },
+                    {
+                        "name": "AWS_SECRET_ACCESS_KEY",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_SECRET_ACCESS_KEY::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "redis",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "web",
+                "workingDirectory": "/app/tackapp",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "celery",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
+                "cpu": 0,
+                "memory": 400,
+                "links": [
+                    "rabbit"
+                ],
+                "portMappings": [],
+                "essential": true,
+                "entryPoint": [
+                    "/app/run_worker.sh"
+                ],
+                "command": [],
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "APP",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:APP::"
+                    },
+                    {
+                        "name": "AWS_ACCESS_KEY_ID",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_ACCESS_KEY_ID::"
+                    },
+                    {
+                        "name": "AWS_REGION",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_REGION::"
+                    },
+                    {
+                        "name": "AWS_SECRET_ACCESS_KEY",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:AWS_SECRET_ACCESS_KEY::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "rabbit",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "celery",
+                "workingDirectory": "/app/tackapp",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "nginx",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/nginx_tackapp:v1",
+                "cpu": 0,
+                "memory": 300,
+                "links": [
+                    "web"
+                ],
+                "portMappings": [
+                    {
+                        "containerPort": 80,
+                        "hostPort": 80,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "BASIC_PASSWORD",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:BASIC_PASSWORD::"
+                    },
+                    {
+                        "name": "BASIC_USERNAME",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:dev/tackapp/django-kwHcma:BASIC_USERNAME::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "web",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "nginx",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            }
+        ],
+        "family": "tackapp",
+        "taskRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+        "executionRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+        "networkMode": "bridge",
+        "revision": 32,
+        "volumes": [],
+        "status": "ACTIVE",
+        "requiresAttributes": [
+            {
+                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+            },
+            {
+                "name": "ecs.capability.execution-role-awslogs"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.ecr-auth"
+            },
+            {
+                "name": "ecs.capability.secrets.asm.environment-variables"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.task-iam-role"
+            },
+            {
+                "name": "ecs.capability.container-ordering"
+            },
+            {
+                "name": "ecs.capability.execution-role-ecr-pull"
+            }
+        ],
+        "placementConstraints": [],
+        "compatibilities": [
+            "EXTERNAL",
+            "EC2"
+        ],
+        "requiresCompatibilities": [
+            "EC2"
+        ]
     }
-  ],
-  "placementConstraints": [],
-  "memory": null,
-  "taskRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
-  "compatibilities": [
-    "EXTERNAL",
-    "EC2"
-  ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:409937427980:task-definition/tackapp:32",
-  "family": "tackapp",
-  "requiresAttributes": [
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "ecs.capability.execution-role-awslogs"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "com.amazonaws.ecs.capability.ecr-auth"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "ecs.capability.secrets.asm.environment-variables"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "com.amazonaws.ecs.capability.task-iam-role"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "ecs.capability.container-ordering"
-    },
-    {
-      "targetId": null,
-      "targetType": null,
-      "value": null,
-      "name": "ecs.capability.execution-role-ecr-pull"
-    }
-  ],
-  "pidMode": null,
-  "requiresCompatibilities": [
-    "EC2"
-  ],
-  "networkMode": "bridge",
-  "runtimePlatform": null,
-  "cpu": null,
-  "revision": 32,
-  "status": "ACTIVE",
-  "inferenceAccelerators": null,
-  "proxyConfiguration": null,
-  "volumes": []
 }
