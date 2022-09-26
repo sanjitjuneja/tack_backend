@@ -14,8 +14,8 @@ from core.exceptions import InvalidActionError
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
-from drf_spectacular.utils import extend_schema
-from rest_framework import views
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import views, serializers
 from rest_framework.response import Response
 
 from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
@@ -245,6 +245,13 @@ class GetUserWithdrawMethods(views.APIView):
 class GetLinkToken(views.APIView):
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(request=None, responses={
+        200: inline_serializer(
+            name="GetLinkToken",
+            fields={
+                "link_token": serializers.CharField()
+            }
+        )})
     def get(self, request):
         dwolla_id = get_dwolla_id(request.user)
         link_token = get_link_token(dwolla_id)
@@ -491,6 +498,12 @@ class GetFees(views.APIView):
 
 
 class DwollaWebhook(views.APIView):
+    @extend_schema(request=inline_serializer(
+        name="Dwolla_webhook",
+        fields={
+            "data": serializers.JSONField()
+        }
+    ), responses=None)
     def post(self, request, *args, **kwargs):
         dwolla_webhook_handler(request)
         # logging.getLogger().warning(f"{request.data = }")

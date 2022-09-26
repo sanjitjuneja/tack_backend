@@ -66,7 +66,7 @@ class UsersViewset(
 
     @extend_schema(request=None, responses={
         204: inline_serializer(
-            name="Deleted successfully",
+            name="Deleted_successfully",
             fields={
                 "error": serializers.CharField(allow_null=True),
                 "message": serializers.CharField(allow_null=True),

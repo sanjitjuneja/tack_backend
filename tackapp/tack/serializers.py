@@ -60,11 +60,6 @@ class TackCreateSerializer(CustomModelSerializer):
 
 
 class TackRunnerSerializer(CustomModelSerializer):
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     for _ in TackStatus.choices:
-    #         ret["status"] = _[1] if ret["status"] == _[0] else ret["status"]
-    #     return ret
     tacker = UserListSerializer(read_only=True)
 
     class Meta:
@@ -85,13 +80,6 @@ class AcceptRunnerSerializer(CustomSerializer):
 
 class TackCompleteSerializer(CustomSerializer):
     message = serializers.CharField(max_length=256, allow_blank=True, default="")
-    # tack = serializers.RelatedField(read_only=True, source="tack.Tack")
-
-    # def to_representation(self, obj):
-    #     ret = super(TackCompleteSerializer, self).to_representation(obj)
-    #     print(f"{ret = }")
-    #     ret.pop('message')
-    #     return ret
 
 
 class AcceptOfferSerializer(CustomModelSerializer):

@@ -98,7 +98,7 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     image = serializers.SerializerMethodField()
     is_primary = serializers.BooleanField()
 
-    def get_image(self, obj):
+    def get_image(self, obj) -> str | None:
         image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
         return image
 
@@ -135,7 +135,7 @@ class FeeSerializer(serializers.Serializer):
             "fee_max": obj.fee_max_stripe
         }
 
-    def get_dwolla(self, obj: Fee):
+    def get_dwolla(self, obj: Fee) -> dict:
         return {
             "fee_percent": obj.fee_percent_dwolla,
             "fee_min": obj.fee_min_dwolla,
