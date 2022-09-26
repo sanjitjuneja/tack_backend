@@ -359,6 +359,23 @@ DWOLLA_WEBHOOK_SECRET = read_secrets(app, env, 'DWOLLA_WEBHOOK_SECRET')
 PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
 
+
+FIREBASE_CONFIG = {
+    "type": read_secrets(app, env, "FIREBASE_TYPE"),
+    "project_id": read_secrets(app, env, "FIREBASE_PROJECT_ID"),
+    "private_key_id": read_secrets(app, env, "FIREBASE_PRIVATE_KEY_ID"),
+    "private_key": read_secrets(app, env, "FIREBASE_PRIVATE_KEY"),
+    "client_email": read_secrets(app, env, "FIREBASE_CLIENT_EMAIL"),
+    "client_id": read_secrets(app, env, "FIREBASE_CLIENT_ID"),
+    "auth_uri": read_secrets(app, env, "FIREBASE_AUTH_URI"),
+    "token_uri": read_secrets(app, env, "FIREBASE_TOKEN_URI"),
+    "auth_provider_x509_cert_url": read_secrets(app, env, "FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
+}
+
+with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=4)
+
 FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
