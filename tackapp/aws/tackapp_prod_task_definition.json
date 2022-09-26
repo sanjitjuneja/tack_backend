@@ -1,0 +1,271 @@
+{
+    "requiresCompatibilities": [
+        "EC2"
+    ],
+    "inferenceAccelerators": [],
+    "containerDefinitions": [
+            {
+                "name": "rabbit",
+                "image": "rabbitmq:3.10-management",
+                "cpu": 0,
+                "memory": 300,
+                "portMappings": [
+                    {
+                        "containerPort": 15672,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "RABBITMQ_DEFAULT_PASS",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:RABBITMQ_DEFAULT_PASS::"
+                    },
+                    {
+                        "name": "RABBITMQ_DEFAULT_USER",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:RABBITMQ_DEFAULT_USER::"
+                    }
+                ],
+                "hostname": "rabbit",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "redis",
+                "image": "redis:7-alpine",
+                "cpu": 0,
+                "memory": 300,
+                "portMappings": [
+                    {
+                        "containerPort": 6379,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "hostname": "redis",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "web",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
+                "cpu": 0,
+                "memory": 500,
+                "links": [
+                    "redis"
+                ],
+                "portMappings": [
+                    {
+                        "containerPort": 8000,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "entryPoint": [
+                    "/app/docker-entrypoint.sh"
+                ],
+                "command": [
+                    "daphne",
+                    "-b",
+                    "0.0.0.0",
+                    "-p",
+                    "8000",
+                    "tackapp.asgi:application"
+                ],
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "APP",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:APP::"
+                    },
+                    {
+                        "name": "AWS_ACCESS_KEY_ID",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_ACCESS_KEY_ID::"
+                    },
+                    {
+                        "name": "AWS_REGION",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_REGION::"
+                    },
+                    {
+                        "name": "AWS_SECRET_ACCESS_KEY",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_SECRET_ACCESS_KEY::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "redis",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "web",
+                "workingDirectory": "/app/tackapp",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "celery",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
+                "cpu": 0,
+                "memory": 400,
+                "links": [
+                    "rabbit"
+                ],
+                "portMappings": [],
+                "essential": true,
+                "entryPoint": [
+                    "/app/run_worker.sh"
+                ],
+                "command": [],
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "APP",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:APP::"
+                    },
+                    {
+                        "name": "AWS_ACCESS_KEY_ID",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_ACCESS_KEY_ID::"
+                    },
+                    {
+                        "name": "AWS_REGION",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_REGION::"
+                    },
+                    {
+                        "name": "AWS_SECRET_ACCESS_KEY",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_SECRET_ACCESS_KEY::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "rabbit",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "celery",
+                "workingDirectory": "/app/tackapp",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+            {
+                "name": "nginx",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/nginx_tackapp:v1",
+                "cpu": 0,
+                "memory": 300,
+                "links": [
+                    "web"
+                ],
+                "portMappings": [
+                    {
+                        "containerPort": 80,
+                        "hostPort": 0,
+                        "protocol": "tcp"
+                    }
+                ],
+                "essential": true,
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "BASIC_PASSWORD",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:BASIC_PASSWORD::"
+                    },
+                    {
+                        "name": "BASIC_USERNAME",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:BASIC_USERNAME::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "web",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "nginx",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            }
+        ],
+    "volumes": [],
+    "networkMode": "bridge",
+    "executionRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+    "family": "tackapp-prod",
+    "taskRoleArn": "arn:aws:iam::409937427980:role/ecsTaskExecutionRole",
+    "placementConstraints": [],
+    "compatibilities": [
+            "EXTERNAL",
+            "EC2"
+        ],
+    "requiresAttributes": [
+            {
+                "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+            },
+            {
+                "name": "ecs.capability.execution-role-awslogs"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.ecr-auth"
+            },
+            {
+                "name": "ecs.capability.secrets.asm.environment-variables"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+            },
+            {
+                "name": "com.amazonaws.ecs.capability.task-iam-role"
+            },
+            {
+                "name": "ecs.capability.container-ordering"
+            },
+            {
+                "name": "ecs.capability.execution-role-ecr-pull"
+            }
+        ]
+}
