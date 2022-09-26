@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from tackapp.services import form_websocket_message, get_user_groups, get_tacks_tacker, get_user_offers, \
     get_tacks_runner
 
-logger = logging.getLogger("tackapp.consumers")
+logger = logging.getLogger("django")
 
 
 class MainConsumer(AsyncWebsocketConsumer):

@@ -1,5 +1,3 @@
-from decimal import Decimal, Context
-
 from rest_framework import serializers
 
 nullable_user_fields = ('tacker', 'runner', 'user', 'member', 'owner')

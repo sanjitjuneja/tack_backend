@@ -5,12 +5,12 @@ from tack.serializers import TackDetailSerializer, OfferSerializer, TacksOffersS
 from tackapp.websocket_messages import WSSender
 
 ws_sender = WSSender()
-logger = logging.getLogger("core.ws_actions")
+logger = logging.getLogger("django")
 
 
 def ws_offer_created(offer: Offer):
-    logger.warning(f"offer_created. {offer.status = }")
-    logger.warning(f"if created:")
+    logger.debug(f"offer_created. {offer.status = }")
+    logger.debug(f"if created:")
     tack_serializer = TackDetailSerializer(offer.tack)
     message_for_runner = {
         'id': offer.tack_id,
@@ -40,7 +40,7 @@ def ws_offer_created(offer: Offer):
 
 
 def ws_offer_accepted(offer: Offer):
-    logger.warning(f"offer_accepted. {offer.status = }")
+    logger.debug(f"offer_accepted. {offer.status = }")
     ws_sender.send_message(
         f"user_{offer.tack_id}_tacker",
         'offer.delete',
@@ -56,7 +56,7 @@ def ws_offer_accepted(offer: Offer):
 
 
 def ws_offer_in_progress(offer: Offer):
-    logger.warning(f"offer_in_progress. {offer.status = }")
+    logger.debug(f"offer_in_progress. {offer.status = }")
     # ws_sender.send_message(
     #     f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
     #     'tack.update',
@@ -68,7 +68,7 @@ def ws_offer_in_progress(offer: Offer):
 
 
 def ws_offer_finished(offer: Offer):
-    logger.warning(f"offer_finished. {offer.status = }")
+    logger.debug(f"offer_finished. {offer.status = }")
     ws_sender.send_message(
         f"user_{offer.runner_id}",
         'runnertack.update',
@@ -76,7 +76,7 @@ def ws_offer_finished(offer: Offer):
 
 
 def ws_offer_expired(offer: Offer):
-    logger.warning(f"offer_expired. {offer.status = }")
+    logger.debug(f"offer_expired. {offer.status = }")
     message_for_runner = {
         'id': offer.tack_id,
         'tack': TackDetailSerializer(offer.tack).data,
@@ -97,7 +97,7 @@ def ws_offer_expired(offer: Offer):
 
 
 def ws_offer_deleted(offer: Offer):
-    logger.warning(f"offer_deleted. {offer.status = }")
+    logger.debug(f"offer_deleted. {offer.status = }")
     tack_serializer = TackDetailSerializer(offer.tack)
     message_for_runner = {
         'id': offer.tack_id,
@@ -119,7 +119,7 @@ def ws_offer_deleted(offer: Offer):
 
 
 def ws_offer_cancelled(offer: Offer):
-    logger.warning(f"offer_cancelled. {offer.status = }")
+    logger.debug(f"offer_cancelled. {offer.status = }")
     ws_sender.send_message(
         f"user_{offer.tack.tacker_id}",  # tack_id_tacker
         'tack.delete',
@@ -135,7 +135,7 @@ def ws_offer_cancelled(offer: Offer):
 
 
 def ws_tack_created(tack: Tack):
-    logger.warning(f"tack_created_first_time. {tack.status = }")
+    logger.debug(f"tack_created_first_time. {tack.status = }")
 
     tack_serializer = TackDetailSerializer(tack)
     # Workaround on a problem to fly-calculate data for every User of the Group
@@ -193,14 +193,14 @@ def ws_tack_cancelled(tack: Tack):
 
 
 def ws_tack_created_from_active(tack: Tack):
-    logger.warning(f"tack_created_active_update. {tack.status = }")
+    logger.debug(f"tack_created_active_update. {tack.status = }")
     tack_serializer = TackDetailSerializer(tack)
     message_for_runner = {
         'id': tack.id,
         'tack': tack_serializer.data,
         'is_mine_offer_sent': False
     }
-    logging.getLogger().warning(f"if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
+    logger.debug(f"if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         'tack.update',
@@ -212,14 +212,14 @@ def ws_tack_created_from_active(tack: Tack):
 
 
 def ws_tack_active(tack: Tack):
-    logger.warning(f"tack_created_active_update. {tack.status = }")
+    logger.debug(f"tack_created_active_update. {tack.status = }")
     tack_serializer = TackDetailSerializer(tack)
     message_for_tacker = {
         'id': tack.id,
         'tack': tack_serializer.data,
         'is_mine_offer_sent': False
     }
-    logging.getLogger().warning(f"if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
+    logger.debug(f"if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         'tack.update',
@@ -232,7 +232,7 @@ def ws_tack_active(tack: Tack):
 
 
 def ws_tack_accepted(tack: Tack):
-    logger.warning(f"tack_status_accepted. {tack.status = }")
+    logger.debug(f"tack_status_accepted. {tack.status = }")
 
     ws_sender.send_message(
         f"group_{tack.group_id}",
@@ -249,7 +249,7 @@ def ws_tack_accepted(tack: Tack):
 
 
 def ws_tack_in_progress(tack: Tack):
-    logger.warning(f"tack_status_accepted_in_progress_waiting_review. {tack.status = }")
+    logger.debug(f"tack_status_accepted_in_progress_waiting_review. {tack.status = }")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         'tack.update',
@@ -261,7 +261,7 @@ def ws_tack_in_progress(tack: Tack):
 
 
 def ws_tack_waiting_review(tack: Tack):
-    logger.warning(f"tack_status_accepted_in_progress_waiting_review. {tack.status = }")
+    logger.debug(f"tack_status_accepted_in_progress_waiting_review. {tack.status = }")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         'tack.update',
@@ -269,7 +269,7 @@ def ws_tack_waiting_review(tack: Tack):
 
 
 def ws_tack_finished(tack: Tack):
-    logger.warning(f"tack_status_finished. {tack.status = }")
+    logger.debug(f"tack_status_finished. {tack.status = }")
     ws_sender.send_message(
         f"user_{tack.tacker_id}",
         'tack.delete',

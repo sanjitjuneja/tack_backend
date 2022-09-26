@@ -1,5 +1,3 @@
-from enum import Enum
-
 from django.db import models
 
 from tackapp.settings import S3_BUCKET_CARDS, S3_BUCKET_BANKS, MEDIA_URL
@@ -9,7 +7,7 @@ images_dict = {
     "mastercard": f"{MEDIA_URL}{S3_BUCKET_CARDS}/mastercard.png",
     "discover": f"{MEDIA_URL}{S3_BUCKET_CARDS}/discover.png",
     "american-express": f"{MEDIA_URL}{S3_BUCKET_CARDS}/american-express.png",
-    # "CHASE": f"{STATIC_URL}{S3_BUCKET_BANKS}/chase.png",
+    # "CHASE": f"{MEDIA_URL}{S3_BUCKET_BANKS}/chase.png",
 }
 
 
