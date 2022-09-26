@@ -92,8 +92,8 @@ LOGGING = {
         }
     }
 }
-
-logger = logging.getLogger()
+os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+logger = logging.getLogger('django')
 
 
 app = os.getenv("APP")
