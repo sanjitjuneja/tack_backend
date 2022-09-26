@@ -334,6 +334,7 @@ MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
+logger.warning(f"{CELERY_BROKER_URL = }")
 
 
 SIMPLE_JWT = {
