@@ -99,10 +99,18 @@ logger = logging.getLogger('django')
 app = os.getenv("APP")
 logger.warning(f"{app = }")
 if app == "dev":
-    env = environ.Env(DEBUG=(bool, True))
-    env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    # env = environ.Env(DEBUG=(bool, True))
+    # env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    temp_env = environ.Env(DEBUG=(bool, False))
+    temp_env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    env = receive_setting_secrets(
+        temp_env("AWS_ACCESS_KEY_ID"),
+        temp_env("AWS_SECRET_ACCESS_KEY"),
+        temp_env("AWS_REGION"),
+        "dev/tackapp/django"
+    )
     logger.warning(f"{env = }")
-    DEBUG = env.get_value("DEBUG")
+    DEBUG = env.get("DEBUG")
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
@@ -110,7 +118,8 @@ else:
     env = receive_setting_secrets(
         temp_env("AWS_ACCESS_KEY_ID"),
         temp_env("AWS_SECRET_ACCESS_KEY"),
-        temp_env("AWS_REGION")
+        temp_env("AWS_REGION"),
+        "prod/tackapp/"
     )
     DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
 
@@ -121,18 +130,14 @@ else:
 AWS_ACCESS_KEY_ID = read_secrets(app, env, "AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = read_secrets(app, env, "AWS_SECRET_ACCESS_KEY")
 AWS_REGION = read_secrets(app, env, "AWS_REGION")
-allowed_hosts, celery_broker, _, crsf_trusted_origins = receive_setting_parameters(
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-    AWS_REGION
-)
+ALLOWED_HOSTS = read_secrets(app, env, "ALLOWED_HOSTS").split(",")
+
 
 SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
 logger.warning(f"{DEBUG = }")
 
-ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
 logger.info(f"{ALLOWED_HOSTS = }")
 if DEBUG:
     import socket  # only if you haven't already imported this
@@ -206,13 +211,17 @@ TEMPLATES = [
     },
 ]
 
+
 # WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
+
+
+CHANNEL_LAYERS_HOSTS = read_secrets(app, env, "CHANNEL_LAYERS_HOSTS").split(",")
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', 6379)],
+            "hosts": [CHANNEL_LAYERS_HOSTS],
         },
     },
 }
@@ -323,7 +332,7 @@ TWILIO_AUTH_TOKEN = read_secrets(app, env, "TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
-CELERY_BROKER_URL = celery_broker.get("Value")
+CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
 
 
 SIMPLE_JWT = {
@@ -354,7 +363,7 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
 }
 
-CSRF_TRUSTED_ORIGINS = crsf_trusted_origins.get("Value").split(",")
+CSRF_TRUSTED_ORIGINS = read_secrets(app, env, "CSRF_TRUSTED_ORIGINS").split(",")
 
 STRIPE_PUBLISHABLE_KEY = read_secrets(app, env, "STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")

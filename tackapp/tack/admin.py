@@ -22,7 +22,7 @@ class PopularTacksAdmin(ModelAdmin):
 
 @admin.register(Offer)
 class OfferAdmin(ModelAdmin):
-    list_display = ['view_offer_str', 'status', 'is_active', 'offer_type', 'price']
+    list_display = ['id', 'view_offer_str', 'status', 'is_active', 'offer_type', 'price']
     list_filter = ['offer_type', 'is_active', 'status']
     ordering = ('-id',)
 
