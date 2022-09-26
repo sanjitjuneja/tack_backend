@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import json
 import logging
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 import environ
@@ -390,7 +391,7 @@ FIREBASE_CONFIG = {
     "type": read_secrets(app, env, "FIREBASE_TYPE"),
     "project_id": read_secrets(app, env, "FIREBASE_PROJECT_ID"),
     "private_key_id": read_secrets(app, env, "FIREBASE_PRIVATE_KEY_ID"),
-    "private_key": read_secrets(app, env, "FIREBASE_PRIVATE_KEY"),
+    "private_key": re.sub(r"\\n", r"\n", read_secrets(app, env, "FIREBASE_PRIVATE_KEY")),
     "client_email": read_secrets(app, env, "FIREBASE_CLIENT_EMAIL"),
     "client_id": read_secrets(app, env, "FIREBASE_CLIENT_ID"),
     "auth_uri": read_secrets(app, env, "FIREBASE_AUTH_URI"),
