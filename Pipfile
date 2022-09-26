@@ -46,6 +46,7 @@ django-storages = "*"
 fcm-django = "*"
 firebase-admin = "*"
 dj-stripe = "*"
+python-json-logger = "*"
 
 [dev-packages]
 

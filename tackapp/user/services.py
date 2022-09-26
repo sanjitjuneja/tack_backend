@@ -1,8 +1,5 @@
 import logging
 from typing import OrderedDict
-from uuid import uuid4
-import aiohttp
-import asyncio
 
 import djstripe.models
 import stripe
@@ -11,10 +8,13 @@ from django.db.models import Q
 
 from payment.dwolla_service import dwolla_client
 from dwolla_service.models import DwollaRemovedAccount
-from payment.services import get_dwolla_id, get_dwolla_payment_methods, detach_dwolla_funding_sources, \
+from payment.services import get_dwolla_id, detach_dwolla_funding_sources, \
     _deactivate_dwolla_account, is_user_have_dwolla_pending_transfers
 from review.models import Review
 from user.models import User
+
+
+logger = logging.getLogger('django')
 
 
 def get_reviews_by_user(user):
@@ -66,13 +66,12 @@ def create_stripe_account(user: User):
 
 def create_dwolla_account(user: User):
     token = dwolla_client.Auth.client()
-    logger = logging.getLogger()
     response = token.get(f"customers?email={user.email}")
 
     # if user already exists in Dwolla system we update information about him
     if response.body["total"] == 1:
         customer = response.body["_embedded"]["customers"][0]
-        logger.warning("Found existing dwolla customer:", customer)
+        logger.debug("Found existing dwolla customer:", customer)
 
         request = {
             "firstName": user.first_name,

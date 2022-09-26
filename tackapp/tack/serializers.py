@@ -1,10 +1,8 @@
 from rest_framework import serializers
-from core.choices import OfferType
 from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from group.serializers import GroupSerializer
-from user.serializers import UserSerializer, UserListSerializer
+from user.serializers import UserListSerializer
 from .models import *
-from phonenumber_field.serializerfields import PhoneNumberField
 
 
 class TackSerializer(CustomModelSerializer):

@@ -1,9 +1,6 @@
-import logging
-
 from rest_framework import serializers
 
 from core.validators import password_validator
-from payment.serializers import BankAccountSerializer
 from .models import User
 
 

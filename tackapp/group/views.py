@@ -19,7 +19,7 @@ from user.serializers import UserListSerializer
 from .serializers import *
 
 
-logger = logging.getLogger("myproject.custom")
+logger = logging.getLogger("django")
 
 
 class GroupViewset(

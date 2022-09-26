@@ -1,12 +1,9 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import django
 import dwollav2
-from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import views
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +11,6 @@ from rest_framework.response import Response
 from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.contrib.auth import authenticate, login, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
@@ -25,6 +21,9 @@ from .serializers import *
 from .services import generate_sms_code
 from .models import PhoneVerification, TimeoutSettings
 from core.choices import SMSType
+
+
+logger = logging.getLogger('django')
 
 
 class TwilioSendMessage(views.APIView):
@@ -109,7 +108,7 @@ class TwilioUserRegistration(views.APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
-            logging.getLogger().error(f"TwilioUserRegistration {e = }")
+            logger.error(f"socials.views.TwilioUserRegistration {e = }")
             return Response(
                 {
                     "error": "Ux2",
@@ -184,7 +183,7 @@ class PasswordRecoverySendMessage(views.APIView):
                     "details": e.detail,
                 },
                 status=400)
-        phone_number=serializer.validated_data["phone_number"]
+        phone_number = serializer.validated_data["phone_number"]
         timeout_settings = TimeoutSettings.objects.all().last()
         time_window_minutes = timeout_settings.signup_time_window_minutes or 60
         max_signup_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window or 3

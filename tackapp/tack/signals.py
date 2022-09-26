@@ -24,24 +24,23 @@ from core.choices import TackStatus
 
 
 ws_sender = WSSender()
-logger = logging.getLogger()
-logger.warning(f"in Tack signals {ws_sender = }")
+logger = logging.getLogger('django')
 
 
 @receiver(signal=post_save, sender=Offer)
 def run_delete_offer_task(instance: Offer, created: bool, *args, **kwargs):
-    logger.warning(f"run_delete_offer_task. {instance.status = }")
+    logger.debug(f"run_delete_offer_task. {instance.status = }")
     if created:
         task = set_expire_offer_task.apply_async(
             countdown=instance.lifetime_seconds,
             kwargs={"offer_id": instance.id}
         )
-        logging.getLogger().info(f"run_delete_offer_task {task}")
+        logger.debug(f"run_delete_offer_task {task}")
 
 
 @receiver(signal=post_save, sender=Offer)
 def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
-    logger.warning(f"tack_status_on_offer_save. {instance.status = }")
+    logger.debug(f"tack_status_on_offer_save. {instance.status = }")
 
     # if instance.status != OfferStatus.CREATED:
     #     return
@@ -60,10 +59,10 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Offer)
 def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
-    logger.error(f"### INSIDE offer_ws_actions signal ###")
-    logger.error(f"### OFFER {instance = }")
-    logger.error(f"### OFFER {instance.status = }")
-    logger.error(f"### OFFER.TACK {instance.tack.status = }")
+    logger.debug(f"### INSIDE offer_ws_actions signal ###")
+    logger.debug(f"### OFFER {instance = }")
+    logger.debug(f"### OFFER {instance.status = }")
+    logger.debug(f"### OFFER.TACK {instance.tack.status = }")
     match instance.status:
         case OfferStatus.CREATED:
             ws_offer_created(instance)
@@ -88,9 +87,9 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
 
 @receiver(signal=post_save, sender=Tack)
 def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
-    logger.error(f"### INSIDE tack_ws_actions signal ###")
-    logger.error(f"### TACK {instance = }")
-    logger.error(f"### TACK {instance.status = }")
+    logger.debug(f"### INSIDE tack_ws_actions signal ###")
+    logger.debug(f"### TACK {instance = }")
+    logger.debug(f"### TACK {instance.status = }")
     # initial creation from tacker
     if created:
         ws_tack_created(instance)

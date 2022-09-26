@@ -44,9 +44,9 @@ logger = logging.getLogger("payments")
 def send_payment_to_runner(tack: Tack):
     """Transact money from one BankAccount to another"""
 
-    logger.warning("INSIDE send_payment_to_runner")
+    logger.debug("INSIDE send_payment_to_runner")
     if tack.is_paid:
-        logger.warning("if tack.is_paid:")
+        logger.debug("if tack.is_paid:")
         return True
     tack.runner.bankaccount.usd_balance += tack.price
     tack.runner.bankaccount.save()
@@ -60,7 +60,7 @@ def get_dwolla_payment_methods(dwolla_user_id):
 
     token = dwolla_client.Auth.client()
     response = token.get(f"customers/{dwolla_user_id}/funding-sources?removed=false")
-    logging.getLogger().warning(f"{response.body = }")
+    logger.debug(f"{response.body = }")
     return response.body
 
 
@@ -118,11 +118,10 @@ def get_bank_account_ids(access_token: str) -> list[AccountBase]:
 
     request = AuthGetRequest(access_token=access_token)
     response = plaid_client.auth_get(request)
-    logger = logging.getLogger()
     supported_accounts = []
     for account in response.get('accounts'):
         if account.subtype == AccountSubtype("checking") and account.type == AccountType("depository"):
-            logger.warning(f"supported {account = }")
+            logger.debug(f"supported {account = }")
             supported_accounts.append(account)
     return supported_accounts
 
@@ -198,25 +197,24 @@ def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id=None, access_t
             dwolla_access_token=access_token
         )
     except BankAccount.DoesNotExist:
-        logging.getLogger().warning(f"Bank Account of {dwolla_id} is not found")
+        logger.error(f"Bank Account of {dwolla_id} is not found")
         # TODO: error handling
 
 
 @transaction.atomic
 def add_money_to_bank_account(payment_intent: PaymentIntent, cur_transaction: Transaction):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
-    logger = logging.getLogger()
     try:
-        logger.warning(f"{payment_intent.customer.id = }")
+        logger.debug(f"{payment_intent.customer.id = }")
         ba = BankAccount.objects.get(stripe_user=payment_intent.customer.id)
-        logger.warning(f"{ba = }")
+        logger.debug(f"{ba = }")
         ba.usd_balance += cur_transaction.amount_requested
-        logger.warning(f"{ba = }")
+        logger.debug(f"{ba = }")
         ba.save()
-        logging.getLogger().warning(f"{ba = }")
+        logger.debug(f"{ba = }")
     except BankAccount.DoesNotExist:
         # TODO: Error handling/create BA
-        logging.getLogger().warning(f"Bank account of {payment_intent.customer} is not found")
+        logger.error(f"Bank account of {payment_intent.customer} is not found")
 
 
 def save_dwolla_access_token(access_token: str, user: User):
@@ -279,7 +277,7 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         access_token=pm.dwolla_access_token
     )
     response = plaid_client.accounts_balance_get(request)
-    logger.info(f"plaid {response = }")
+    logger.debug(f"plaid {response = }")
     try:
         payment_method_qs = UserPaymentMethods.objects.get(
             bank_account__user=user,
@@ -288,7 +286,7 @@ def check_dwolla_balance(user: User, amount: int, payment_method: str = None):
         dwolla_payment_id = payment_method_qs.dwolla_payment_method
         for account in response['accounts']:
             if account["account_id"] == pm.plaid_account_id:
-                logger.warning(f"{Decimal(account['balances']['available']) = }")
+                logger.debug(f"{Decimal(account['balances']['available']) = }")
 
                 if Decimal(account["balances"]["available"], Context(prec=2)) >= amount:
                     return True
@@ -349,7 +347,7 @@ def dwolla_transaction(
     response = token.post('transfers', transfer_request)
     transaction_id = response.headers["Location"].split("/")[-1]
     service_fee = calculate_service_fee(amount=amount, service=PaymentService.DWOLLA)
-    logging.getLogger().warning(response.body)
+    logger.debug(response.body)
     ba = BankAccount.objects.get(user=user)
 
     Transaction.objects.create(
@@ -396,7 +394,7 @@ def calculate_amount_with_fees(amount: int, service: str) -> int:
                 abs_fee = fees.fee_max_dwolla
 
     amount = int(amount + abs_fee)
-    logging.getLogger().warning(f"{amount = }")
+    logger.debug(f"{amount = }")
     return amount
 
 
@@ -433,7 +431,7 @@ def dwolla_webhook_handler(request):
 def detach_dwolla_funding_sources(dwolla_id):
     funding_sources = get_dwolla_payment_methods(dwolla_id)['_embedded']['funding-sources']
 
-    logger.warning(f"in detach_dwolla_funding_sources: {funding_sources = }")
+    logger.debug(f"in detach_dwolla_funding_sources: {funding_sources = }")
     for funding_source in funding_sources:
         detach_dwolla_funding_source(funding_source['id'])
 
@@ -538,12 +536,12 @@ def calculate_service_fee(amount: int, service: str):
     service_fee = ServiceFee.objects.last()
     match service:
         case PaymentService.DWOLLA:
-            logging.getLogger().warning("calculate_service_fee, DWOLLA")
-            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
+            logger.debug("calculate_service_fee, DWOLLA")
+            logger.debug(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
             return int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
-            logging.getLogger().warning("calculate_service_fee, STRIPE")
-            logging.getLogger().warning(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
+            logger.debug("calculate_service_fee, STRIPE")
+            logger.debug(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
             return int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum)
 
 

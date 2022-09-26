@@ -1,8 +1,6 @@
 import logging
-import sys
 
 from django.db import transaction, IntegrityError
-from django.db.models import Subquery
 from django.utils import timezone
 from fcm_django.models import FCMDevice
 
@@ -10,14 +8,11 @@ from core.choices import TackStatus, OfferStatus, NotificationType, OfferType
 from group.models import GroupMembers
 from payment.services import send_payment_to_runner
 from .models import Offer, Tack
-from .notification import build_ntf_message, get_message_template
+from .notification import build_ntf_message
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
 
-logger = logging.getLogger("payments")
-# logger.setLevel("INFO")
-# sh = logging.StreamHandler(sys.stdout)
-# logger.addHandler(sh)
+logger = logging.getLogger("django")
 
 
 @transaction.atomic
@@ -71,7 +66,7 @@ def confirm_complete_tack(tack: Tack):
             tack.runner.save()
             tack.save()
     except IntegrityError as e:
-        logger.error(f"{e = }")
+        logger.error(f"tack.services.confirm_complete_tack {e = }")
 
 
 def deactivate_related_offers(tack: Tack):
@@ -103,7 +98,7 @@ def notification_on_tack_created(tack: Tack):  # TACK_CREATED
 def deferred_notification_tack_inactive(tack: Tack):  # TACK_INACTIVE
     if not tack.tacker:
         return
-    logger.warning(f"INSIDE deferred_notification_tack_inactive")
+    logger.debug(f"INSIDE deferred_notification_tack_inactive")
     tack_without_offer_seconds = 900
     tack_long_inactive.apply_async(
         countdown=tack_without_offer_seconds,

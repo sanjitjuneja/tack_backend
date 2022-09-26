@@ -20,6 +20,7 @@ import stripe
 from django.utils.encoding import force_str
 from firebase_admin import initialize_app
 
+from core.logs_formatter import CustomJsonFormatter
 from tackapp.services_env import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
@@ -39,6 +40,9 @@ LOGGING = {
         'simple': {
             'format': '{levelname} {message}',
             'style': '{',
+        },
+        'json_formatter': {
+            '()': CustomJsonFormatter
         }
     },
     'handlers': {
@@ -51,24 +55,43 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
+        },
+        'payment_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/payments.log',
+            'formatter': 'json_formatter'
+        },
+        'sql_measurement': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/sql_queues.log',
+            'formatter': 'json_formatter'
         }
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ('console',),
             'propagate': True,
         },
-        'myproject.custom': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
         'payments': {
-            'handlers': ['console'],
-            'level': 'DEBUG'
+            'handlers': ('payment_file',),
+            'level': 'INFO'
+        },
+        'tackapp.consumers': {
+            'handlers': ('console',),
+            'level': 'INFO'
+        },
+        'tackapp.channels_middleware': {
+            'handlers': ('console',),
+            'level': 'ERROR'
+        },
+        'sql_time_measurement': {
+            'handlers': ('sql_measurement',),
+            'level': 'INFO'
         }
     }
 }
-
 
 logger = logging.getLogger()
 
@@ -80,7 +103,6 @@ if app == "dev":
     env.read_env(os.path.join(BASE_DIR, "dev.env"))
     logger.warning(f"{env = }")
     DEBUG = env.get_value("DEBUG")
-    # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
@@ -119,11 +141,6 @@ if DEBUG:
     INTERNAL_IPS += ["172.25.0.5"]
     logger.warning(f"{INTERNAL_IPS = }")
 
-# INTERNAL_IPS = [
-#     "127.0.0.1",
-#     "localhost",
-#     "172.25.0.5"
-# ]
 # Application definition
 
 INSTALLED_APPS = [

@@ -16,8 +16,8 @@ from payment.services import convert_to_decimal
 from socials.models import NotificationSettings
 from tack.models import Tack, Offer
 
-logger = logging.getLogger("tack.notification")
-logger.setLevel("CRITICAL")
+logger = logging.getLogger("django")
+
 ntf_type_dict = {
         NotificationType.TACK_CREATED: {
             "title": "Tack",
@@ -168,7 +168,7 @@ def get_properties_dict(instance: Tack | Offer):
 def get_formatted_ntf_title_and_body(ntf_title: str, ntf_body: str, instance: Tack | Offer):
     properties = get_properties_dict(instance)
     # TODO: map function?
-    logger.warning(f"{properties = }")
+    logger.debug(f"{properties = }")
     formatted_ntf_title = ntf_title.format(
         **properties.get("tack"),
         **properties.get("tacker"),
@@ -211,7 +211,7 @@ def _build_ntf_message(title: str = None, body: str = None, image_url: str = Non
 
 
 def build_ntf_message(ntf_type: NotificationType, instance: Tack | Offer):
-    logger.info(f"INSIDE build_ntf_message")
+    logger.debug(f"INSIDE build_ntf_message")
     ntf_title, ntf_body, ntf_image_url = get_message_template(ntf_type)
     formatted_ntf_title, formatted_ntf_body = get_formatted_ntf_title_and_body(ntf_title, ntf_body, instance)
     message = _build_ntf_message(formatted_ntf_title, formatted_ntf_body, ntf_image_url)

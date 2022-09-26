@@ -1,11 +1,5 @@
 import logging
-from datetime import timedelta
-
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.db import transaction
-from django.db.models import Sum, Q, F
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
@@ -280,7 +274,6 @@ class AddUserWithdrawMethod(views.APIView):
         public_token = serializer.validated_data['public_token']
 
         access_token = get_access_token(public_token)
-        # TODO: WRONG?
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
 

@@ -12,7 +12,6 @@ from user.models import User
 
 
 logger = logging.getLogger("tackapp.channels_middleware")
-logger.setLevel("CRITICAL")
 
 
 @database_sync_to_async
@@ -59,8 +58,8 @@ class TokenAuthMiddleware:
         # Get the token
         token = extract_token(scope['headers'])
         device_info = extract_device_info(scope['headers'])
-        logger.warning(f"{scope['headers'] = }")
-        logger.warning(f"{token = }")
+        logger.debug(f"{scope['headers'] = }")
+        logger.debug(f"{token = }")
 
         # Try to authenticate the user
         try:
@@ -69,12 +68,12 @@ class TokenAuthMiddleware:
             # TODO: if token is not Blacklisted
         except (InvalidToken, TokenError) as e:
             # Token is invalid
-            logger.warning(f"{e = }")
+            logger.info(f"{e = }")
             return None
         else:
             #  Then token is valid, decode it
             decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            logger.warning(f"{decoded_data = }")
+            logger.debug(f"{decoded_data = }")
             # Will return a dictionary like -
             # {
             #     "token_type": "access",
@@ -85,6 +84,6 @@ class TokenAuthMiddleware:
 
             # Get the user using ID
             user = await get_user(int(decoded_data["user_id"]))
-            logger.warning(f"{user = }")
+            logger.debug(f"{user = }")
         # Return the inner application directly and let it run everything else
         return await self.inner(dict(scope, user=user, device_info=device_info), receive, send)

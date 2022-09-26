@@ -11,7 +11,7 @@ from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 
 
-logger = logging.getLogger()
+logger = logging.getLogger('django')
 
 
 class TackViewset(
@@ -79,7 +79,7 @@ class TackViewset(
                 },
                 status=400)
 
-        logger.warning(f"{serializer.validated_data = }")
+        logger.debug(f"{serializer.validated_data = }")
 
         if tack.status != TackStatus.CREATED:
             return Response(
@@ -324,7 +324,7 @@ class TackViewset(
                 },
                 status=400)
         contacts = tack.runner.get_contacts() if tack.tacker == request.user else tack.tacker.get_contacts()
-        logging.getLogger().warning(contacts)
+        logger.debug(contacts)
         serializer = ContactsSerializer(contacts)
         return Response(serializer.data)
 

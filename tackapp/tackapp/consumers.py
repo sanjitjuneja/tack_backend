@@ -7,7 +7,6 @@ from tackapp.services import form_websocket_message, get_user_groups, get_tacks_
     get_tacks_runner
 
 logger = logging.getLogger("tackapp.consumers")
-logger.setLevel("DEBUG")
 
 
 class MainConsumer(AsyncWebsocketConsumer):
@@ -25,7 +24,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name)
-        logger.info(f"[{self.user} :: {self.device_info}] Added to {self.room_group_name}")
+        logger.debug(f"[{self.user} :: {self.device_info}] Added to {self.room_group_name}")
 
         group_members = await get_user_groups(self.user)
         for gm in group_members:
@@ -33,7 +32,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"group_{gm.group_id}",
                 self.channel_name
             )
-            logger.info(f"[{self.user} :: {self.device_info}] Added to group_{gm.group_id}")
+            logger.debug(f"[{self.user} :: {self.device_info}] Added to group_{gm.group_id}")
 
         tacks_tacker = await get_tacks_tacker(self.user)
         for tack in tacks_tacker:
@@ -41,7 +40,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_tacker",
                 self.channel_name
             )
-            logger.info(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_tacker")
+            logger.debug(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_tacker")
 
         tacks_runner = await get_tacks_runner(self.user)
         for tack in tacks_runner:
@@ -49,7 +48,7 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{tack.id}_runner",
                 self.channel_name
             )
-            logger.info(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_runner")
+            logger.debug(f"[{self.user} :: {self.device_info}] Added to tack_{tack.id}_runner")
 
         offers = await get_user_offers(self.user)
         for offer in offers:
@@ -57,16 +56,16 @@ class MainConsumer(AsyncWebsocketConsumer):
                 f"tack_{offer.tack_id}_offer",
                 self.channel_name
             )
-            logger.info(f"[{self.user} :: {self.device_info}] Added to tack_{offer.tack_id}_offer")
+            logger.debug(f"[{self.user} :: {self.device_info}] Added to tack_{offer.tack_id}_offer")
         await self.accept()
 
     async def websocket_receive(self, message):
-        logger.info(f"Received from [{self.user} :: {self.device_info}]\n\t\t\t\t\t\t[{message['text']}]")
+        logger.debug(f"Received from [{self.user} :: {self.device_info}] :: [{message['text']}]")
 
     async def disconnect(self, close_code):
         # Leave room group
         # TODO: leave all groups
-        logger.info(f"disconnect {close_code = }")
+        logger.info(f"Disconnected {self.user} with {close_code = }")
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
@@ -89,7 +88,7 @@ class MainConsumer(AsyncWebsocketConsumer):
             f"tack_{message['id']}_tacker",
             self.channel_name
         )
-        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_tacker")
+        logger.debug(f"{self.user} Added to tack_{message['id']}_tacker")
 
     async def tack_update(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")
@@ -110,11 +109,11 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_tacker",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_tacker")
+        logger.debug(f"{self.user} Discarded to tack_{message}_tacker")
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
+        logger.debug(f"{self.user} Discarded to tack_{message}_offer")
 
     async def grouptack_create(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")
@@ -183,7 +182,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             f"group_{message['id']}",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Added to group_{message['id']}")
+        logger.debug(f"{self.user} Added to group_{message['id']}")
 
     async def groupdetails_update(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")
@@ -205,7 +204,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"group_{message}",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Discarded to group_{message}")
+        logger.debug(f"{self.user} Discarded to group_{message}")
 
     async def offer_create(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")
@@ -236,7 +235,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             f"tack_{message['id']}_offer",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Added to tack_{message['id']}_offer")
+        logger.debug(f"{self.user} Added to tack_{message['id']}_offer")
 
     async def runnertack_update(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")
@@ -259,7 +258,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             f"tack_{message}_offer",
             self.channel_name)
-        logging.getLogger().warning(f"{self.user} Discarded to tack_{message}_offer")
+        logger.debug(f"{self.user} Discarded to tack_{message}_offer")
 
     async def completedtackrunner_create(self, event):
         logger.debug(f"Sent to {self.user}({self.device_info}) - {event = }")

@@ -1,5 +1,3 @@
-import logging
-
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import filters
@@ -10,13 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.choices import TackStatus
-from payment.models import BankAccount, UserPaymentMethods
-from payment.services import dwolla_transaction
+from payment.models import BankAccount
+from payment.serializers import BankAccountSerializer
 from review.serializers import ReviewSerializer
 from tack.models import Tack
 from .serializers import *
-from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio, deactivate_dwolla_customer, \
-    delete_stripe_customer
+from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
 
 
 class UsersViewset(

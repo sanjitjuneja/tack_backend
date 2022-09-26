@@ -17,7 +17,7 @@ from core.exceptions import TooManyAttemptsError, MultipleAccountsError
 from socials.models import TimeoutSettings, FailedLoginAttempts
 from user.models import User
 
-logger = logging.getLogger("user.auth_backend")
+logger = logging.getLogger("django")
 
 
 def create_firebase_device(device_fields, user):
@@ -89,15 +89,15 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                     email=credentials["phone_number"]
                 )
                 credentials['phone_number'] = user.phone_number
-                logger.warning(f"Inside if: {user = }")
+                logger.debug(f"Inside if: {user = }")
             else:
                 user = User.objects.get(
                     phone_number=credentials["phone_number"]
                 )
-                logger.warning(f"Inside else: {user = }")
+                logger.debug(f"Inside else: {user = }")
 
             if is_failed_attempt(attrs, user):
-                logger.warning("inside first is_failed_attempt")
+                logger.debug("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
                     error="Sx12",
                     message="Too many unsuccessful sing-in attempts. Try again later",
@@ -111,13 +111,13 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 credentials=credentials["phone_number"]
             )
             if is_failed_attempt(attrs, None):
-                logger.warning("inside first is_failed_attempt")
+                logger.debug("inside first is_failed_attempt")
                 raise TooManyAttemptsError(
                     error="Sx12",
                     message="Too many unsuccessful sing-in attempts. Try again later",
                     status=400
                 )
-            logger.warning(f"Failed login attempt with {credentials['phone_number']}")
+            logger.debug(f"Failed login attempt with {credentials['phone_number']}")
             raise exceptions.AuthenticationFailed(
                 self.error_messages["no_active_account"],
                 "no_active_account",
@@ -131,7 +131,7 @@ class CustomJWTSerializer(TokenObtainPairSerializer):
                 status=400
             )
         else:
-            logger.warning(f"INSIDE ELSE STATEMENT JWT SERIALIZER")
+            logger.debug(f"INSIDE ELSE STATEMENT JWT SERIALIZER")
             try:
                 data = super().validate(credentials)
             except AuthenticationFailed as e:
@@ -163,13 +163,13 @@ def is_failed_attempt(serializer_fields: dict, user: User | None) -> bool:
             timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
         )
     elif user:
-        logger.warning(f"elif user: {user = }")
+        logger.debug(f"elif user: {user = }")
         failed_attempts = FailedLoginAttempts.objects.filter(
             user=user,
             timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)
         )
     else:
-        logger.warning(f"else {serializer_fields.get('phone_number') = }")
+        logger.debug(f"else {serializer_fields.get('phone_number') = }")
         failed_attempts = FailedLoginAttempts.objects.filter(
             credentials=serializer_fields.get("phone_number"),
             timestamp__gte=timezone.now() - timedelta(minutes=time_window_minutes)

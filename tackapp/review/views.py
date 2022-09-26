@@ -1,11 +1,7 @@
-import logging
-
 from rest_framework import viewsets, mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
-from core.choices import TackStatus
 from core.permissions import ReviewPermission
 from review.models import Review
 from review.serializers import ReviewSerializer
@@ -41,8 +37,6 @@ class ReviewViewset(
                     "message": "You do not have permission to perform this action."
                 },
                 status=400)
-        # if tack.status != TackStatus.WAITING_REVIEW:
-        #     return Response({"detail": f"Tack is not in status {TackStatus.WAITING_REVIEW}"}, status=400)
 
         try:
             review = Review.objects.get(tack=tack, user=request.user)

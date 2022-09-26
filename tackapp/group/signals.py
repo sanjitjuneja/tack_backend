@@ -9,7 +9,7 @@ from .serializers import GroupInvitationsSerializer, GroupMembersSerializer
 
 
 ws_sender = WSSender()
-logger = logging.getLogger()
+logger = logging.getLogger('django')
 logger.warning(f"in Group signals {ws_sender = }")
 
 
