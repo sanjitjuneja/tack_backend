@@ -97,7 +97,7 @@ logger = logging.getLogger('django')
 
 
 app = os.getenv("APP")
-logger.warning(f"{app = }")
+logger.info(f"{app = }")
 if app == "dev":
     # env = environ.Env(DEBUG=(bool, True))
     # env.read_env(os.path.join(BASE_DIR, "dev.env"))
@@ -109,7 +109,6 @@ if app == "dev":
         temp_env("AWS_REGION"),
         "dev/tackapp/django"
     )
-    logger.warning(f"{env = }")
     DEBUG = env.get("DEBUG")
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
@@ -136,7 +135,7 @@ ALLOWED_HOSTS = read_secrets(app, env, "ALLOWED_HOSTS").split(",")
 SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
-logger.warning(f"{DEBUG = }")
+logger.info(f"{DEBUG = }")
 
 logger.info(f"{ALLOWED_HOSTS = }")
 if DEBUG:
@@ -144,7 +143,7 @@ if DEBUG:
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
     INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
     INTERNAL_IPS += ["172.25.0.5"]
-    logger.warning(f"{INTERNAL_IPS = }")
+    logger.info(f"{INTERNAL_IPS = }")
 
 # Application definition
 
@@ -401,7 +400,7 @@ FIREBASE_CONFIG = {
 }
 
 with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=4)
+    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 
