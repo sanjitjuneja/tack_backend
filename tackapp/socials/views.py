@@ -184,6 +184,22 @@ class PasswordRecoverySendMessage(views.APIView):
                     "details": e.detail,
                 },
                 status=400)
+        phone_number=serializer.validated_data["phone_number"]
+        timeout_settings = TimeoutSettings.objects.all().last()
+        time_window_minutes = timeout_settings.signup_time_window_minutes or 60
+        max_signup_attempts_per_time_window = timeout_settings.signup_max_attempts_per_window or 3
+
+        if PhoneVerification.objects.filter(
+                phone_number=phone_number,
+                creation_time__gte=timezone.now() - timedelta(minutes=time_window_minutes)
+        ).count() > max_signup_attempts_per_time_window:
+            return Response(
+                {
+                    "error": "Sx1",
+                    "message": "Too many password recovery attempts. Try again later."
+                },
+                status=400)
+
         uuid = uuid4()
         phone_number = serializer.validated_data["phone_number"]
         sms_code = generate_sms_code()
