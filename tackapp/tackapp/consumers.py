@@ -13,7 +13,7 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def websocket_connect(self, event):
         self.user = self.scope['user']
         self.device_info = self.scope['device_info']
-        logger.info(f"WS connected for [{self.user.id} :: {self.device_info}]")
+        logger.info(f"WS connected for [{self.user} :: {self.device_info}]")
         if self.user.is_anonymous:
             await self.close()
 
