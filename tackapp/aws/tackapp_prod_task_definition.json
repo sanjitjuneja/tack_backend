@@ -34,7 +34,7 @@
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
-                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-group": "/ecs/tackapp-prod",
                         "awslogs-region": "us-east-1",
                         "awslogs-stream-prefix": "ecs"
                     }
@@ -60,7 +60,7 @@
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
-                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-group": "/ecs/tackapp-prod",
                         "awslogs-region": "us-east-1",
                         "awslogs-stream-prefix": "ecs"
                     }
@@ -127,7 +127,7 @@
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
-                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-group": "/ecs/tackapp-prod",
                         "awslogs-region": "us-east-1",
                         "awslogs-stream-prefix": "ecs"
                     }
@@ -175,11 +175,11 @@
                     }
                 ],
                 "hostname": "celery",
-                "workingDirectory": "/app/tackapp",
+                "workingDirectory": "/app/tackapp-prod",
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
-                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-group": "/ecs/tackapp-prod",
                         "awslogs-region": "us-east-1",
                         "awslogs-stream-prefix": "ecs"
                     }
@@ -224,7 +224,7 @@
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
-                        "awslogs-group": "/ecs/tackapp",
+                        "awslogs-group": "/ecs/tackapp-prod",
                         "awslogs-region": "us-east-1",
                         "awslogs-stream-prefix": "ecs"
                     }
