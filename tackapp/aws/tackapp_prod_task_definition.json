@@ -175,7 +175,7 @@
                     }
                 ],
                 "hostname": "celery",
-                "workingDirectory": "/app/tackapp-prod",
+                "workingDirectory": "/app/tackapp",
                 "logConfiguration": {
                     "logDriver": "awslogs",
                     "options": {
