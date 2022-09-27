@@ -11,31 +11,31 @@ from tackapp.views import HealthCheck
 from user.auth_backend import CustomJWTSerializer, CustomTokenObtainPairView
 
 urlpatterns = [
-    re_path(r"admin/", admin.site.urls),
-    re_path(r"api/v1/", include("tack.urls")),
-    re_path(r"api/v1/", include("user.urls")),
-    re_path(r"api/v1/", include("group.urls")),
-    re_path(r"api/v1/", include("review.urls")),
-    re_path(r"api/v1/", include("payment.urls")),
-    re_path(r"api/v1/", include("socials.urls")),
-    re_path(r"api/v1/tokens/obtain/",
+    re_path(r"(dev/|stage/)?admin/", admin.site.urls),
+    re_path(r"(dev/|stage/)?api/v1/", include("tack.urls")),
+    re_path(r"(dev/|stage/)?api/v1/", include("user.urls")),
+    re_path(r"(dev/|stage/)?api/v1/", include("group.urls")),
+    re_path(r"(dev/|stage/)?api/v1/", include("review.urls")),
+    re_path(r"(dev/|stage/)?api/v1/", include("payment.urls")),
+    re_path(r"(dev/|stage/)?api/v1/", include("socials.urls")),
+    re_path(r"(dev/|stage/)?api/v1/tokens/obtain/",
             CustomTokenObtainPairView.as_view(
                 serializer_class=CustomJWTSerializer
             ),
             name='token_obtain_pair'),
-    re_path(r"api/v1/tokens/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
-    re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
-    re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
-    path("stripe/", include("djstripe.urls", namespace="djstripe")),
-    path("healthcheck/", HealthCheck.as_view()),
+    re_path(r"(dev/|stage/)?api/v1/tokens/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
+    re_path(r"(dev/|stage/)?api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
+    re_path(r"(dev/|stage/)?api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
+    re_path(r"(dev/|stage/)?stripe/", include("djstripe.urls", namespace="djstripe")),
+    re_path(r"(dev/|stage/)?healthcheck/", HealthCheck.as_view()),
 
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    re_path(r'(dev/|stage/)?api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
-    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    re_path(r'(dev/|stage/)?swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
 
 websocket_urlpatterns = [
-    re_path(r'ws/', consumers.MainConsumer.as_asgi()),
+    re_path(r'(dev/|stage/)?ws/', consumers.MainConsumer.as_asgi()),
 ]
 
 if settings.DEBUG:

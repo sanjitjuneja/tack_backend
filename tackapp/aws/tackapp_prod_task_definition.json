@@ -73,7 +73,8 @@
                 "memory": 500,
                 "links": [
                     "redis",
-                    "celery"
+                    "celery",
+                    "rabbit"
                 ],
                 "portMappings": [
                     {
