@@ -1,23 +1,17 @@
-import datetime
 import logging
-from decimal import Decimal
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
-from rest_framework import views, viewsets, mixins
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.fields import empty
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
-from core.choices import TackStatus, OfferType
-from group.models import GroupTacks, Group
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
-from .tasks import change_tack_status_finished
+
+
+logger = logging.getLogger('django')
 
 
 class TackViewset(
@@ -35,16 +29,33 @@ class TackViewset(
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['status']
 
+    def get_serializer_class(self):
+        """Changing serializer class depends on actions"""
+
+        if self.action == "partial_update" or self.action == "update":
+            return TackCreateSerializer
+        else:
+            return super().get_serializer_class()
+
     @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
         serializer = TackCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         try:
             GroupMembers.objects.get(member=request.user, group=serializer.validated_data["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Gx1",
                     "message": "You are not a member of this Group"
                 },
                 status=400)
@@ -57,12 +68,23 @@ class TackViewset(
         partial = kwargs.pop('partial', False)
         tack = self.get_object()
         serializer = self.get_serializer(tack, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
+
+        logger.debug(f"{serializer.validated_data = }")
 
         if tack.status != TackStatus.CREATED:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx1",
                     "message": "You cannot change Tack with active offers"
                 },
                 status=400)
@@ -74,17 +96,22 @@ class TackViewset(
             # forcibly invalidate the prefetch cache on the instance.
             tack._prefetched_objects_cache = {}
 
-        return Response(serializer.data)
+        return Response(TackDetailSerializer(tack, context={"request": request}).data)
 
     def destroy(self, request, *args, **kwargs):
         tack = self.get_object()
         if tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx2",
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
+        Offer.active.filter(
+            tack=tack
+        ).update(
+            status=OfferStatus.DELETED
+        )
         self.perform_destroy(tack)
         return Response(status=204)
 
@@ -115,7 +142,8 @@ class TackViewset(
             status__in=(
                 OfferStatus.ACCEPTED,
                 OfferStatus.CREATED,
-                OfferStatus.IN_PROGRESS
+                OfferStatus.IN_PROGRESS,
+                OfferStatus.FINISHED
             ),
             runner=request.user
         ).exclude(
@@ -179,13 +207,12 @@ class TackViewset(
         if tack.status != TackStatus.IN_PROGRESS:
             return Response(
                 {
-                    "error": "code",
-                    "detail": "Current Tack status is not In Progress"
+                    "error": "Tx3",
+                    "message": "Current Tack status is not In Progress"
                 },
                 status=400)
 
         complete_tack(tack)
-        task = change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": tack.id})
         return Response(status=200)
 
     @extend_schema(request=None, responses={
@@ -209,6 +236,7 @@ class TackViewset(
         return Response(
             {
                 "error": None,
+                "message": None,
                 "is_ongoing_runner_tack": ongoing_runner_tacks.exists()
             },
             status=200)
@@ -230,7 +258,7 @@ class TackViewset(
         if ongoing_runner_tacks.exists():
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx4",
                     "message": "You already have ongoing Tack"
                 },
                 status=400)
@@ -275,7 +303,7 @@ class TackViewset(
         else:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx5",
                     "message": "Tack status is not in status Waiting Review"
                 },
                 status=400)
@@ -291,12 +319,12 @@ class TackViewset(
         if tack.status in (TackStatus.CREATED, TackStatus.ACTIVE):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx6",
                     "message": "You cannot get contact data for Unaccepted Offer"
                 },
                 status=400)
         contacts = tack.runner.get_contacts() if tack.tacker == request.user else tack.tacker.get_contacts()
-        logging.getLogger().warning(contacts)
+        logger.debug(contacts)
         serializer = ContactsSerializer(contacts)
         return Response(serializer.data)
 
@@ -307,16 +335,11 @@ class TackViewset(
         if tack.status not in (TackStatus.ACCEPTED, TackStatus.IN_PROGRESS):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx7",
                     "message": "Cannot cancel Tack in this status"
                 },
                 status=400)
-        with transaction.atomic():
-            tack.accepted_offer.status = OfferStatus.CANCELLED
-            tack.is_active = False
-            tack.is_canceled = True
-            tack.accepted_offer.save()
-            tack.save()
+        tack.cancel()
         serializer = self.get_serializer(tack)
         return Response(serializer.data)
 
@@ -343,34 +366,43 @@ class OfferViewset(
         """Endpoint for creating Runner-side offers. Provide price ONLY for Counter-offering"""
 
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         tack = serializer.validated_data["tack"]
 
         if serializer.validated_data.get("price") and (not tack.allow_counter_offer):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx8",
                     "message": "Counter offering is not allowed to this Tack"
                 },
-                status=403)
+                status=400)
         if tack.tacker == request.user:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx9",
                     "message": "You are not allowed to create Offers to your own Tacks"
                 },
-                status=403)
+                status=400)
         if Offer.active.filter(tack=tack, runner=request.user):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx10",
                     "message": "You already have an offer for this Tack"
                 },
-                status=409)
+                status=400)
         if tack.status not in (TackStatus.ACTIVE, TackStatus.CREATED):
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx11",
                     "message": "You can create Offers only on Active Tacks"
                 },
                 status=400)
@@ -395,7 +427,7 @@ class OfferViewset(
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px2",
                     "message": "Not enough money",
                     "balance": request.user.bankaccount.usd_balance,
                     "tack_price": price
@@ -437,10 +469,10 @@ class OfferViewset(
         """Endpoint for Runner to delete their own not accepted Offers"""
 
         instance = self.get_object()
-        if instance.is_accepted:
+        if instance.status == OfferStatus.ACCEPTED:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Tx12",
                     "message": "Cannot delete accepted Offers"
                 },
                 status=400)

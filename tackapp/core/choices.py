@@ -1,14 +1,13 @@
 from django.db import models
 
-from tackapp.settings import S3_BUCKET_TACKAPPSTORAGE, S3_BUCKET_CARDS, S3_BUCKET_BANKS
-
+from tackapp.settings import S3_BUCKET_CARDS, S3_BUCKET_BANKS, MEDIA_URL
 
 images_dict = {
-    "visa": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/visa.png",
-    "mastercard": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/mastercard.png",
-    "discover": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/discover.png",
-    "american-express": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_CARDS}/american-express.png",
-    # "CHASE": f"{S3_BUCKET_TACKAPPSTORAGE}{S3_BUCKET_BANKS}/chase.png",
+    "visa": f"{MEDIA_URL}{S3_BUCKET_CARDS}/visa.png",
+    "mastercard": f"{MEDIA_URL}{S3_BUCKET_CARDS}/mastercard.png",
+    "discover": f"{MEDIA_URL}{S3_BUCKET_CARDS}/discover.png",
+    "american-express": f"{MEDIA_URL}{S3_BUCKET_CARDS}/american-express.png",
+    # "CHASE": f"{MEDIA_URL}{S3_BUCKET_BANKS}/chase.png",
 }
 
 
@@ -88,8 +87,28 @@ class OfferStatus(models.TextChoices):
 
     CREATED = "created", "Created"
     ACCEPTED = "accepted", "Accepted"
+    IN_PROGRESS = "in_progress", "In progress"
+    FINISHED = "finished", "Finished"
     DELETED = "deleted", "Deleted"
     EXPIRED = "expired", "Expired"
     CANCELLED = "cancelled", "Cancelled"
-    IN_PROGRESS = "in_progress", "In progress"
-    FINISHED = "finished", "Finished"
+
+
+class NotificationType(models.TextChoices):
+    TACK_CREATED = "tack_created", "Tack created"
+    TACK_ACCEPTED = "tack_accepted", "Tack accepted"
+    TACK_IN_PROGRESS = "tack_in_progress", "Tack in progress"
+    TACK_WAITING_REVIEW = "tack_waiting_review", "Tack waiting for review"
+    TACK_FINISHED = "tack_finished", "Tack finished"
+
+    TACK_EXPIRING = "tack_expiring", "Tack expiring"
+    TACK_INACTIVE = "tack_inactive", "Tack inactive"
+    TACK_CANCELLED = "tack_canceled", "Tack cancelled"
+
+    OFFER_RECEIVED = "offer_received", "Offer received"
+    COUNTEROFFER_RECEIVED = "counteroffer_received", "Counter-offer received"
+    OFFER_ACCEPTED = "offer_accepted", "Offer accepted"
+    RUNNER_FINISHED = "runner_finished", "Runner finished"
+    OFFER_EXPIRED = "offer_expired", "Offer expired"
+
+

@@ -15,11 +15,13 @@ class ReadOnlyMixin:
 @admin.register(BankAccount)
 class BankAccountAdmin(ModelAdmin):
     list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    ordering = ('id',)
 
 
 @admin.register(UserPaymentMethods)
 class UserPaymentMethodsAdmin(ModelAdmin):
     list_display = ('bank_account', 'dwolla_payment_method')
+    ordering = ('id',)
 
 
 @admin.register(Fee)

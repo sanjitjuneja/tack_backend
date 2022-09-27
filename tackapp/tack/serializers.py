@@ -1,12 +1,11 @@
 from rest_framework import serializers
-from core.choices import OfferType
+from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from group.serializers import GroupSerializer
-from user.serializers import UserSerializer, UserListSerializer
+from user.serializers import UserListSerializer
 from .models import *
-from phonenumber_field.serializerfields import PhoneNumberField
 
 
-class TackSerializer(serializers.ModelSerializer):
+class TackSerializer(CustomModelSerializer):
     class Meta:
         model = Tack
         fields = (
@@ -26,7 +25,7 @@ class TackSerializer(serializers.ModelSerializer):
         )
 
 
-class TackDetailSerializer(serializers.ModelSerializer):
+class TackDetailSerializer(CustomModelSerializer):
     tacker = UserListSerializer(read_only=True)
     runner = UserListSerializer(read_only=True)
     group = GroupSerializer(read_only=True)
@@ -46,7 +45,7 @@ class TackDetailSerializer(serializers.ModelSerializer):
         )
 
 
-class TackCreateSerializer(serializers.ModelSerializer):
+class TackCreateSerializer(CustomModelSerializer):
     class Meta:
         model = Tack
         fields = (
@@ -60,12 +59,7 @@ class TackCreateSerializer(serializers.ModelSerializer):
         )
 
 
-class TackRunnerSerializer(serializers.ModelSerializer):
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     for _ in TackStatus.choices:
-    #         ret["status"] = _[1] if ret["status"] == _[0] else ret["status"]
-    #     return ret
+class TackRunnerSerializer(CustomModelSerializer):
     tacker = UserListSerializer(read_only=True)
 
     class Meta:
@@ -80,22 +74,15 @@ class TackRunnerSerializer(serializers.ModelSerializer):
         )
 
 
-class AcceptRunnerSerializer(serializers.Serializer):
+class AcceptRunnerSerializer(CustomSerializer):
     runner_id = serializers.IntegerField(min_value=1)
 
 
-class TackCompleteSerializer(serializers.Serializer):
+class TackCompleteSerializer(CustomSerializer):
     message = serializers.CharField(max_length=256, allow_blank=True, default="")
-    # tack = serializers.RelatedField(read_only=True, source="tack.Tack")
-
-    # def to_representation(self, obj):
-    #     ret = super(TackCompleteSerializer, self).to_representation(obj)
-    #     print(f"{ret = }")
-    #     ret.pop('message')
-    #     return ret
 
 
-class AcceptOfferSerializer(serializers.ModelSerializer):
+class AcceptOfferSerializer(CustomModelSerializer):
     class Meta:
         model = Offer
         fields = "__all__"
@@ -111,7 +98,7 @@ class AcceptOfferSerializer(serializers.ModelSerializer):
         )
 
 
-class OfferSerializer(serializers.ModelSerializer):
+class OfferSerializer(CustomModelSerializer):
     def create(self, validated_data):
         offer_type = OfferType.COUNTER_OFFER if validated_data.get("price") else OfferType.OFFER
         instance = Offer.objects.create(
@@ -131,7 +118,7 @@ class OfferSerializer(serializers.ModelSerializer):
         )
 
 
-class TackUserSerializer(serializers.ModelSerializer):
+class TackUserSerializer(CustomModelSerializer):
     tacker = UserListSerializer(read_only=True)
 
     class Meta:
@@ -153,7 +140,7 @@ class TackUserSerializer(serializers.ModelSerializer):
         )
 
 
-class TacksOffersSerializer(serializers.Serializer):
+class TacksOffersSerializer(CustomSerializer):
     id = serializers.SerializerMethodField()
     tack = TackDetailSerializer()
     offer = serializers.SerializerMethodField()
@@ -165,26 +152,26 @@ class TacksOffersSerializer(serializers.Serializer):
         return obj.id
 
 
-class PopularTackSerializer(serializers.ModelSerializer):
+class PopularTackSerializer(CustomModelSerializer):
     class Meta:
         model = PopularTack
         fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
 
 
-class TackTemplateSerializer(serializers.ModelSerializer):
+class TackTemplateSerializer(CustomModelSerializer):
     class Meta:
         model = Tack
         fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
 
 
-class ContactsSerializer(serializers.ModelSerializer):
+class ContactsSerializer(CustomModelSerializer):
     class Meta:
         model = User
         fields = "phone_number", "email"
         read_only_fields = "phone_number", "email"
 
 
-class GroupTackSerializer(serializers.Serializer):
+class GroupTackSerializer(CustomSerializer):
     id = serializers.SerializerMethodField()
     tack = serializers.SerializerMethodField()
     is_mine_offer_sent = serializers.SerializerMethodField()

@@ -1,11 +1,6 @@
 import logging
-from datetime import timedelta
-
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.db import transaction
-from django.db.models import Sum, Q, F
-from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 
 import djstripe.models
@@ -15,11 +10,12 @@ import stripe
 from django.core.exceptions import ObjectDoesNotExist
 
 from core.choices import PaymentType, PaymentService, PaymentAction
+from core.exceptions import InvalidActionError
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
-from drf_spectacular.utils import extend_schema
-from rest_framework import views
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import views, serializers
 from rest_framework.response import Response
 
 from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
@@ -34,6 +30,9 @@ from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link
     calculate_transaction_loss, calculate_service_fee
 
 
+logger = logging.getLogger("payments")
+
+
 class AddBalanceStripe(views.APIView):
     """Endpoint for money refill from Stripe"""
 
@@ -42,8 +41,16 @@ class AddBalanceStripe(views.APIView):
     @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
     def post(self, request):
         serializer = AddBalanceStripeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        logger = logging.getLogger()
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         customer, created = dsCustomer.get_or_create(subscriber=request.user)
 
@@ -59,19 +66,19 @@ class AddBalanceStripe(views.APIView):
             service=PaymentService.STRIPE
         )
 
-        logging.getLogger().warning(f"{current_transaction_loss = }")
+        logger.debug(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
 
         # TODO: try-except block
         payment_method = serializer.validated_data["payment_method"] or None
-        logger.warning(f"{payment_method = }")
+        logger.info(f"{payment_method = }")
         pi_request = {
             "customer": customer.id,
             "receipt_email": customer.email,
@@ -80,7 +87,7 @@ class AddBalanceStripe(views.APIView):
         }
         if payment_method:
             pi_request["payment_method"] = payment_method
-        logger.warning(f"{pi_request = }")
+        logger.info(f"{pi_request = }")
         with transaction.atomic():
             pi = stripe.PaymentIntent.create(**pi_request)
             Transaction.objects.create(
@@ -94,8 +101,8 @@ class AddBalanceStripe(views.APIView):
                     service=PaymentService.STRIPE),
                 transaction_id=pi["id"]
             )
-            logger.warning(f"{pi = }")
-            logger.warning(f"{type(pi) = }")
+            logger.info(f"{pi = }")
+            logger.debug(f"{type(pi) = }")
             return Response(pi)
 
 
@@ -107,7 +114,16 @@ class AddBalanceDwolla(views.APIView):
     @extend_schema(request=AddBalanceDwollaSerializer, responses=AddBalanceDwollaSerializer)
     def post(self, request):
         serializer = AddBalanceDwollaSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         amount = serializer.validated_data["amount"]
         payment_method = serializer.validated_data["payment_method"]
 
@@ -116,26 +132,42 @@ class AddBalanceDwolla(views.APIView):
             amount=serializer.validated_data["amount"],
             service=PaymentService.DWOLLA
         )
-        logging.getLogger().warning(f"{current_transaction_loss = }")
+        logger.debug(f"{current_transaction_loss = }")
         total_loss = sum24h + current_transaction_loss
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
 
         is_enough_funds = check_dwolla_balance(request.user, amount, payment_method)
         if not is_enough_funds:
-            return Response({"error": "code", "message": "Insufficient funds"}, status=400)
+            logger.info(f"NOT ENOUGH FUNDS from {request.user = }, {amount = }. {total_loss = }")
+            return Response(
+                {
+                    "error": "Px2",
+                    "message": "Insufficient funds"
+                }, status=400)
         try:
             response_body = dwolla_transaction(
                 user=request.user,
                 action=PaymentAction.DEPOSIT,
                 **serializer.validated_data
             )
+            logger.info(f"AddBalanceDwolla {response_body = }")
+        except InvalidActionError as e:
+            logger.warning(f"InvalidActionError {e = }")
+            return Response(
+                {
+                    "error": e.error,
+                    "message": e.message,
+                },
+                status=e.status
+            )
         except dwollav2.Error as e:
+            logger.warning(f"dwollav2.Error {e = }")
             return Response(e.body)
 
         return Response(response_body)
@@ -162,15 +194,19 @@ class GetUserPaymentMethods(views.APIView):
         ds_customer, created = djstripe.models.Customer.get_or_create(
             subscriber=request.user
         )
-        logging.getLogger().warning(f"{ds_customer = }")
+        logger.debug(f"{ds_customer = }")
         pms = dsPaymentMethod.objects.filter(
             customer=ds_customer
         ).order_by(
             "-created"
         )
-        logging.getLogger().warning(f"{pms = }")
+        logger.debug(f"{pms = }")
         serializer = StripePaymentMethodSerializer(pms, many=True)
-        return Response({"results": serializer.data})
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class GetUserWithdrawMethods(views.APIView):
@@ -187,7 +223,7 @@ class GetUserWithdrawMethods(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ox1",
                     "message": "Can not find DB user"
                 },
                 status=400)
@@ -199,16 +235,31 @@ class GetUserWithdrawMethods(views.APIView):
 
         data = update_dwolla_pms_with_primary(pms, request.user)
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        return Response({"results": serializer.data})
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class GetLinkToken(views.APIView):
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(request=None, responses={
+        200: inline_serializer(
+            name="GetLinkToken",
+            fields={
+                "link_token": serializers.CharField()
+            }
+        )})
     def get(self, request):
         dwolla_id = get_dwolla_id(request.user)
         link_token = get_link_token(dwolla_id)
-        return Response({"link_token": link_token})
+        return Response(
+            {
+                "link_token": link_token
+            }
+        )
 
 
 class AddUserWithdrawMethod(views.APIView):
@@ -217,11 +268,19 @@ class AddUserWithdrawMethod(views.APIView):
     @extend_schema(request=AddWithdrawMethodSerializer, responses=DwollaPaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = AddWithdrawMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         public_token = serializer.validated_data['public_token']
 
         access_token = get_access_token(public_token)
-        # TODO: WRONG?
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
 
@@ -231,7 +290,7 @@ class AddUserWithdrawMethod(views.APIView):
             # TODO: create dwolla account and return empty list
             return Response(
                 {
-                    "error": "code",
+                    "error": "Ox1",
                     "message": "Can not find DB user"
                 },
                 status=400)
@@ -255,7 +314,12 @@ class AddUserWithdrawMethod(views.APIView):
             )
             data[0]["is_primary"] = True
         serializer = DwollaPaymentMethodSerializer(data, many=True)
-        return Response({"results": serializer.data})
+        logger.debug(f"{serializer.data = }")
+        return Response(
+            {
+                "results": serializer.data
+            }
+        )
 
 
 class DwollaMoneyWithdraw(views.APIView):
@@ -264,12 +328,26 @@ class DwollaMoneyWithdraw(views.APIView):
     @extend_schema(request=DwollaMoneyWithdrawSerializer, responses=DwollaMoneyWithdrawSerializer)
     def post(self, request, *args, **kwargs):
         serializer = DwollaMoneyWithdrawSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         try:
             ba = BankAccount.objects.get(user=request.user)
             if ba.usd_balance < serializer.validated_data["amount"]:
-                return Response({"error": "code", "message": "Not enough money"}, status=400)
+                return Response(
+                    {
+                        "error": "Px2",
+                        "message": "Insufficient funds"
+                    },
+                    status=400)
         except BankAccount.DoesNotExist:
             pass
 
@@ -282,7 +360,7 @@ class DwollaMoneyWithdraw(views.APIView):
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px1",
                     "message": "You reached your 24h transaction limit"
                 },
                 status=400)
@@ -301,7 +379,16 @@ class GetPaymentMethodById(views.APIView):
     @extend_schema(request=GetCardByIdSerializer, responses=StripePaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = GetCardByIdSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         payment_method_id = serializer["pm_id"]
         ds_customer, created = djstripe.models.Customer.get_or_create(
             subscriber=request.user
@@ -311,7 +398,7 @@ class GetPaymentMethodById(views.APIView):
         except dsPaymentMethod.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px3",
                     "message": "Payment method not found"
                 },
                 status=400)
@@ -325,7 +412,16 @@ class DetachPaymentMethod(views.APIView):
     @extend_schema(request=DeletePaymentMethodSerializer, responses=DeletePaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = DeletePaymentMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
 
         try:
             detach_payment_method(
@@ -338,7 +434,7 @@ class DetachPaymentMethod(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px4",
                     "message": "Payment method doesn't exist",
                     "payment_method": serializer.data["payment_method"]
                 },
@@ -348,8 +444,8 @@ class DetachPaymentMethod(views.APIView):
                 "error": None,
                 "message": "Successfully detached",
                 "payment_method": serializer.data["payment_method"]
-            }
-        )
+            },
+            status=200)
 
 
 class SetPrimaryPaymentMethod(views.APIView):
@@ -358,7 +454,16 @@ class SetPrimaryPaymentMethod(views.APIView):
     @extend_schema(request=SetPrimaryPaymentMethodSerializer, responses=SetPrimaryPaymentMethodSerializer)
     def post(self, request, *args, **kwargs):
         serializer = SetPrimaryPaymentMethodSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         try:
             set_primary_method(
                 user=request.user,
@@ -368,7 +473,7 @@ class SetPrimaryPaymentMethod(views.APIView):
         except ObjectDoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Px4}",
                     "message": "Payment method does not exist",
                     "payment_method": serializer.validated_data["payment_method"]
                 },
@@ -378,8 +483,8 @@ class SetPrimaryPaymentMethod(views.APIView):
                 "error": None,
                 "message": "Successfully updated primary method",
                 "payment_method": serializer.validated_data["payment_method"]
-            }
-        )
+            },
+            status=200)
 
 
 class GetFees(views.APIView):
@@ -393,6 +498,12 @@ class GetFees(views.APIView):
 
 
 class DwollaWebhook(views.APIView):
+    @extend_schema(request=inline_serializer(
+        name="Dwolla_webhook",
+        fields={
+            "data": serializers.JSONField()
+        }
+    ), responses=None)
     def post(self, request, *args, **kwargs):
         dwolla_webhook_handler(request)
         # logging.getLogger().warning(f"{request.data = }")

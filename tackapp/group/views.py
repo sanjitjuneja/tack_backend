@@ -7,16 +7,19 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
 from tack.models import Tack, PopularTack, Offer
-from tack.serializers import TackDetailSerializer, PopularTackSerializer, TackTemplateSerializer, GroupTackSerializer
+from tack.serializers import TackDetailSerializer, PopularTackSerializer, GroupTackSerializer
 from user.serializers import UserListSerializer
 from .serializers import *
+
+
+logger = logging.getLogger("django")
 
 
 class GroupViewset(
@@ -31,6 +34,11 @@ class GroupViewset(
     permission_classes = (GroupOwnerPermission,)
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)
 
+    def get_permissions(self):
+        if self.action == "retrieve":  # per action
+            self.permission_classes = (GroupMemberPermission,)
+        return super().get_permissions()
+
     def retrieve(self, request, *args, **kwargs):
         group = self.get_object()
         try:
@@ -38,7 +46,7 @@ class GroupViewset(
         except GroupMembers.DoesNotExist:
             return Response(
                 {
-                    "error": "code",
+                    "error": "Gx1",
                     "message": "You are not a member of this Group"
                 },
                 status=400
@@ -96,7 +104,16 @@ class GroupViewset(
         """Endpoint for accepting invitation from Invitation Link"""
 
         serializer = self.get_serializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         uuid = serializer.validated_data["uuid"]
         try:
             group = self.get_queryset().get(invitation_link=uuid)
@@ -153,7 +170,7 @@ class GroupViewset(
             if ongoing_tacks.exists():
                 return Response(
                     {
-                        "error": "code",
+                        "error": "Gx2",
                         "message": "You can't leave this group. You have ongoing Tacks"
                     },
                     status=400)
@@ -163,10 +180,18 @@ class GroupViewset(
                 request.user.save()
             gm.delete()
         except ObjectDoesNotExist:
-            return Response({"message": "You are not a member of this group"}, status=400)
-
-        return Response({"message": "Leaved Successfully",
-                         "group": GroupSerializer(group, context={"request": request}).data}, status=200)
+            return Response(
+                {
+                    "error": "Gx1",
+                    "message": "You are not a member of this group"},
+                status=400)
+        return Response(
+            {
+                "error": None,
+                "message": "Leaved Successfully",
+                "group": GroupSerializer(group, context={"request": request}).data
+            },
+            status=200)
 
     @action(
         methods=("GET",),
@@ -214,10 +239,14 @@ class GroupViewset(
         group = self.get_object()
         protocol = 'https' if request.is_secure() else 'http'
         return Response(
-            {"invite_link": (f"{protocol}://"
-                             f"{request.get_host()}"
-                             f"{reverse('group-invite')}"
-                             f"?uuid={group.invitation_link}")}
+            {
+                "error": None,
+                "message": None,
+                "invite_link": (f"{protocol}://"
+                                f"{request.get_host()}"
+                                f"{reverse('group-invite')}"
+                                f"?uuid={group.invitation_link}")
+            }
         )
 
     @action(
@@ -256,7 +285,12 @@ class GroupViewset(
             gm.is_muted = True
             gm.save()
         except GroupMembers.DoesNotExist:
-            return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
+            return Response(
+                {
+                    "error": "Gx1",
+                    "message": "You are not a member of this group"
+                },
+                status=400)
         return Response(GroupMembersSerializer(gm, context={"request": request}).data)
 
     @extend_schema(request=None)
@@ -272,7 +306,12 @@ class GroupViewset(
             gm.is_muted = False
             gm.save()
         except GroupMembers.DoesNotExist:
-            return Response({"error": "code", "message": "You are not a member of this group"}, status=400)
+            return Response(
+                {
+                    "error": "Gx1",
+                    "message": "You are not a member of this group"
+                },
+                status=400)
 
         return Response(GroupMembersSerializer(gm, context={"request": request}).data)
 
@@ -290,18 +329,17 @@ class GroupViewset(
             group=group,
             status__in=(TackStatus.WAITING_REVIEW, TackStatus.FINISHED)
         ).annotate(
-            offer_count=Count('offer')
+            offer_count=Count('offer', filter=~Q(offer__status=OfferStatus.DELETED))
         ).order_by(
             "-offer_count"
         )[:tacks_len]
-        # logging.getLogger().warning(tacks.query)
-
         serializer_popular = PopularTackSerializer(popular_tacks, many=True)
-        serializer_default = TackTemplateSerializer(tacks, many=True)
-        return Response({
-            "popular": serializer_popular.data,
-            "groups": serializer_default.data
-        })
+        serializer_default = PopularTackSerializer(tacks, many=True)
+        return Response(
+            {
+                "popular": serializer_popular.data + serializer_default.data,
+            }
+        )
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -345,7 +383,16 @@ class InvitesView(
         invite = self.get_object()
         GroupMembers.objects.create(group=invite.group, member=invite.invitee)
         invite.delete()
-        return Response({"accepted group": GroupSerializer(invite.group, context={"request": request}).data})
+        return Response(
+            {
+                "accepted group": GroupSerializer(
+                    invite.group,
+                    context={
+                        "request": request
+                    }
+                ).data
+            }
+        )
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

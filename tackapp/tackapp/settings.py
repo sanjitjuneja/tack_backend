@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import json
 import logging
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 import environ
@@ -20,6 +21,7 @@ import stripe
 from django.utils.encoding import force_str
 from firebase_admin import initialize_app
 
+from core.logs_formatter import CustomJsonFormatter
 from tackapp.services_env import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
@@ -28,17 +30,87 @@ django.utils.encoding.force_text = force_str
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-logger = logging.getLogger()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'json_formatter': {
+            '()': CustomJsonFormatter
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'debug_console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        'payment_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/payments.log',
+            'formatter': 'json_formatter'
+        },
+        'sql_measurement': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/sql_queues.log',
+            'formatter': 'json_formatter'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ('console',),
+            'propagate': True,
+        },
+        'payments': {
+            'handlers': ('payment_file',),
+            'level': 'INFO'
+        },
+        'tackapp.consumers': {
+            'handlers': ('console',),
+            'level': 'INFO'
+        },
+        'tackapp.channels_middleware': {
+            'handlers': ('console',),
+            'level': 'ERROR'
+        },
+        'sql_time_measurement': {
+            'handlers': ('sql_measurement',),
+            'level': 'INFO'
+        }
+    }
+}
+os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+logger = logging.getLogger('django')
 
 
 app = os.getenv("APP")
-logger.warning(f"{app = }")
+logger.info(f"{app = }")
 if app == "dev":
-    env = environ.Env(DEBUG=(bool, True))
-    env.read_env(os.path.join(BASE_DIR, "dev.env"))
-    logger.warning(f"{env = }")
-    # environ.Env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    # env = environ.Env(DEBUG=(bool, True))
+    # env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    temp_env = environ.Env(DEBUG=(bool, False))
+    temp_env.read_env(os.path.join(BASE_DIR, "dev.env"))
+    env = receive_setting_secrets(
+        temp_env("AWS_ACCESS_KEY_ID"),
+        temp_env("AWS_SECRET_ACCESS_KEY"),
+        temp_env("AWS_REGION"),
+        "dev/tackapp/django"
+    )
+    DEBUG = env.get("DEBUG")
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
@@ -46,9 +118,10 @@ else:
     env = receive_setting_secrets(
         temp_env("AWS_ACCESS_KEY_ID"),
         temp_env("AWS_SECRET_ACCESS_KEY"),
-        temp_env("AWS_REGION")
+        temp_env("AWS_REGION"),
+        "prod/tackapp/"
     )
-
+    DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -57,27 +130,26 @@ else:
 AWS_ACCESS_KEY_ID = read_secrets(app, env, "AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = read_secrets(app, env, "AWS_SECRET_ACCESS_KEY")
 AWS_REGION = read_secrets(app, env, "AWS_REGION")
-allowed_hosts, celery_broker, _, crsf_trusted_origins = receive_setting_parameters(
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-    AWS_REGION
-)
+ALLOWED_HOSTS = read_secrets(app, env, "ALLOWED_HOSTS").split(",")
+
 
 SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if read_secrets(app, env, "DEBUG") == "True" else False
-logging.getLogger().warning(f"{DEBUG = }")
+logger.info(f"{DEBUG = }")
 
-ALLOWED_HOSTS = allowed_hosts.get("Value").split(",")
+logger.info(f"{ALLOWED_HOSTS = }")
+if DEBUG:
+    import socket  # only if you haven't already imported this
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
+    INTERNAL_IPS += ["172.25.0.5"]
+    logger.info(f"{INTERNAL_IPS = }")
 
-INTERNAL_IPS = [
-    "127.0.0.1"
-]
 # Application definition
 
 INSTALLED_APPS = [
+    "debug_toolbar",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -94,7 +166,6 @@ INSTALLED_APPS = [
     "dwolla_service.apps.DwollaServiceConfig",
     "drf_spectacular",
     "rest_framework",
-    "debug_toolbar",
     "sslserver",
     "phonenumber_field",
     "django_filters",
@@ -107,7 +178,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
-    "tackapp.middleware.RequestTimeMiddleware",
+    # "tackapp.middleware.RequestTimeMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -140,13 +211,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "tackapp.wsgi.application"
+
+# WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
+
+
+CHANNEL_LAYERS_HOSTS = read_secrets(app, env, "CHANNEL_LAYERS_HOSTS").split(",")
+logger.info(f"{CHANNEL_LAYERS_HOSTS = }")
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', 6379)],
+            "hosts": [CHANNEL_LAYERS_HOSTS],
         },
     },
 }
@@ -257,7 +333,8 @@ TWILIO_AUTH_TOKEN = read_secrets(app, env, "TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
-CELERY_BROKER_URL = celery_broker.get("Value")
+CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
+logger.warning(f"{CELERY_BROKER_URL = }")
 
 
 SIMPLE_JWT = {
@@ -288,7 +365,7 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=10),
 }
 
-CSRF_TRUSTED_ORIGINS = crsf_trusted_origins.get("Value").split(",")
+CSRF_TRUSTED_ORIGINS = read_secrets(app, env, "CSRF_TRUSTED_ORIGINS").split(",")
 
 STRIPE_PUBLISHABLE_KEY = read_secrets(app, env, "STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
@@ -310,6 +387,23 @@ DWOLLA_WEBHOOK_SECRET = read_secrets(app, env, 'DWOLLA_WEBHOOK_SECRET')
 PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
 
+
+FIREBASE_CONFIG = {
+    "type": read_secrets(app, env, "FIREBASE_TYPE"),
+    "project_id": read_secrets(app, env, "FIREBASE_PROJECT_ID"),
+    "private_key_id": read_secrets(app, env, "FIREBASE_PRIVATE_KEY_ID"),
+    "private_key": re.sub(r"\\n", r"\n", read_secrets(app, env, "FIREBASE_PRIVATE_KEY")),
+    "client_email": read_secrets(app, env, "FIREBASE_CLIENT_EMAIL"),
+    "client_id": read_secrets(app, env, "FIREBASE_CLIENT_ID"),
+    "auth_uri": read_secrets(app, env, "FIREBASE_AUTH_URI"),
+    "token_uri": read_secrets(app, env, "FIREBASE_TOKEN_URI"),
+    "auth_provider_x509_cert_url": read_secrets(app, env, "FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
+}
+
+with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
@@ -321,15 +415,11 @@ FCM_DJANGO_SETTINGS = {
      # devices to which notifications cannot be sent,
      # are deleted upon receiving error response from FCM
      # default: False
-    "DELETE_INACTIVE_DEVICES": True,
+    "DELETE_INACTIVE_DEVICES": False,
 }
-
-GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR / 'tack-technologies-firebase-adminsdk-hq5db-8881ca10c9.json')
-
-logging.getLogger().warning(f"{GOOGLE_APPLICATION_CREDENTIALS = }")
 
 S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
 
-S3_BUCKET_CARDS = "/media/payment_methods/cards"
-S3_BUCKET_BANKS = "/media/payment_methods/banks"
-S3_BUCKET_DIGITAL_WALLETS = "/media/payment_methods/digital_wallets"
+S3_BUCKET_CARDS = "payment_methods/cards"
+S3_BUCKET_BANKS = "payment_methods/banks"
+S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"

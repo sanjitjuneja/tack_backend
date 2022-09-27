@@ -1,19 +1,19 @@
-import logging
-
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.choices import TackStatus
-from payment.models import BankAccount, UserPaymentMethods
-from payment.services import dwolla_transaction
+from payment.models import BankAccount
+from payment.serializers import BankAccountSerializer
 from review.serializers import ReviewSerializer
 from tack.models import Tack
 from .serializers import *
-from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio, deactivate_dwolla_customer
+from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
 
 
 class UsersViewset(
@@ -50,57 +50,67 @@ class UsersViewset(
     def me_change_bio(self, request, *args, **kwargs):
         self.queryset = User.objects.all()
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400)
         user = user_change_bio(request.user, serializer.validated_data)
 
         return Response(self.get_serializer(user).data)
 
-    @action(methods=("DELETE",), detail=False, url_path="me")
+    @extend_schema(request=None, responses={
+        204: inline_serializer(
+            name="Deleted_successfully",
+            fields={
+                "error": serializers.CharField(allow_null=True),
+                "message": serializers.CharField(allow_null=True),
+            }
+        ),
+        400: inline_serializer(
+            name="Error",
+            fields={
+                "error": serializers.CharField(allow_null=True),
+                "message": serializers.CharField(allow_null=True),
+            }
+        )})
+    @action(methods=("POST",), detail=False, url_path="me/delete_account")
     def me_delete(self, request, *args, **kwargs):
-        dwolla_pms = UserPaymentMethods.objects.filter(bank_account__user=request.user)
-        if not dwolla_pms:
-            return Response(
-                {
-                    "error": "code",
-                    "message": "You don't have Dwolla Bank Accounts"
-                },
-                status=400)
-        try:
-            primary_pm = dwolla_pms.get(primary=True)
-        except UserPaymentMethods.DoesNotExist:
-            return Response(
-                {
-                    "error": "code",
-                    "message": "You don't have Dwolla primary Bank Account"
-                },
-                status=400)
         active_tacks = Tack.active.filter(
             Q(tacker=request.user) | Q(runner=request.user),
-            status__in=(TackStatus.ACCEPTED, TackStatus.IN_PROGRESS)
+            status__in=(
+                TackStatus.ACCEPTED,
+                TackStatus.IN_PROGRESS,
+                TackStatus.WAITING_REVIEW
+            )
         )
         if active_tacks:
             return Response(
                 {
-                    "error": "code",
-                    "message": "You have active Tacks"
+                    "error": "Ux5",
+                    "message": "Cannot delete User. You have active Tacks"
+                },
+                status=400)
+        ba = BankAccount.objects.get(user=request.user)
+        if ba.usd_balance > 0:
+            return Response(
+                {
+                    "error": "Ux6",
+                    "message": "User balance is not 0"
                 },
                 status=400)
 
-        ba = BankAccount.objects.get(user=request.user)
-        min_withdraw_amount = 100
-        if ba.usd_balance >= min_withdraw_amount:
-            dwolla_transaction(
-                user=request.user,
-                amount=ba.usd_balance,
-                payment_method=primary_pm,
-                action="withdraw"
-            )
-
-        deactivate_dwolla_customer(request.user)
+        # deactivate_dwolla_customer(request.user)
+        request.user.delete()  # delete_stripe_dwolla_account signal will do the job
         return Response(
             {
                 "error": None,
-                "message": "Successfuly deleted"
+                "message": "Successfully deleted"
             },
             status=204)
 

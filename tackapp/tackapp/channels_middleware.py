@@ -11,7 +11,7 @@ from django.conf import settings
 from user.models import User
 
 
-logger = logging.getLogger()
+logger = logging.getLogger("tackapp.channels_middleware")
 
 
 @database_sync_to_async
@@ -32,6 +32,16 @@ def extract_token(headers: tuple) -> bytes:
     return b''
 
 
+def extract_device_info(headers: tuple) -> bytes:
+    """Function to get device_id from HTTP headers"""
+
+    # Starting from an end because "Authorization" header will likely be there
+    for header, value in headers[::-1]:
+        if header == b'device-info':
+            return value
+    return b'No device info'
+
+
 class TokenAuthMiddleware:
     """
     Custom token auth middleware
@@ -47,8 +57,10 @@ class TokenAuthMiddleware:
 
         # Get the token
         token = extract_token(scope['headers'])
-        logger.warning(f"{scope['headers'] = }")
-        logger.warning(f"{token = }")
+        device_info = extract_device_info(scope['headers'])
+        logger.debug(f"{scope['headers'] = }")
+        logger.debug(f"{token = }")
+
         # Try to authenticate the user
         try:
             # This will automatically validate the token and raise an error if token is invalid
@@ -56,12 +68,12 @@ class TokenAuthMiddleware:
             # TODO: if token is not Blacklisted
         except (InvalidToken, TokenError) as e:
             # Token is invalid
-            logger.warning(f"{e = }")
+            logger.info(f"{e = }")
             return None
         else:
             #  Then token is valid, decode it
             decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            logger.warning(f"{decoded_data = }")
+            logger.debug(f"{decoded_data = }")
             # Will return a dictionary like -
             # {
             #     "token_type": "access",
@@ -72,6 +84,6 @@ class TokenAuthMiddleware:
 
             # Get the user using ID
             user = await get_user(int(decoded_data["user_id"]))
-            logger.warning(f"{user = }")
+            logger.debug(f"{user = }")
         # Return the inner application directly and let it run everything else
-        return await self.inner(dict(scope, user=user), receive, send)
+        return await self.inner(dict(scope, user=user, device_info=device_info), receive, send)

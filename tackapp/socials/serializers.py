@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from phonenumber_field.serializerfields import PhoneNumberField
+
+from core.custom_serializers import CustomSerializer
 from user.serializers import UserSerializer, UserRegistrationSerializer
 from core.validators import password_validator
 
@@ -7,9 +9,10 @@ from core.validators import password_validator
 class SMSSendSerializer(serializers.Serializer):
     phone_number = PhoneNumberField(write_only=True)
     uuid = serializers.CharField(read_only=True)
+    device_id = serializers.CharField(max_length=64, allow_null=True, write_only=True)
 
 
-class TwilioUserRegistrationSerializer(serializers.Serializer):
+class TwilioUserRegistrationSerializer(CustomSerializer):
     uuid = serializers.CharField(max_length=36)
     user = UserRegistrationSerializer()
 

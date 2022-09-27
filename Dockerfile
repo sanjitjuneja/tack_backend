@@ -7,3 +7,4 @@ COPY Pipfile /app/
 RUN pipenv install --system --deploy --ignore-pipfile
 COPY . /app/
 RUN ["chmod", "+x", "/app/docker-entrypoint.sh"]
+RUN ["chmod", "+x", "/app/run_worker.sh"]

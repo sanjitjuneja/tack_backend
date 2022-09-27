@@ -7,7 +7,7 @@ from core.choices import ReviewRating
 
 class Review(CoreModel):
     user = models.ForeignKey(
-        "user.User", on_delete=models.CASCADE, related_name="review_user"
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="review_user"
     )
     tack = models.ForeignKey(
         "tack.Tack", on_delete=models.CASCADE, related_name="review_tack"

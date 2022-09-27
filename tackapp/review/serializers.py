@@ -1,9 +1,10 @@
 from rest_framework import serializers
 
+from core.custom_serializers import CustomModelSerializer
 from review.models import Review
 
 
-class ReviewSerializer(serializers.ModelSerializer):
+class ReviewSerializer(CustomModelSerializer):
     class Meta:
         model = Review
         fields = "__all__"

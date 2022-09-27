@@ -1,7 +1,5 @@
 import logging
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
@@ -13,20 +11,19 @@ from user.services import create_api_accounts, deactivate_dwolla_customer, delet
 
 
 ws_sender = WSSender()
-logger = logging.getLogger()
-logger.warning(f"in User signals {ws_sender = }")
+logger = logging.getLogger('django')
 
 
 @receiver(signal=post_save, sender=User)
 def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs):
     if created and not instance.is_superuser:
-        # stripe_id, dwolla_id = create_api_accounts(instance)
+        stripe_id, dwolla_id = create_api_accounts(instance)
 
         # Creating record in our system
         BankAccount.objects.create(
             user=instance,
-            # stripe_user=stripe_id,
-            # dwolla_user=dwolla_id
+            stripe_user=stripe_id,
+            dwolla_user=dwolla_id
         )
     ws_sender.send_message(
         f"user_{instance.id}",

@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from celery import shared_task
@@ -8,11 +9,14 @@ from django.utils import timezone
 
 from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
-from core.choices import TackStatus, OfferStatus
+from core.choices import TackStatus, OfferStatus, NotificationType
+from tack.notification import build_ntf_message
 from user.models import User
 
 from fcm_django.models import FCMDevice
-from .notification import create_message, send_message
+
+
+logger_services = logging.getLogger("django")
 
 
 @shared_task
@@ -20,7 +24,7 @@ from .notification import create_message, send_message
 def change_tack_status_finished(tack_id: int):
     tack = Tack.objects.get(pk=tack_id)
     if tack.status != TackStatus.FINISHED:
-        send_payment_to_runner(tack)
+        tack.is_paid = send_payment_to_runner(tack)
         tack.status = TackStatus.FINISHED
         tack.tacker.tacks_amount += 1
         tack.runner.tacks_amount += 1
@@ -31,12 +35,12 @@ def change_tack_status_finished(tack_id: int):
 
 @shared_task
 @transaction.atomic
-def delete_offer_task(offer_id: int) -> None:
+def set_expire_offer_task(offer_id: int) -> None:
     try:
         offer = Offer.objects.get(pk=offer_id)
     except ObjectDoesNotExist:
         return None
-    if offer.status != OfferStatus.ACCEPTED:
+    if offer.status == OfferStatus.CREATED:
         offer.set_expired_status()
 
 
@@ -57,15 +61,33 @@ def set_tack_active_on_user_last_login(user_id: int) -> None:
 
 
 @shared_task
-def tack_long_inactive(tack_id, user_id, data, nf_types) -> None:
-    if not Offer.objects.filter(tack=tack_id).exists():
-        messages = create_message(data, nf_types)
-        devices = FCMDevice.objects.filter(user=user_id)
-        send_message(messages, (devices, ))
+def tack_long_inactive(tack_id) -> None:
+    # if this tack already had offers - do not send notification
+    logger_services.debug("tack.tasks.tack_long_inactive")
+    if Offer.objects.filter(tack=tack_id).exists():
+        return
+    # if this tack is not in active objects(deleted) - do not send notification
+    try:
+        if tack := Tack.active.get(id=tack_id):
+            if tack.status != TackStatus.CREATED:
+                return
+            message = build_ntf_message(NotificationType.TACK_INACTIVE, tack)
+            FCMDevice.objects.filter(
+                user_id=tack.tacker_id
+            ).send_message(message)
+    except Tack.DoesNotExist:
+        return
 
 
 @shared_task
-def tack_expire_soon(user_id, data, nf_types) -> None:
-    messages = create_message(data, nf_types)
-    devices = FCMDevice.objects.filter(user=user_id)
-    send_message(messages, (devices, ))
+def tack_will_expire_soon(offer_id) -> None:
+    try:
+        offer = Offer.active.get(id=offer_id)
+    except Offer.DoesNotExist:
+        return
+    if offer.status != OfferStatus.IN_PROGRESS:
+        return
+    message = build_ntf_message(NotificationType.TACK_EXPIRING, offer)
+    FCMDevice.objects.filter(
+        user_id=offer.runner_id
+    ).send_message(message)

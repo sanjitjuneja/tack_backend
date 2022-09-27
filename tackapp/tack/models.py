@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
@@ -7,15 +7,16 @@ from django.db.models import UniqueConstraint, Q
 
 from core.abstract_models import CoreModel
 from core.choices import TackStatus, OfferType, TackType, OfferStatus
+from payment.models import BankAccount
 from user.models import User
 
 
 class Tack(CoreModel):
     tacker = models.ForeignKey(
-        "user.User", on_delete=models.CASCADE, related_name="tack_tacker"
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="tack_tacker"
     )
     runner = models.ForeignKey(
-        "user.User", on_delete=models.SET_NULL, related_name="tack_runner", null=True, blank=True
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="tack_runner",
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
@@ -46,6 +47,19 @@ class Tack(CoreModel):
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
 
+    def cancel(self):
+        with transaction.atomic():
+            if self.accepted_offer:
+                self.accepted_offer.status = OfferStatus.CANCELLED
+                self.accepted_offer.is_active = False
+            self.is_active = False
+            self.is_canceled = True
+            ba = BankAccount.objects.get(user=self.tacker)
+            ba.usd_balance += self.price
+            ba.save()
+            self.accepted_offer.save()
+            self.save()
+
     def change_status(self, status: str):
         self.status = status
         self.save()
@@ -69,7 +83,7 @@ class Tack(CoreModel):
 
 class Offer(CoreModel):
     tack = models.ForeignKey("tack.Tack", on_delete=models.CASCADE)
-    runner = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    runner = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL)
     price = models.IntegerField(
         validators=(
             MinValueValidator(0),
@@ -90,6 +104,10 @@ class Offer(CoreModel):
         self.is_active = False
         self.save()
 
+    def delete(self, using=None, keep_parents=False):
+        self.status = OfferStatus.DELETED
+        super().delete()
+
     class Meta:
         db_table = "offers"
         verbose_name = "Offer"
@@ -105,7 +123,7 @@ class Offer(CoreModel):
 
 class PopularTack(models.Model):
     tacker = models.ForeignKey(
-        "user.User", on_delete=models.CASCADE, null=True, blank=True, default=None
+        "user.User", null=True, blank=True, on_delete=models.SET_NULL, default=None
     )
     title = models.CharField(max_length=64)
     type = models.CharField(
