@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  nginx:
+    container_name: 'nginx'
+    restart: always
+    build: ./nginx
+    env_file:
+      - tackapp/dev.env
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
   web:
     container_name: 'web'
     build: .
@@ -10,10 +21,7 @@ services:
       - .:/app/
     env_file:
       - tackapp/dev.env
-#    command: ["daphne", "-b", "0.0.0.0", "-p", "8020", "tackapp.asgi:application"]
-    command: ["python3", "manage.py", "runserver", "0.0.0.0:80"]
-    ports:
-      - "80:80"
+    command: ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
     depends_on:
       - postgres
 
