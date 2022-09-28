@@ -150,6 +150,8 @@ if DEBUG:
 
 INSTALLED_APPS = [
     "debug_toolbar",
+    "jet.dashboard",
+    "jet",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -294,7 +296,7 @@ STATICFILES_STORAGE = 'tackapp.storage_backends.StaticStorage'
 PUBLIC_MEDIA_LOCATION = read_secrets(app, env, 'PUBLIC_MEDIA_LOCATION')
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
 DEFAULT_FILE_STORAGE = 'tackapp.storage_backends.PublicMediaStorage'
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'staticfiles'),)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -334,7 +336,6 @@ MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
-logger.warning(f"{CELERY_BROKER_URL = }")
 
 
 SIMPLE_JWT = {
@@ -401,8 +402,8 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+# with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+#     json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 
@@ -423,3 +424,6 @@ S3_BUCKET_TACKAPPSTORAGE = AWS_S3_CUSTOM_DOMAIN
 S3_BUCKET_CARDS = "payment_methods/cards"
 S3_BUCKET_BANKS = "payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
+
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
