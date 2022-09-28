@@ -426,4 +426,6 @@ S3_BUCKET_BANKS = "payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = 'SAMEORIGIN'
+JET_DEFAULT_THEME = 'light-green'
+JET_SIDE_MENU_COMPACT = True

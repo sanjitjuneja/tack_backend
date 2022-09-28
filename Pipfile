@@ -47,7 +47,7 @@ fcm-django = "*"
 firebase-admin = "*"
 dj-stripe = "*"
 python-json-logger = "*"
-django-jet-4 = "*"
+django-jet-reboot = "*"
 
 [dev-packages]
 
