@@ -2,25 +2,33 @@ from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
+
+from core.choices import TackStatus
 from .models import Tack, Offer, PopularTack
 
 
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        parent_id = request.resolver_match.kwargs['object_id']
-        if db_field.name == "accepted_offer":
-            kwargs["queryset"] = Offer.active.filter(tack_id=parent_id)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
     list_per_page = 50
     list_display = ['id', 'tacker', 'runner', 'status', 'title', 'price', 'view_num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_filter = ['allow_counter_offer', 'status', 'creation_time']
     advanced_filter_fields = (
         'status',
     )
-    search_fields = ("tacker__name__contains",)
+    search_fields = ("tacker__first_name", "tacker__last_name", "runner__first_name", "runner__last_name", "group__name", "group__id")
+    search_help_text = "Search by Tacker name, Runner name, Group name, Group id"
     ordering = ('-id',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        parent_id = request.resolver_match.kwargs.get('object_id')
+        if db_field.name == "accepted_offer":
+            kwargs["queryset"] = Offer.active.filter(tack_id=parent_id)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    @admin.action(description='Cancel selected Tacks')
+    def make_published(self, request, queryset):
+        if queryset.count() == queryset.filter(status_in=(TackStatus.CREATED, TackStatus.ACTIVE)).count():
+            queryset.update(is_active=False, is_canceled=True)
 
     @admin.display(description="Offer count")
     def view_num_offers(self, obj) -> int:
@@ -38,6 +46,19 @@ class PopularTacksAdmin(ModelAdmin):
 
 @admin.register(Offer)
 class OfferAdmin(ModelAdmin):
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        parent_id = request.resolver_match.kwargs.get('object_id')
+        if db_field.name == "tack":
+            kwargs["queryset"] = Tack.active.filter(
+                tack_id=parent_id
+            ) if parent_id else \
+                Tack.active.filter(
+                    status__in=(
+                        TackStatus.CREATED,
+                        TackStatus.ACTIVE
+                    )
+                )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
     list_per_page = 50
     list_display = ['id', 'view_offer_str', 'status', 'is_active', 'offer_type', 'price']
     list_filter = ['offer_type', 'is_active', 'status']

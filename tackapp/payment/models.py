@@ -17,7 +17,7 @@ class BankAccount(models.Model):
         ),
         default=0
     )
-    stripe_user = models.CharField(max_length=64)
+    stripe_user = models.CharField(max_length=64, null=True, blank=True, default=None)
     dwolla_user = models.CharField(max_length=64, null=True, blank=True, default=None)
     dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
 
