@@ -150,9 +150,10 @@ if DEBUG:
 
 INSTALLED_APPS = [
     "debug_toolbar",
-    "jet.dashboard",
-    "jet",
-    "django.contrib.admin",
+    # "jet.dashboard",
+    # "jet",
+    "custom_admin.apps.CustomAdminConfig",
+    # "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -427,5 +428,3 @@ S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
 
 # X_FRAME_OPTIONS = 'SAMEORIGIN'
-JET_DEFAULT_THEME = 'light-green'
-JET_SIDE_MENU_COMPACT = True

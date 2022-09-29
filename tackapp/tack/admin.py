@@ -1,13 +1,25 @@
-from django.contrib import admin
+import logging
+
 from django.contrib.admin import ModelAdmin
 
+from django.contrib import admin
 from .models import Tack, Offer, PopularTack
+
+
+logger = logging.getLogger('django')
 
 
 @admin.register(Tack)
 class TackAdmin(ModelAdmin):
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        parent_id = request.resolver_match.kwargs['object_id']
+        if db_field.name == "accepted_offer":
+            kwargs["queryset"] = Offer.active.filter(tack_id=parent_id)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     list_display = ['id', 'tacker', 'runner', 'status', 'title', 'price', 'allow_counter_offer', 'group']
     list_filter = ['allow_counter_offer', 'status']
+
     search_fields = ("tacker__name__contains",)
     ordering = ('-id',)
 
@@ -24,6 +36,7 @@ class PopularTacksAdmin(ModelAdmin):
 class OfferAdmin(ModelAdmin):
     list_display = ['id', 'view_offer_str', 'status', 'is_active', 'offer_type', 'price']
     list_filter = ['offer_type', 'is_active', 'status']
+    search_fields = ['id', 'title', 'description', 'runner']
     ordering = ('-id',)
 
     @admin.display(empty_value='???')
