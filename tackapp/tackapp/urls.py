@@ -13,6 +13,7 @@ from user.auth_backend import CustomJWTSerializer, CustomTokenObtainPairView
 urlpatterns = [
     # re_path(r"^jet/", include("jet.urls", "jet")),
     # re_path(r"jet/dashboard/", include("jet.dashboard.urls", "jet-dashboard")),
+    re_path(r'^advanced_filters/', include('advanced_filters.urls')),
     re_path(r"admin/", admin.site.urls),
     re_path(r"api/v1/", include("tack.urls")),
     re_path(r"api/v1/", include("user.urls")),

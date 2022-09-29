@@ -100,8 +100,6 @@ logger = logging.getLogger('django')
 app = os.getenv("APP")
 logger.info(f"{app = }")
 if app == "dev":
-    # env = environ.Env(DEBUG=(bool, True))
-    # env.read_env(os.path.join(BASE_DIR, "dev.env"))
     temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "dev.env"))
     env = receive_setting_secrets(
@@ -111,6 +109,10 @@ if app == "dev":
         "dev/tackapp/django"
     )
     DEBUG = env.get("DEBUG")
+elif app == "local":
+    env = environ.Env(DEBUG=(bool, True))
+    env.read_env(os.path.join(BASE_DIR, "local.env"))
+    DEBUG = read_secrets(app, env, "DEBUG")
 else:
     temp_env = environ.Env(DEBUG=(bool, False))
     temp_env.read_env(os.path.join(BASE_DIR, "prod.env"))
@@ -177,6 +179,7 @@ INSTALLED_APPS = [
     "storages",
     "fcm_django",
     "django_celery_beat",
+    "advanced_filters"
 ]
 
 

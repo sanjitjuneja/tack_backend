@@ -1,12 +1,23 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:14.4-alpine
+    container_name: 'postgres'
+    restart: always
+    volumes:
+      - ./database:/var/lib/postgresql
+    env_file:
+      - tackapp/local.env
+    ports:
+      - "5432:5432"
+
   nginx:
     container_name: 'nginx'
     restart: always
     build: ./nginx
     env_file:
-      - tackapp/dev.env
+      - tackapp/local.env
     ports:
       - "80:80"
     depends_on:
@@ -17,11 +28,13 @@ services:
     build: .
     restart: always
     entrypoint: ["/app/docker-entrypoint.sh"]
-#    volumes:
-#      - .:/app/
+    volumes:
+      - .:/app/
     env_file:
-      - tackapp/dev.env
+      - tackapp/local.env
     command: ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on:
+      - postgres
 
   celery:
     build: .
@@ -29,7 +42,7 @@ services:
     restart: always
     command: celery -A tackapp worker --loglevel=info --logfile=celery.log
     env_file:
-      - tackapp/dev.env
+      - tackapp/local.env
     depends_on:
       - web
       - redis
@@ -46,7 +59,7 @@ services:
     image: rabbitmq:3.10-management
     restart: always
     env_file:
-      - tackapp/dev.env
+      - tackapp/local.env
     ports:
       - "15672:15672"
 
@@ -58,7 +71,7 @@ services:
     ports:
       - "5555:5555"
     env_file:
-      - tackapp/dev.env
+      - tackapp/local.env
     depends_on:
       - web
       - redis
