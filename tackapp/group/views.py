@@ -2,6 +2,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Prefetch, Q
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
@@ -9,7 +10,7 @@ from rest_framework import viewsets, parsers, mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from core.choices import TackStatus, OfferStatus
 from core.permissions import GroupOwnerPermission, GroupMemberPermission, InviteePermission
@@ -98,11 +99,13 @@ class GroupViewset(
         methods=("GET",),
         detail=False,
         serializer_class=GroupInviteLinkSerializer,
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(AllowAny,)
     )
     def invite(self, request, *args, **kwargs):
         """Endpoint for accepting invitation from Invitation Link"""
 
+        if request.user.is_anonymous:
+            return TemplateResponse(request, 'browser_group_invite.html', context={})
         serializer = self.get_serializer(data=request.query_params)
         try:
             serializer.is_valid(raise_exception=True)
