@@ -403,8 +403,8 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-# with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-#     json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 

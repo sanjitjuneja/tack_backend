@@ -6,12 +6,14 @@ from .models import PhoneVerification, TimeoutSettings, FailedLoginAttempts, Not
 
 @admin.register(PhoneVerification)
 class PhoneVerificationAdmin(ModelAdmin):
+    list_per_page = 100
     list_display = ['uuid', 'user', 'phone_number', 'sms_code', 'sms_type', 'is_verified']
     search_fields = ("phone_number__contains",)
 
 
 @admin.register(FailedLoginAttempts)
 class FailedLoginAttemptsAdmin(ModelAdmin):
+    list_per_page = 100
     list_display = ['credentials', 'device_id', 'user', 'device_type', 'device_name', 'timestamp']
     search_fields = ("device_id", "user", 'device_name', 'device_type', 'credentials')
 

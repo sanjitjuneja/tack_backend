@@ -1,12 +1,7 @@
-import logging
-
 from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
 from .models import Tack, Offer, PopularTack
-
-
-logger = logging.getLogger('django')
 
 
 @admin.register(Tack)
@@ -17,15 +12,16 @@ class TackAdmin(ModelAdmin):
             kwargs["queryset"] = Offer.active.filter(tack_id=parent_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    list_per_page = 50
     list_display = ['id', 'tacker', 'runner', 'status', 'title', 'price', 'allow_counter_offer', 'group']
     list_filter = ['allow_counter_offer', 'status']
-
     search_fields = ("tacker__name__contains",)
     ordering = ('-id',)
 
 
 @admin.register(PopularTack)
 class PopularTacksAdmin(ModelAdmin):
+    list_per_page = 50
     list_display = ['id', 'title', 'group', 'price', 'allow_counter_offer']
     list_display_links = ['title']
     list_filter = ['allow_counter_offer', 'group']
@@ -34,6 +30,7 @@ class PopularTacksAdmin(ModelAdmin):
 
 @admin.register(Offer)
 class OfferAdmin(ModelAdmin):
+    list_per_page = 50
     list_display = ['id', 'view_offer_str', 'status', 'is_active', 'offer_type', 'price']
     list_filter = ['offer_type', 'is_active', 'status']
     search_fields = ['id', 'title', 'description', 'runner']
