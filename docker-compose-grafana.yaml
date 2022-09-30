@@ -24,7 +24,8 @@ services:
 #      - "8080:80"
 
   grafana:
-    image: grafana/grafana
+#    image: grafana/grafana
+    image: grafana/grafana-enterprise
     container_name: 'grafana'
     user: "0"
     volumes:
