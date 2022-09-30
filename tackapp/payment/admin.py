@@ -16,6 +16,8 @@ class ReadOnlyMixin:
 class BankAccountAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    search_fields = ('user', 'user__firstname', 'user__lastname', 'stripe_user', 'dwolla_user')
+    search_help_text = "Search by User id, name, stripe id, dwolla id"
     ordering = ('id',)
 
 
@@ -23,6 +25,8 @@ class BankAccountAdmin(ModelAdmin):
 class UserPaymentMethodsAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ('bank_account', 'dwolla_payment_method')
+    search_fields = ('bank_account', 'dwolla_payment_method')
+    search_help_text = "Search by Bank account id, Dwolla method id"
     ordering = ('id',)
 
 
@@ -62,4 +66,5 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'transaction_id',
     )
     list_filter = ('creation_time', 'service_name', 'action_type')
-    search_fields = ('user', 'transaction_id')
+    search_fields = ('user', 'user__firstname', 'user_lastname', 'transaction_id')
+    search_help_text = "Search by User id, name, Transaction id"

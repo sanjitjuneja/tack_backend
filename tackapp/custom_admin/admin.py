@@ -19,12 +19,12 @@ class MyAdminSite(admin.AdminSite):
             "User": 4,
             "Payment": 5,
             "Socials": 6,
-            "[tackapp]": 7,
-            "djstripe": 8,
-            "FCM devices": 9,
-            "Dwolla service": 10,
-            "Periodic Tasks": 11,
-            "Token Blacklist": 12
+            "FCM Devices": 7,
+            "Periodic Tasks": 8,
+            "Token Blacklist": 9,
+            "ADVANCED_FILTERS": 10,
+            "djstripe": 11,
+            "Dwolla service": 12,
         }
         app_list = sorted(app_list, key=lambda x: ordering[x['name']] if x['name'] in ordering else 100)
         return app_list
