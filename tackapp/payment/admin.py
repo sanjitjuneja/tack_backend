@@ -74,19 +74,19 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
     def human_readable_amount_requested(self, obj: Transaction):
         decimal_amount = convert_to_decimal(obj.amount_requested)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
 
     @admin.display(description="Total", ordering='amount_with_fees')
     def human_readable_amount_with_fees(self, obj: Transaction):
         decimal_amount = convert_to_decimal(obj.amount_with_fees)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
 
     @admin.display(description="Service fee", ordering='service_fee')
     def human_readable_service_fee(self, obj: Transaction):
         decimal_amount = convert_to_decimal(obj.service_fee)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"

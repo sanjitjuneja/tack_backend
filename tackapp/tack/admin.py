@@ -1,5 +1,3 @@
-from decimal import Decimal, Context
-
 from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
@@ -59,8 +57,8 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     def human_readable_price(self, obj):
         decimal_amount = convert_to_decimal(obj.price)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
 
 
 @admin.register(PopularTack)
@@ -79,8 +77,8 @@ class PopularTacksAdmin(ModelAdmin):
             return "-"
         decimal_amount = convert_to_decimal(obj.price)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
 
 
 @admin.register(Offer)
@@ -116,5 +114,5 @@ class OfferAdmin(ModelAdmin):
             return "-"
         decimal_amount = convert_to_decimal(obj.price)
         if decimal_amount % 1:
-            return f"{decimal_amount:.2f}"
-        return str(decimal_amount)
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
