@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
 from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee, Transaction
+from .services import convert_to_decimal
 
 
 class ReadOnlyMixin:
@@ -57,9 +58,9 @@ class ServiceFeeAdmin(ModelAdmin):
 class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
     list_display = (
         'user',
-        'amount_requested',
-        'amount_with_fees',
-        'service_fee',
+        'human_readable_amount_requested',
+        'human_readable_amount_with_fees',
+        'human_readable_service_fee',
         'service_name',
         'action_type',
         'is_succeeded',
@@ -68,3 +69,24 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
     list_filter = ('creation_time', 'service_name', 'action_type')
     search_fields = ('user', 'user__firstname', 'user_lastname', 'transaction_id')
     search_help_text = "Search by User id, name, Transaction id"
+
+    @admin.display(description="Requested", ordering='amount_requested')
+    def human_readable_amount_requested(self, obj: Transaction):
+        decimal_amount = convert_to_decimal(obj.amount_requested)
+        if decimal_amount % 1:
+            return f"{decimal_amount:.2f}"
+        return str(decimal_amount)
+
+    @admin.display(description="Total", ordering='amount_with_fees')
+    def human_readable_amount_with_fees(self, obj: Transaction):
+        decimal_amount = convert_to_decimal(obj.amount_with_fees)
+        if decimal_amount % 1:
+            return f"{decimal_amount:.2f}"
+        return str(decimal_amount)
+
+    @admin.display(description="Service fee", ordering='service_fee')
+    def human_readable_service_fee(self, obj: Transaction):
+        decimal_amount = convert_to_decimal(obj.service_fee)
+        if decimal_amount % 1:
+            return f"{decimal_amount:.2f}"
+        return str(decimal_amount)
