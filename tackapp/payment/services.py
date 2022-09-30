@@ -66,7 +66,7 @@ def get_dwolla_payment_methods(dwolla_user_id):
 
 def get_link_token(dwolla_id_user):
     """Get link token for FE to initiate plaid authentication"""
-
+    logger.debug("INSIDE get_link_token")
     request = LinkTokenCreateRequest(
         products=[Products('transactions')],  # , Products("identity_verification")],
         client_name="Plaid Test App",
@@ -89,6 +89,7 @@ def get_link_token(dwolla_id_user):
     )
 
     link_token = plaid_client.link_token_create(request)
+    logger.debug(f"Plaid {link_token = }")
     return link_token['link_token']
 
 
