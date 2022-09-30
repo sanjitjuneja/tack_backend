@@ -57,28 +57,28 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'payment_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/payments.log',
-            'formatter': 'json_formatter'
-        },
-        'sql_measurement': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/sql_queues.log',
-            'formatter': 'json_formatter'
-        }
+        # 'payment_file': {
+        #     'level': 'INFO',
+        #     'class': 'logging.FileHandler',
+        #     'filename': 'logs/payments.log',
+        #     'formatter': 'json_formatter'
+        # },
+        # 'sql_measurement': {
+        #     'level': 'INFO',
+        #     'class': 'logging.FileHandler',
+        #     'filename': 'logs/sql_queues.log',
+        #     'formatter': 'json_formatter'
+        # }
     },
     'loggers': {
         'django': {
             'handlers': ('console',),
             'propagate': True,
         },
-        'payments': {
-            'handlers': ('payment_file',),
-            'level': 'INFO'
-        },
+        # 'payments': {
+        #     'handlers': ('payment_file',),
+        #     'level': 'INFO'
+        # },
         'tackapp.consumers': {
             'handlers': ('console',),
             'level': 'INFO'
@@ -87,13 +87,13 @@ LOGGING = {
             'handlers': ('console',),
             'level': 'ERROR'
         },
-        'sql_time_measurement': {
-            'handlers': ('sql_measurement',),
-            'level': 'INFO'
-        }
+        # 'sql_time_measurement': {
+        #     'handlers': ('sql_measurement',),
+        #     'level': 'INFO'
+        # }
     }
 }
-os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+# os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
 logger = logging.getLogger('django')
 
 
@@ -406,14 +406,14 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+# with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+#     json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
      # default: _('FCM Django')
-    "APP_VERBOSE_NAME": "[tackapp]",
+    "APP_VERBOSE_NAME": "FCM Devices",
      # true if you want to have only one active device per registered user at a time
      # default: False
     "ONE_DEVICE_PER_USER": False,

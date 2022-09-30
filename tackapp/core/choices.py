@@ -112,3 +112,9 @@ class NotificationType(models.TextChoices):
     OFFER_EXPIRED = "offer_expired", "Offer expired"
 
 
+class TackerType(models.TextChoices):
+    INACTIVE = "Inactive", "Inactive User"
+    ACTIVE = "Active", "Active user"
+    TACKER = "Tacker", "Tacker"
+    RUNNER = "Runner", "Runner"
+    SUPER_ACTIVE = "Super Active", "Super Active User"

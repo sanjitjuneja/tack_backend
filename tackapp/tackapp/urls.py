@@ -19,8 +19,8 @@ urlpatterns = [
     re_path(r"api/v1/", include("user.urls")),
     re_path(r"api/v1/", include("group.urls")),
     re_path(r"api/v1/", include("review.urls")),
-    re_path(r"api/v1/", include("payment.urls")),
-    re_path(r"api/v1/", include("socials.urls")),
+    # re_path(r"api/v1/", include("payment.urls")),
+    # re_path(r"api/v1/", include("socials.urls")),
     re_path(r"api/v1/tokens/obtain/",
             CustomTokenObtainPairView.as_view(
                 serializer_class=CustomJWTSerializer
@@ -29,7 +29,7 @@ urlpatterns = [
     re_path(r"api/v1/tokens/refresh/", TokenRefreshView.as_view(), name='token_refresh'),
     re_path(r"api/v1/tokens/verify/", TokenVerifyView.as_view(), name='token_verify'),
     re_path(r"api/v1/tokens/blacklist/", TokenBlacklistView.as_view(), name='token_blacklist'),
-    re_path(r"stripe/", include("djstripe.urls", namespace="djstripe")),
+    # re_path(r"stripe/", include("djstripe.urls", namespace="djstripe")),
     re_path(r"healthcheck/", HealthCheck.as_view()),
 
     re_path(r'api/schema/', SpectacularAPIView.as_view(), name='schema'),

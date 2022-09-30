@@ -1,13 +1,15 @@
-import unicodedata
+from datetime import timedelta
 
+from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm, ReadOnlyPasswordHashField
-from django.forms import forms, CharField, ModelForm
-from django.contrib.sessions.models import Session
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.db.models import Q
+from django.utils import timezone
 
+from core.choices import TackerType, TackStatus
+from tack.models import Tack
 from .models import *
 from django.utils.translation import gettext_lazy as _
 
@@ -40,8 +42,9 @@ class CustomUserAdmin(UserAdmin):
         "is_staff", "username",
     )
     list_display_links = "phone_number",
-    search_fields = ("first_name__contains", "last_name__contains", "phone_number__contains",
-                     "email__contains", "username__contains")
+    search_fields = ("first_name", "last_name", "phone_number",
+                     "email", "username")
+    search_help_text = "Search by User name, username, phone number, email"
     fieldsets = (
         (None, {"fields": ("phone_number", "password")}),
         (_("Personal info"), {"fields": (
@@ -71,4 +74,48 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("id",)
 
 
-admin.site.register(User, CustomUserAdmin)
+@admin.register(User)
+class UserAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
+    list_per_page = 50
+    list_display = ['id', 'phone_number', 'first_name', 'last_name', 'tacker_type']
+    list_display_links = ("phone_number",)
+    list_filter = ['is_staff']
+    advanced_filter_fields = (
+        'tacks_rating',
+        'tacks_amount',
+    )
+    search_fields = (
+        "phone_number",
+        "first_name",
+        "last_name",
+        "email",
+    )
+    search_help_text = "Search by User first_name, last_name, email, phone_number"
+    ordering = ('-id',)
+
+    @admin.display(description="Tacker type")
+    def tacker_type(self, obj: User) -> TackerType:
+        week_related_tacks = Tack.objects.filter(
+            Q(tacker=obj) | Q(runner=obj),
+            creation_time__gte=timezone.now() - timedelta(days=7),
+        )
+        week_num_runner_tacks = week_related_tacks.filter(
+            runner=obj,
+            status__in=(
+                           TackStatus.WAITING_REVIEW,
+                           TackStatus.FINISHED
+                       )).count()
+        week_num_tacker_tacks = week_related_tacks.filter(
+            tacker=obj,
+        ).count()
+        if not obj.last_login:
+            return TackerType.INACTIVE
+        if obj.last_login <= timezone.now() - timedelta(days=7):
+            return TackerType.INACTIVE
+        if week_num_runner_tacks >= 3 and week_num_tacker_tacks >= 1:
+            return TackerType.SUPER_ACTIVE
+        if week_num_runner_tacks >= 3:
+            return TackerType.RUNNER
+        if week_num_tacker_tacks >= 1:
+            return TackerType.TACKER
+        return TackerType.ACTIVE
