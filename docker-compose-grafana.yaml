@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+
+  kafka:
+    image: spotify/kafka
+    hostname: kafka
+    container_name: kafka
+    volumes:
+      - /storage/kafka/kafka-logs:/tmp/kafka-logs
+    ports:
+      - "2181:2181"
+      - "9092:9092"
+    environment:
+      ADVERTISED_HOST: kafka
+      ADVERTISED_PORT: 9092
+      LOG_RETENTION_HOURS: 1440
+
+#  graphite:
+#    image: sitespeedio/graphite
+#    ports:
+#      - "2003:2003"
+#      - "2004:2004"
+#      - "8080:80"
+
+  grafana:
+    image: grafana/grafana
+    container_name: 'grafana'
+    user: "0"
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_INSTALL_PLUGINS: mongodb-datasource
+      GF_PLUGIN_ADMIN_ENABLED: "true"
+      GF_SECURITY_ADMIN_USER: awerty_naxis
+      GF_SECURITY_ADMIN_PASSWORD: Legendarno1994
+#      GF_PLUGIN_REPO: https://github.com/grafana/mongodb-datasource/
+#      GF_PLUGIN_URL: https://github.com/hoptical/grafana-kafka-datasource/releases/download/v0.2.0/hamedkarbasi93-kafka-datasource-0.2.0.zip
+#    links:
+#      - graphite
+
+#  postgres:
+#    image: postgres:14.4-alpine
+#    container_name: 'postgres'
+#    restart: always
+#    volumes:
+#      - ./database:/var/lib/postgresql
+#    env_file:
+#      - tackapp/dev.env
+#    ports:
+#      - "5432:5432"
