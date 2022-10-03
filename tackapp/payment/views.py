@@ -339,7 +339,13 @@ class DwollaMoneyWithdraw(views.APIView):
                     "details": e.detail,
                 },
                 status=400)
-
+        if not request.user.allowed_to_withdraw:
+            return Response(
+                {
+                    "error": "Px8",
+                    "message": "You are not allowed to withdraw money"
+                },
+                status=400)
         try:
             ba = BankAccount.objects.get(user=request.user)
             if ba.usd_balance < serializer.validated_data["amount"]:
