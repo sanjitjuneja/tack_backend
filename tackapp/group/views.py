@@ -178,9 +178,9 @@ class GroupViewset(
                     },
                     status=400)
 
-            if request.user.active_group == group:
-                request.user.active_group = None
-                request.user.save()
+            # if request.user.active_group == group:
+            #     request.user.active_group = None
+            #     request.user.save()
             gm.delete()
         except ObjectDoesNotExist:
             return Response(

@@ -44,6 +44,9 @@ class GroupMembers(models.Model):
     is_muted = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Group.id: {self.group_id}, User.id: {self.member_id}, is_muted: {self.is_muted}"
+
     class Meta:
         db_table = "group_membership"
         verbose_name = "Group membership"
