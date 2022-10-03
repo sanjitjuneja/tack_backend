@@ -3,8 +3,8 @@ from django.contrib import admin
 
 class MyAdminSite(admin.AdminSite):
     site_title = "Tack Admin"
-    site_header = "Tack administration"
-    index_title = "Tack administration"
+    site_header = "Tack Admin Dashboard"
+    index_title = "Tack Admin Dashboard"
 
     def get_app_list(self, request):
         app_list = super().get_app_list(request)
