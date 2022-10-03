@@ -92,7 +92,7 @@ class AddBalanceStripe(views.APIView):
             pi = stripe.PaymentIntent.create(**pi_request)
             Transaction.objects.create(
                 user=request.user,
-                service_name=PaymentService.STRIPE,
+                service_name=PaymentService.STRIPE if payment_method else PaymentService.DIGITAL_WALLET,
                 action_type=PaymentAction.DEPOSIT,
                 amount_requested=serializer.validated_data["amount"],
                 amount_with_fees=amount_with_fees,
