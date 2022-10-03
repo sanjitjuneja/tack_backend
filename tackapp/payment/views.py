@@ -96,6 +96,7 @@ class AddBalanceStripe(views.APIView):
                 action_type=PaymentAction.DEPOSIT,
                 amount_requested=serializer.validated_data["amount"],
                 amount_with_fees=amount_with_fees,
+                fee_difference=current_transaction_loss,
                 service_fee=calculate_service_fee(
                     amount=amount_with_fees,
                     service=PaymentService.STRIPE),

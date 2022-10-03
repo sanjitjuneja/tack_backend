@@ -60,6 +60,7 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'user',
         'human_readable_amount_requested',
         'human_readable_amount_with_fees',
+        'human_readable_fee_difference',
         'human_readable_service_fee',
         'service_name',
         'action_type',
@@ -84,8 +85,19 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
 
+    @admin.display(description="Fee difference", ordering='fee_difference')
+    def human_readable_fee_difference(self, obj: Transaction):
+        if not obj.fee_difference:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.fee_difference)
+        if decimal_amount % 1:
+            return f"${decimal_amount:.2f}"
+        return f"${str(decimal_amount)}"
+
     @admin.display(description="Service fee", ordering='service_fee')
     def human_readable_service_fee(self, obj: Transaction):
+        if not obj.service_fee:
+            return "-"
         decimal_amount = convert_to_decimal(obj.service_fee)
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"

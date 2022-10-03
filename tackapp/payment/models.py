@@ -89,6 +89,7 @@ class Transaction(models.Model):
     amount_requested = models.PositiveIntegerField()
     amount_with_fees = models.PositiveIntegerField()
     service_fee = models.PositiveIntegerField()
+    fee_difference = models.SmallIntegerField(null=True, default=None)
     service_name = models.CharField(max_length=10, choices=PaymentService.choices)
     action_type = models.CharField(max_length=10, choices=PaymentAction.choices)
     transaction_id = models.CharField(max_length=255)

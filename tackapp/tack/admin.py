@@ -14,7 +14,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
     list_display = ['id', 'title', 'human_readable_price', 'tacker', 'runner', 'status', 'num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = ['allow_counter_offer', 'status', 'creation_time']
+    list_filter = ['allow_counter_offer', 'status', 'creation_time', 'group']
     advanced_filter_fields = (
         'status',
     )
