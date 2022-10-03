@@ -2,7 +2,7 @@ from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from core.choices import TackStatus
 from payment.services import convert_to_decimal
@@ -45,8 +45,17 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
 
     @admin.action(description='Cancel selected Tacks')
     def cancel_tacks(self, request, queryset):
-        if queryset.count() == queryset.filter(status_in=(TackStatus.CREATED, TackStatus.ACTIVE)).count():
+        if queryset.count() == queryset.filter(
+            Q(status_in=(
+                    TackStatus.CREATED,
+                    TackStatus.ACTIVE
+            )) |
+            Q(is_canceled=True)
+        ).count():
             queryset.update(is_active=False, is_canceled=True)
+        else:
+            for tack in queryset:
+                tack.cancel()
 
     @admin.display(description="Offer count")
     def num_offers(self, obj) -> int:
