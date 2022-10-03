@@ -349,13 +349,17 @@ def dwolla_transaction(
     service_fee = calculate_service_fee(amount=amount, service=PaymentService.DWOLLA)
     logger.debug(response.body)
     ba = BankAccount.objects.get(user=user)
-
+    current_transaction_loss = calculate_transaction_loss(
+        amount=amount,
+        service=PaymentService.DWOLLA
+    )
     Transaction.objects.create(
         user=user,
         transaction_id=transaction_id,
         service_name=PaymentService.DWOLLA,
         amount_requested=amount,
         amount_with_fees=amount_with_fees,
+        fee_difference=current_transaction_loss,
         service_fee=service_fee,
         action_type=action
     )

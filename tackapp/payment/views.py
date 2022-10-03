@@ -92,10 +92,11 @@ class AddBalanceStripe(views.APIView):
             pi = stripe.PaymentIntent.create(**pi_request)
             Transaction.objects.create(
                 user=request.user,
-                service_name=PaymentService.STRIPE,
+                service_name=PaymentService.STRIPE if payment_method else PaymentService.DIGITAL_WALLET,
                 action_type=PaymentAction.DEPOSIT,
                 amount_requested=serializer.validated_data["amount"],
                 amount_with_fees=amount_with_fees,
+                fee_difference=current_transaction_loss,
                 service_fee=calculate_service_fee(
                     amount=amount_with_fees,
                     service=PaymentService.STRIPE),
@@ -338,7 +339,13 @@ class DwollaMoneyWithdraw(views.APIView):
                     "details": e.detail,
                 },
                 status=400)
-
+        if not request.user.allowed_to_withdraw:
+            return Response(
+                {
+                    "error": "Px8",
+                    "message": "You are not allowed to withdraw money"
+                },
+                status=400)
         try:
             ba = BankAccount.objects.get(user=request.user)
             if ba.usd_balance < serializer.validated_data["amount"]:

@@ -48,15 +48,17 @@ class Tack(CoreModel):
     completion_time = models.DateTimeField(null=True, blank=True)
 
     def cancel(self):
+        if self.is_canceled:
+            return
         with transaction.atomic():
+            self.is_active = False
+            self.is_canceled = True
             if self.accepted_offer:
                 self.accepted_offer.status = OfferStatus.CANCELLED
                 self.accepted_offer.is_active = False
-            self.is_active = False
-            self.is_canceled = True
-            ba = BankAccount.objects.get(user=self.tacker)
-            ba.usd_balance += self.price
-            ba.save()
+                ba = BankAccount.objects.get(user=self.tacker)
+                ba.usd_balance += self.price
+                ba.save()
             self.accepted_offer.save()
             self.save()
 

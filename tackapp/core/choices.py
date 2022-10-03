@@ -71,8 +71,9 @@ class PaymentType(models.TextChoices):
 class PaymentService(models.TextChoices):
     """Choices for Payment services (Stripe, Dwolla)"""
 
-    STRIPE = "stripe", "Stripe"
-    DWOLLA = "dwolla", "Dwolla"
+    STRIPE = "stripe", "Stripe (Card)"
+    DIGITAL_WALLET = "d_wallet", "Stripe (Digital Wallet)"
+    DWOLLA = "dwolla", "Dwolla (Bank Account)"
 
 
 class PaymentAction(models.TextChoices):
