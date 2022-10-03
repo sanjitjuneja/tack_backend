@@ -68,7 +68,7 @@ def get_link_token(dwolla_id_user):
     """Get link token for FE to initiate plaid authentication"""
 
     request = LinkTokenCreateRequest(
-        products=[Products('auth'), Products('balance')],
+        products=[Products('auth')],
         client_name="TEST TACKAPP",
         country_codes=[CountryCode('US')],
         language='en',
