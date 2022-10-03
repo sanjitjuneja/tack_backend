@@ -68,8 +68,8 @@ def get_link_token(dwolla_id_user):
     """Get link token for FE to initiate plaid authentication"""
     logger.debug("INSIDE get_link_token")
     request = LinkTokenCreateRequest(
-        products=[Products('auth')],  # , Products("identity_verification")],
-        client_name="Tack App",
+        products=[Products('auth'), Products('balance')],  # , Products("identity_verification")],
+        client_name="Tack",
         country_codes=[CountryCode('US')],
         language='en',
         # webhook='https://sample-webhook-uri.com',
