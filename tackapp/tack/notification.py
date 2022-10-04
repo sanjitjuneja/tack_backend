@@ -109,15 +109,15 @@ def get_properties_dict(instance: Tack | Offer):
     match instance:
         case Tack() as tack:
             tack = tack
-            tacker = User.objects.get(id=tack.tacker_id)
-            runner = User.objects.get(id=tack.runner_id)
-            group = Group.objects.get(id=tack.group_id)
+            tacker = User.objects.filter(id=tack.tacker_id).first()
+            runner = User.objects.filter(id=tack.runner_id).first()
+            group = Group.objects.filter(id=tack.group_id).first()
             tack_or_offer_price = tack.price
         case Offer() as offer:
-            tack = Tack.objects.get(id=offer.tack_id)
-            tacker = User.objects.get(id=tack.tacker_id)
-            runner = User.objects.get(id=offer.runner_id)
-            group = Group.objects.get(id=tack.group_id)
+            tack = Tack.objects.filter(id=offer.tack_id).first()
+            tacker = User.objects.filter(id=tack.tacker_id).first()
+            runner = User.objects.filter(id=offer.runner_id).first()
+            group = Group.objects.filter(id=tack.group_id).first()
             tack_or_offer_price = offer.price or tack.price
         case _:
             return dict()
