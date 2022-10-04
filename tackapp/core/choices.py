@@ -114,8 +114,8 @@ class NotificationType(models.TextChoices):
 
 
 class TackerType(models.TextChoices):
-    INACTIVE = "Inactive", "Inactive User"
-    ACTIVE = "Active", "Active user"
-    TACKER = "Tacker", "Tacker"
-    RUNNER = "Runner", "Runner"
-    SUPER_ACTIVE = "Super Active", "Super Active User"
+    TACKER = "Active - Tacker", "Active - Tacker"
+    RUNNER = "Active - Runner", "Active - Runner"
+    SUPER_ACTIVE = "Active - Both", "Active - Both"
+    ACTIVE = "Active - Neither", "Active - Neither"
+    INACTIVE = "Inactive", "Inactive"

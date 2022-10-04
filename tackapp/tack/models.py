@@ -59,20 +59,15 @@ class Tack(CoreModel):
                 ba = BankAccount.objects.get(user=self.tacker)
                 ba.usd_balance += self.price
                 ba.save()
-            self.accepted_offer.save()
+                self.accepted_offer.save()
             self.save()
 
-    def change_status(self, status: str):
+    def change_status(self, status: TackStatus):
         self.status = status
         self.save()
 
     def is_participant(self, user: User):
         return not (self.tacker != user and self.runner != user)
-
-    # payment_status
-    # tacker rating
-    # finished by user or by celery task
-    # runner rating
 
     def __str__(self):
         return f"Tack {self.pk}: {self.title}"
