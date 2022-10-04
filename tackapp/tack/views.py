@@ -1,5 +1,7 @@
+import datetime
 import logging
 
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -265,6 +267,7 @@ class TackViewset(
         with transaction.atomic():
             tack.status = TackStatus.IN_PROGRESS
             tack.accepted_offer.status = OfferStatus.IN_PROGRESS
+            tack.start_completion_time = timezone.now()
             tack.save()
             tack.accepted_offer.save()
         return Response(self.get_serializer(tack).data)

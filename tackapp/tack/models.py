@@ -43,7 +43,9 @@ class Tack(CoreModel):
     # setting after Tacker accepts Runner's Offer
     accepted_time = models.DateTimeField(null=True, blank=True)
     accepted_offer = models.ForeignKey("tack.Offer", on_delete=models.SET_NULL, blank=True, null=True, default=None, related_name="tack_accepted_offer")
-    # setting after Runner completed the Tack
+    # setting after Runner started completing Tack
+    start_completion_time = models.DateTimeField(null=True, blank=True, default=None)
+    # setting after Runner completed Tack
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
 

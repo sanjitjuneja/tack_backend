@@ -119,9 +119,10 @@ class OfferAdmin(ModelAdmin):
 
     @admin.display(description="Price", ordering='price')
     def human_readable_price(self, obj):
-        if not obj.price:
+        price = obj.price if obj.price else obj.tack.price
+        if not price:
             return "-"
-        decimal_amount = convert_to_decimal(obj.price)
+        decimal_amount = convert_to_decimal(price)
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
