@@ -58,7 +58,7 @@ class StripeCardSerializer(serializers.Serializer):
     image = serializers.SerializerMethodField()
 
     def get_image(self, obj) -> str:
-        image = images_dict[obj["brand"]] if obj.get("brand") in images_dict else None
+        image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
         return image
 
 
