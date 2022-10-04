@@ -94,7 +94,7 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     bankAccountType = serializers.CharField(read_only=True)
     created = serializers.CharField(read_only=True)
     channels = serializers.ListField(read_only=True)
-    bankName = serializers.CharField(read_only=True)
+    bankName = serializers.CharField(read_only=True, source="name")
     image = serializers.SerializerMethodField()
     is_primary = serializers.BooleanField()
 
