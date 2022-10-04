@@ -104,11 +104,11 @@ class TackerTypeFilter(admin.SimpleListFilter):
         inactive_users = queryset.filter(
                     Q(last_login=None) | Q(last_login__lte=timezone.now() - timedelta(days=7))
                 ).values_list("pk", flat=True)
-        tackers = list(Tack.objects.filter(
+        last_week_tackers = list(Tack.objects.filter(
             creation_time__gte=timezone.now() - timedelta(days=7),
         ).values_list("tacker_id", flat=True))
 
-        runners = list(Tack.objects.filter(
+        last_week_runners = list(Tack.objects.filter(
             creation_time__gte=timezone.now() - timedelta(days=7),
             status__in=(
                 TackStatus.WAITING_REVIEW,
@@ -116,9 +116,9 @@ class TackerTypeFilter(admin.SimpleListFilter):
             )
         ).values_list("runner_id", flat=True))
 
-        counter_runners = collections.Counter(runners)
+        counter_runners = collections.Counter(last_week_runners)
+        counter_tackers = collections.Counter(last_week_tackers)
         filtered_runners = [key for key in counter_runners if counter_runners[key] >= 3 and key is not None]
-        counter_tackers = collections.Counter(tackers)
         filtered_tackers = [key for key in counter_tackers if counter_tackers[key] >= 1 and key is not None]
         super_active_users = list(set(filtered_tackers).intersection(filtered_runners))
         match self.value():

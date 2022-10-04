@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
@@ -12,9 +14,9 @@ from .models import Tack, Offer, PopularTack
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'human_readable_price', 'tacker', 'runner', 'status', 'num_offers', 'allow_counter_offer', 'group', 'creation_time']
+    list_display = ['id', 'title', 'human_readable_price', 'status', 'is_active', 'tacker', 'runner', 'num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = ['allow_counter_offer', 'status', 'creation_time', 'group']
+    list_filter = ['is_active', 'allow_counter_offer', 'status', 'creation_time', 'group']
     advanced_filter_fields = (
         'status',
     )
@@ -28,7 +30,14 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         "group__id",
     )
     search_help_text = "Search by Tack title, Tacker name, Runner name, Group id, name"
+    actions = ['cancel_tacks']
     ordering = ('-id',)
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -45,17 +54,8 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
 
     @admin.action(description='Cancel selected Tacks')
     def cancel_tacks(self, request, queryset):
-        if queryset.count() == queryset.filter(
-            Q(status_in=(
-                    TackStatus.CREATED,
-                    TackStatus.ACTIVE
-            )) |
-            Q(is_canceled=True)
-        ).count():
-            queryset.update(is_active=False, is_canceled=True)
-        else:
-            for tack in queryset:
-                tack.cancel()
+        for tack in queryset:
+            tack.cancel()
 
     @admin.display(description="Offer count")
     def num_offers(self, obj) -> int:
