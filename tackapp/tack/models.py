@@ -70,7 +70,7 @@ class Tack(CoreModel):
         return not (self.tacker != user and self.runner != user)
 
     def __str__(self):
-        return f"Tack {self.pk}: {self.title}"
+        return f"{self.pk}: {self.title}"
 
     class Meta:
         db_table = "tacks"
@@ -94,7 +94,7 @@ class Offer(CoreModel):
     status = models.CharField(max_length=12, choices=OfferStatus.choices, default=OfferStatus.CREATED)
 
     def __str__(self):
-        return f"Offer {self.id}: on {self.tack} from {self.runner}"
+        return f"{self.id}: {self.tack.title}"
 
     def set_expired_status(self):
         self.status = OfferStatus.EXPIRED

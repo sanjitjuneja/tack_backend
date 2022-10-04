@@ -106,7 +106,7 @@ class OfferAdmin(ModelAdmin):
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     list_per_page = 50
-    list_display = ['id', 'view_offer_str', 'status', 'is_active', 'offer_type', 'human_readable_price']
+    list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
     list_display_links = ("view_offer_str",)
     list_filter = ['offer_type', 'is_active', 'status']
     search_fields = ['id', 'title', 'description', 'tack__title', 'runner__firstname', 'runner__lastname']

@@ -7,11 +7,15 @@ from .models import *
 @admin.register(Group)
 class GroupAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ['name', 'owner', 'description', 'is_public']
+    list_display = ['name', 'creator', 'description']
     list_filter = ['is_public']
     search_fields = ("name", "id", "owner__firstname", "owner_lastname")
     search_help_text = "Search by Group name, id, Owner name"
     ordering = ('id',)
+
+    @admin.display(description="Creator")
+    def creator(self, obj: Group) -> str:
+        return str(obj.owner)
 
 
 @admin.register(GroupMembers)

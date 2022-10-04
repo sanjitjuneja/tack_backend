@@ -90,9 +90,14 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         if not obj.fee_difference:
             return "-"
         decimal_amount = convert_to_decimal(obj.fee_difference)
-        if decimal_amount % 1:
-            return f"${decimal_amount:.2f}"
-        return f"${str(decimal_amount)}"
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
 
     @admin.display(description="Service fee", ordering='service_fee')
     def human_readable_service_fee(self, obj: Transaction):
