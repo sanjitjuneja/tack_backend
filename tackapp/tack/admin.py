@@ -1,22 +1,71 @@
+import datetime
 import logging
+from datetime import timedelta
 
 from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet, Subquery, F, Value, ExpressionWrapper, IntegerField, DateTimeField, \
+    Func
+from django.utils import timezone
 
 from core.choices import TackStatus
 from payment.services import convert_to_decimal
 from .models import Tack, Offer, PopularTack
 
 
+class ExpiringTacksFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = 'Expiring tacks'
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'expiring_tacks'
+
+    def lookups(self, request, model_admin):
+        return (("expire_soon", "Expiring First"),)
+
+    def to_datetime(self, seconds):
+        return timedelta(seconds=seconds) + timezone.now()
+
+    def queryset(self, request, queryset: QuerySet[Tack]):
+        logger = logging.getLogger('django')
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        if self.value() == "expire_soon":
+            expiring_tacks = queryset.filter(
+                Q(
+                    start_completion_time__isnull=False,
+                    start_completion_time__lt=timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
+                    is_active=True
+                ) |
+                Q(
+                    status__in=(
+                        TackStatus.CREATED,
+                        TackStatus.ACTIVE,
+                        TackStatus.ACCEPTED,
+                        TackStatus.IN_PROGRESS
+                    ),
+                    is_active=True
+                )
+            ).order_by(
+                'id'
+            )
+            return expiring_tacks
+        return queryset
+
+
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'human_readable_price', 'status', 'is_active', 'tacker', 'runner', 'num_offers', 'allow_counter_offer', 'group', 'creation_time']
+    list_display = ['id', 'title', 'human_readable_price', 'status', 'is_active', 'tacker', 'runner', 'num_offers',
+                    'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = ['is_active', 'allow_counter_offer', 'status', 'creation_time', 'group']
+    list_filter = ['is_active', 'allow_counter_offer', 'status', 'creation_time', 'group', ExpiringTacksFilter]
     advanced_filter_fields = (
         'status',
     )
@@ -60,6 +109,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     @admin.display(description="Offer count")
     def num_offers(self, obj) -> int:
         return Offer.objects.filter(tack_id=obj.id).count()
+
     num_offers.admin_order_field = '_num_offers'
 
     @admin.display(description="Price", ordering='price')
@@ -105,6 +155,7 @@ class OfferAdmin(ModelAdmin):
                     )
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     list_per_page = 50
     list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
     list_display_links = ("view_offer_str",)
