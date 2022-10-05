@@ -9,7 +9,7 @@ class GroupAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ['name', 'creator', 'description']
     list_filter = ['is_public']
-    search_fields = ("name", "id", "owner__firstname", "owner_lastname")
+    search_fields = ("name", "id", "owner__first_name", "owner__last_name")
     search_help_text = "Search by Group name, id, Owner name"
     ordering = ('id',)
 
