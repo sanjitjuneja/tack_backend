@@ -94,13 +94,17 @@ class DwollaPaymentMethodSerializer(serializers.Serializer):
     bankAccountType = serializers.CharField(read_only=True)
     created = serializers.CharField(read_only=True)
     channels = serializers.ListField(read_only=True)
-    bankName = serializers.CharField(read_only=True, source="name")
+    bankName = serializers.SerializerMethodField(method_name="get_bankname")
     image = serializers.SerializerMethodField()
     is_primary = serializers.BooleanField()
 
     def get_image(self, obj) -> str | None:
         image = images_dict[obj["bankName"]] if obj.get("bankName") in images_dict else None
         return image
+
+    def get_bankname(self, obj) -> str:
+        bankname = obj.get("name")
+        return bankname.lower().title() if bankname else ''
 
 
 class GetCardByIdSerializer(serializers.Serializer):
