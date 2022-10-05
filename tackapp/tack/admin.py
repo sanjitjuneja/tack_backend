@@ -7,7 +7,7 @@ from django.contrib.admin import ModelAdmin
 from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.db.models import Count, Q, QuerySet, Subquery, F, Value, ExpressionWrapper, IntegerField, DateTimeField, \
-    Func
+    Func, Case, When
 from django.utils import timezone
 
 from core.choices import TackStatus
@@ -50,6 +50,8 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
             ).order_by(
                 'expiration_time'
             )
+            ordering = (TackStatus.IN_PROGRESS, TackStatus.ACCEPTED, TackStatus.ACTIVE, TackStatus.CREATED)
+            preserved = Case(*[When(status=status, then=pos) for pos, status in enumerate(ordering)])
             other_tacks_included = queryset.filter(
                 Q(
                     start_completion_time__isnull=False,
@@ -66,11 +68,11 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
                     is_active=True
                 )
             ).order_by(
-                'start_completion_time'
+                preserved
             )
-            # ordering = (TackStatus.IN_PROGRESS, TackStatus.ACCEPTED, TackStatus.ACTIVE, TackStatus.CREATED)
+
             # sorted(other_tacks_included, key=lambda tack: ordering.index(item.status))
-            return expiring_tacks | other_tacks_included
+            return (expiring_tacks | other_tacks_included).distinct()
         return queryset
 
 
