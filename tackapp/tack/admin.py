@@ -47,6 +47,8 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
             ).filter(
                 start_completion_time__lt=F('expiration_time'),
                 is_active=True
+            ).exclude(
+                status__in=(TackStatus.FINISHED, TackStatus.WAITING_REVIEW)
             ).order_by(
                 'expiration_time'
             )
