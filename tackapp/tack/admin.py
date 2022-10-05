@@ -103,7 +103,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     )
     search_help_text = "Search by Tack title, Tacker name, Runner name, Group id, name"
     actions = ['cancel_tacks']
-    ordering = ('-id',)
+    # ordering = ('-id',)
 
     def get_actions(self, request):
         actions = super().get_actions(request)
