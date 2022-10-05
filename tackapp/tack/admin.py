@@ -145,7 +145,7 @@ class OfferAdmin(ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         parent_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "tack":
-            kwargs["queryset"] = Tack.active.filter(
+            kwargs["queryset"] = Tack.objects.filter(
                 id=parent_id
             ) if parent_id else \
                 Tack.active.filter(
