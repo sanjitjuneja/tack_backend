@@ -38,6 +38,19 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
         """
         if self.value() == "expire_soon":
             expiring_tacks = queryset.filter(
+                start_completion_time__isnull=False
+            ).annotate(
+                expiration_time=ExpressionWrapper(
+                    timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
+                    output_field=DateTimeField()
+                )
+            ).filter(
+                start_completion_time__lt=F('expiration_time'),
+                is_active=True
+            ).order_by(
+                'expiration_time'
+            )
+            other_tacks_included = queryset.filter(
                 Q(
                     start_completion_time__isnull=False,
                     start_completion_time__lt=timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
@@ -53,19 +66,21 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
                     is_active=True
                 )
             ).order_by(
-                'id'
+                'start_completion_time'
             )
-            return expiring_tacks
+            # ordering = (TackStatus.IN_PROGRESS, TackStatus.ACCEPTED, TackStatus.ACTIVE, TackStatus.CREATED)
+            # sorted(other_tacks_included, key=lambda tack: ordering.index(item.status))
+            return expiring_tacks | other_tacks_included
         return queryset
 
 
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'human_readable_price', 'status', 'is_active', 'tacker', 'runner', 'num_offers',
-                    'allow_counter_offer', 'group', 'creation_time']
+    list_display = ['id', 'title', 'human_readable_price', 'status', 'expires_at', 'is_active', 'tacker', 'runner',
+                    'num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = ['is_active', 'allow_counter_offer', 'status', 'creation_time', 'group', ExpiringTacksFilter]
+    list_filter = [ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'group']
     advanced_filter_fields = (
         'status',
     )
@@ -118,6 +133,12 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
+
+    @admin.display(description="Expires at")
+    def expires_at(self, obj: Tack):
+        if not (obj.start_completion_time and obj.estimation_time_seconds):
+            return "-"
+        return obj.start_completion_time + timedelta(seconds=obj.estimation_time_seconds)
 
 
 @admin.register(PopularTack)

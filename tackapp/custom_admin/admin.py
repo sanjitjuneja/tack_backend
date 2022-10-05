@@ -17,6 +17,7 @@ class MyAdminSite(admin.AdminSite):
         ordering = {
             # "Grafana": 0,
             # "Important": 1,
+            "Advanced_Filters": 0,
             "Tack": 1,
             "Group": 2,
             "Review": 3,
@@ -26,7 +27,6 @@ class MyAdminSite(admin.AdminSite):
             "FCM Devices": 7,
             "Periodic Tasks": 8,
             "Token Blacklist": 9,
-            "ADVANCED_FILTERS": 10,
             "djstripe": 11,
             "Dwolla service": 12,
         }
