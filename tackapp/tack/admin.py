@@ -170,7 +170,7 @@ class PopularTacksAdmin(ModelAdmin):
 
 
 @admin.register(Offer)
-class OfferAdmin(ModelAdmin):
+class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         parent_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "tack":

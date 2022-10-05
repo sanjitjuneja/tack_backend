@@ -147,7 +147,7 @@ class UserAdmin(AdminAdvancedFiltersMixin, CustomUserAdmin):
     advanced_filter_fields = (
         'tacks_rating',
         'tacks_amount',
-        'allowed_to_withdraw'
+        'allowed_to_withdraw',
     )
     search_fields = (
         "phone_number",
