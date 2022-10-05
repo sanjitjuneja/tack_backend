@@ -17,7 +17,7 @@ class ReadOnlyMixin:
 class BankAccountAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
-    search_fields = ('user', 'user__firstname', 'user__lastname', 'stripe_user', 'dwolla_user')
+    search_fields = ('user__firstname', 'user__lastname', 'stripe_user', 'dwolla_user')
     search_help_text = "Search by User id, name, stripe id, dwolla id"
     ordering = ('id',)
 
@@ -68,7 +68,7 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'transaction_id',
     )
     list_filter = ('creation_time', 'service_name', 'action_type')
-    search_fields = ('user', 'user__firstname', 'user_lastname', 'transaction_id')
+    search_fields = ('user__firstname', 'user_lastname', 'transaction_id')
     search_help_text = "Search by User id, name, Transaction id"
 
     @admin.display(description="Requested", ordering='amount_requested')

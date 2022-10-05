@@ -420,9 +420,10 @@ def dwolla_webhook_handler(request):
     except DwollaEvent.DoesNotExist:
         pass
 
+    topic = request.data.get("topic")
     DwollaEvent.objects.create(
         event_id=request.data.get("id"),
-        topic=request.data.get("topic"),
+        topic=topic,
         timestamp=request.data.get("timestamp"),
         self_res=request.data.get("_links").get("self"),
         account=request.data.get("_links").get("account"),
@@ -430,6 +431,17 @@ def dwolla_webhook_handler(request):
         customer=request.data.get("_links").get("customer"),
         created=request.data.get("created"),
     )
+    match topic:
+        case "transfer_completed":
+            transfer_id = request.data.get("_links").get("resource").get("href").split("/")[-1]
+            try:
+                trnsctn = Transaction.objects.get(transaction_id=transfer_id)
+                trnsctn.is_succeeded = True
+                trnsctn.save()
+            except Transaction.DoesNotExist:
+                pass
+            except Transaction.MultipleObjectsReturned:
+                pass
 
 
 def detach_dwolla_funding_sources(dwolla_id):
