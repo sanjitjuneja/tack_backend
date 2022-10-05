@@ -146,7 +146,7 @@ class OfferAdmin(ModelAdmin):
         parent_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "tack":
             kwargs["queryset"] = Tack.active.filter(
-                tack_id=parent_id
+                id=parent_id
             ) if parent_id else \
                 Tack.active.filter(
                     status__in=(
