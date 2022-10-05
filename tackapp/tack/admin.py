@@ -84,9 +84,13 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_display = ['id', 'title', 'human_readable_price', 'status', 'expires_at', 'is_active', 'tacker', 'runner',
                     'num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = [ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'group']
+    list_filter = [ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'is_paid', 'group']
     advanced_filter_fields = (
         'status',
+        'price',
+        'allow_counter_offer',
+        'is_paid',
+        'is_canceled',
     )
     search_fields = (
         "title",
@@ -170,10 +174,12 @@ class OfferAdmin(ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         parent_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "tack":
-            kwargs["queryset"] = Tack.objects.filter(
-                id=parent_id
-            ) if parent_id else \
-                Tack.active.filter(
+            if parent_id:
+                kwargs["queryset"] = Tack.objects.filter(
+                    offer=parent_id
+                )
+            else:
+                kwargs["queryset"] = Tack.active.filter(
                     status__in=(
                         TackStatus.CREATED,
                         TackStatus.ACTIVE
@@ -185,6 +191,12 @@ class OfferAdmin(ModelAdmin):
     list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
     list_display_links = ("view_offer_str",)
     list_filter = ['offer_type', 'is_active', 'status']
+    advanced_filter_fields = (
+        'status',
+        'is_active',
+        'offer_type',
+        'price',
+    )
     search_fields = ['id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name']
     search_help_text = "Search by Offer id, title, description; Tack title; Runner name"
     ordering = ('-id',)
