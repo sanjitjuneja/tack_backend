@@ -139,7 +139,8 @@
                 "cpu": 0,
                 "memory": 400,
                 "links": [
-                    "rabbit"
+                    "rabbit",
+                    "redis"
                 ],
                 "portMappings": [],
                 "essential": true,
