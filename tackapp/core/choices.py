@@ -7,7 +7,7 @@ images_dict = {
     "mastercard": f"{MEDIA_URL}{S3_BUCKET_CARDS}/mastercard.png",
     "discover": f"{MEDIA_URL}{S3_BUCKET_CARDS}/discover.png",
     "american-express": f"{MEDIA_URL}{S3_BUCKET_CARDS}/american-express.png",
-    "JPMORGAN CHASE BANK, NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/chase.jpg",
+    "JPMORGAN CHASE BANK, NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/chase.png",
     "WELLS FARGO BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/wells-fargo.png"
 }
 
