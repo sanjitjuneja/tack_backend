@@ -16,19 +16,33 @@ class ReadOnlyMixin:
 @admin.register(BankAccount)
 class BankAccountAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ('id', 'user', 'usd_balance', 'stripe_user', 'dwolla_user')
+    list_display = ('id', 'user', 'human_readable_usd_balance', 'stripe_user', 'dwolla_user')
     search_fields = ('user__firstname', 'user__lastname', 'stripe_user', 'dwolla_user')
     search_help_text = "Search by User id, name, stripe id, dwolla id"
     ordering = ('id',)
 
+    @admin.display(description="USD balance", ordering='usd_balance')
+    def human_readable_usd_balance(self, obj: BankAccount):
+        if obj.usd_balance is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.usd_balance)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
 
-@admin.register(UserPaymentMethods)
-class UserPaymentMethodsAdmin(ModelAdmin):
-    list_per_page = 50
-    list_display = ('bank_account', 'dwolla_payment_method')
-    search_fields = ('bank_account', 'dwolla_payment_method')
-    search_help_text = "Search by Bank account id, Dwolla method id"
-    ordering = ('id',)
+
+# @admin.register(UserPaymentMethods)
+# class UserPaymentMethodsAdmin(ModelAdmin):
+#     list_per_page = 50
+#     list_display = ('bank_account', 'dwolla_payment_method')
+#     search_fields = ('bank_account', 'dwolla_payment_method')
+#     search_help_text = "Search by Bank account id, Dwolla method id"
+#     ordering = ('id',)
 
 
 @admin.register(Fee)
@@ -68,7 +82,7 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'transaction_id',
     )
     list_filter = ('creation_time', 'service_name', 'action_type')
-    search_fields = ('user__firstname', 'user_lastname', 'transaction_id')
+    search_fields = ('user__first_name', 'user__last_name', 'transaction_id')
     search_help_text = "Search by User id, name, Transaction id"
 
     @admin.display(description="Requested", ordering='amount_requested')

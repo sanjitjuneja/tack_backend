@@ -160,7 +160,7 @@ class OfferAdmin(ModelAdmin):
     list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
     list_display_links = ("view_offer_str",)
     list_filter = ['offer_type', 'is_active', 'status']
-    search_fields = ['id', 'title', 'description', 'tack__title', 'runner__firstname', 'runner__lastname']
+    search_fields = ['id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name']
     search_help_text = "Search by Offer id, title, description; Tack title; Runner name"
     ordering = ('-id',)
 
@@ -177,3 +177,13 @@ class OfferAdmin(ModelAdmin):
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
+
+#
+# class ProxyTack(Tack):
+#     class Meta:
+#         proxy = True
+#
+#
+# @admin.register(ProxyTack)
+# class ProxyTackAdmin(ModelAdmin):
+#     inlines = ()
