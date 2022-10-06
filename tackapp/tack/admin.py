@@ -55,26 +55,21 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
             ordering = (TackStatus.IN_PROGRESS, TackStatus.ACCEPTED, TackStatus.ACTIVE, TackStatus.CREATED)
             preserved = Case(*[When(status=status, then=pos) for pos, status in enumerate(ordering)])
             other_tacks_included = queryset.filter(
-                Q(
-                    start_completion_time__isnull=False,
-                    start_completion_time__lt=timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
-                    is_active=True
-                ) |
-                Q(
-                    status__in=(
-                        TackStatus.CREATED,
-                        TackStatus.ACTIVE,
-                        TackStatus.ACCEPTED,
-                        TackStatus.IN_PROGRESS
-                    ),
-                    is_active=True
-                )
+                status__in=(
+                    TackStatus.CREATED,
+                    TackStatus.ACTIVE,
+                    TackStatus.ACCEPTED,
+                    TackStatus.IN_PROGRESS
+                ),
+                is_active=True
             ).order_by(
                 preserved
             )
-
-            # sorted(other_tacks_included, key=lambda tack: ordering.index(item.status))
-            return (expiring_tacks | other_tacks_included).distinct()
+            logger.info(f"{expiring_tacks.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            logger.info(f"{other_tacks_included.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            union_result = (expiring_tacks | other_tacks_included).distinct()
+            logger.info(f"{union_result.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            return union_result
         return queryset
 
 
