@@ -8,7 +8,21 @@ images_dict = {
     "discover": f"{MEDIA_URL}{S3_BUCKET_CARDS}/discover.png",
     "amex": f"{MEDIA_URL}{S3_BUCKET_CARDS}/american-express.png",
     "JPMORGAN CHASE BANK, NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/chase.png",
-    "WELLS FARGO BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/wells-fargo.png"
+    "WELLS FARGO BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/wells-fargo.png",
+    "BANK OF AMERICA, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/boa.png",
+    "BANK OF AMERICA, N.A": f"{MEDIA_URL}{S3_BUCKET_BANKS}/boa.png",
+    "CAPITAL ONE, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/capital-one.png",
+    "CITIBANK, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/citi.png",
+    "CITIBANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/citi.png",
+    "GOLDMAN SACHS BANK USA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/goldman.png",
+    "MORGAN STANLEY PRIVATE BANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/morgan-stanley.png",
+    "PNC BANK N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/pnc.png",
+    "PNC BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/pnc.png",
+    "SILICON VALLEY BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/svb.png",
+    "TD BANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/tdb.png",
+    "TRUIST BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/truist.png",
+    "US BANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/us-bank.png",
+    "UNIVERSITY FEDERAL CREDIT UNION": f"{MEDIA_URL}{S3_BUCKET_BANKS}/ufcu.png",
 }
 
 
