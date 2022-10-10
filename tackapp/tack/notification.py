@@ -12,9 +12,11 @@ from firebase_admin.messaging import (
 )
 
 from core.choices import NotificationType
+from group.models import Group
 from payment.services import convert_to_decimal
 from socials.models import NotificationSettings
 from tack.models import Tack, Offer
+from user.models import User
 
 logger = logging.getLogger("django")
 
@@ -107,16 +109,16 @@ def get_properties_dict(instance: Tack | Offer):
     match instance:
         case Tack() as tack:
             tack = tack
-            tacker = tack.tacker
-            runner = tack.runner
-            group = tack.group
+            tacker = User.objects.filter(id=tack.tacker_id).first()
+            runner = User.objects.filter(id=tack.runner_id).first()
+            group = Group.objects.filter(id=tack.group_id).first()
             tack_or_offer_price = tack.price
         case Offer() as offer:
-            tack = offer.tack
-            tacker = tack.tacker
-            runner = offer.runner
-            group = tack.group
-            tack_or_offer_price = offer.price or offer.tack.price
+            tack = Tack.objects.filter(id=offer.tack_id).first()
+            tacker = User.objects.filter(id=tack.tacker_id).first()
+            runner = User.objects.filter(id=offer.runner_id).first()
+            group = Group.objects.filter(id=tack.group_id).first()
+            tack_or_offer_price = offer.price or tack.price
         case _:
             return dict()
 

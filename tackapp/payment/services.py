@@ -89,7 +89,6 @@ def get_link_token(dwolla_id_user):
     )
 
     link_token = plaid_client.link_token_create(request)
-    logger.debug(f"Plaid {link_token = }")
     return link_token['link_token']
 
 
@@ -350,13 +349,17 @@ def dwolla_transaction(
     service_fee = calculate_service_fee(amount=amount, service=PaymentService.DWOLLA)
     logger.debug(response.body)
     ba = BankAccount.objects.get(user=user)
-
+    current_transaction_loss = calculate_transaction_loss(
+        amount=amount,
+        service=PaymentService.DWOLLA
+    )
     Transaction.objects.create(
         user=user,
         transaction_id=transaction_id,
         service_name=PaymentService.DWOLLA,
         amount_requested=amount,
         amount_with_fees=amount_with_fees,
+        fee_difference=current_transaction_loss,
         service_fee=service_fee,
         action_type=action
     )
@@ -417,9 +420,10 @@ def dwolla_webhook_handler(request):
     except DwollaEvent.DoesNotExist:
         pass
 
+    topic = request.data.get("topic")
     DwollaEvent.objects.create(
         event_id=request.data.get("id"),
-        topic=request.data.get("topic"),
+        topic=topic,
         timestamp=request.data.get("timestamp"),
         self_res=request.data.get("_links").get("self"),
         account=request.data.get("_links").get("account"),
@@ -427,6 +431,17 @@ def dwolla_webhook_handler(request):
         customer=request.data.get("_links").get("customer"),
         created=request.data.get("created"),
     )
+    match topic:
+        case "transfer_completed":
+            transfer_id = request.data.get("_links").get("resource").get("href").split("/")[-1]
+            try:
+                trnsctn = Transaction.objects.get(transaction_id=transfer_id)
+                trnsctn.is_succeeded = True
+                trnsctn.save()
+            except Transaction.DoesNotExist:
+                pass
+            except Transaction.MultipleObjectsReturned:
+                pass
 
 
 def detach_dwolla_funding_sources(dwolla_id):

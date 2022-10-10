@@ -12,6 +12,7 @@ images_dict = {
     "BANK OF AMERICA, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/boa.png",
     "BANK OF AMERICA, N.A": f"{MEDIA_URL}{S3_BUCKET_BANKS}/boa.png",
     "CAPITAL ONE, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/capital-one.png",
+    "CAPITAL ONE N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/capital-one.png",
     "CITIBANK, N.A.": f"{MEDIA_URL}{S3_BUCKET_BANKS}/citi.png",
     "CITIBANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/citi.png",
     "GOLDMAN SACHS BANK USA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/goldman.png",
@@ -22,7 +23,6 @@ images_dict = {
     "TD BANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/tdb.png",
     "TRUIST BANK": f"{MEDIA_URL}{S3_BUCKET_BANKS}/truist.png",
     "US BANK NA": f"{MEDIA_URL}{S3_BUCKET_BANKS}/us-bank.png",
-    "UNIVERSITY FEDERAL CREDIT UNION": f"{MEDIA_URL}{S3_BUCKET_BANKS}/ufcu.png",
 }
 
 
@@ -86,8 +86,9 @@ class PaymentType(models.TextChoices):
 class PaymentService(models.TextChoices):
     """Choices for Payment services (Stripe, Dwolla)"""
 
-    STRIPE = "stripe", "Stripe"
-    DWOLLA = "dwolla", "Dwolla"
+    STRIPE = "stripe", "Stripe (Card)"
+    DIGITAL_WALLET = "d_wallet", "Stripe (Digital Wallet)"
+    DWOLLA = "dwolla", "Dwolla (Bank Account)"
 
 
 class PaymentAction(models.TextChoices):
@@ -127,3 +128,9 @@ class NotificationType(models.TextChoices):
     OFFER_EXPIRED = "offer_expired", "Offer expired"
 
 
+class TackerType(models.TextChoices):
+    TACKER = "Active - Tacker", "Active - Tacker"
+    RUNNER = "Active - Runner", "Active - Runner"
+    SUPER_ACTIVE = "Active - Both", "Active - Both"
+    ACTIVE = "Active - Neither", "Active - Neither"
+    INACTIVE = "Inactive", "Inactive"

@@ -76,6 +76,7 @@ class User(AbstractUser):
     tacks_rating = models.DecimalField(max_digits=3, decimal_places=2, default=5)
     tacks_amount = models.PositiveIntegerField(default=0)
     email = LowercaseEmailField(unique=True, null=True, default=None)
+    allowed_to_withdraw = models.BooleanField(default=True)
 
     objects = CustomUserManager()
 
@@ -86,7 +87,7 @@ class User(AbstractUser):
         return {"phone_number": self.phone_number, "email": self.email}
 
     def __str__(self):
-        return f"{self.last_name} {self.first_name}"
+        return f"{self.last_name} {self.first_name} {self.phone_number}"
 
     class Meta:
         db_table = "users"

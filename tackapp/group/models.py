@@ -23,6 +23,7 @@ class Group(CoreModel):
     )
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default=uuid4)
+    collect_stats = models.BooleanField(default=True)
 
     def members_count(self):
         return GroupMembers.objects.filter(
@@ -43,6 +44,9 @@ class GroupMembers(models.Model):
     member = models.ForeignKey("user.User", null=True, blank=True, on_delete=models.SET_NULL)
     is_muted = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Group.id: {self.group_id}, User.id: {self.member_id}, is_muted: {self.is_muted}"
 
     class Meta:
         db_table = "group_membership"

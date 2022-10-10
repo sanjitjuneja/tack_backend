@@ -32,7 +32,7 @@ def post_save_invitations(instance: GroupInvitations, *args, **kwargs):
 @receiver(signal=post_delete, sender=GroupInvitations)
 def post_delete_invitations(instance: GroupInvitations, *args, **kwargs):
     ws_sender.send_message(
-        f"user_{instance.invitee.id}",
+        f"user_{instance.invitee_id}",
         'invitation.delete',
         instance.id)
 
@@ -42,12 +42,12 @@ def post_save_group_members(instance: GroupMembers, created: bool, *args, **kwar
     if created:
         logger.warning(f"in post_save_group_members: {instance = }")
         ws_sender.send_message(
-            f"user_{instance.member.id}",
+            f"user_{instance.member_id}",
             'groupdetails.create',
             GroupMembersSerializer(instance).data)
     else:
         ws_sender.send_message(
-            f"user_{instance.member.id}",
+            f"user_{instance.member_id}",
             'groupdetails.update',
             GroupMembersSerializer(instance).data)
 
