@@ -92,7 +92,7 @@ class GroupStats(models.Model):
     timestamp = models.DateTimeField(
         auto_now_add=True
     )
-    group_id = models.ForeignKey(
+    group = models.ForeignKey(
         "group.Group", blank=True, null=True, on_delete=models.SET_NULL, default=None
     )
     num_tacks_created_last_hour = models.PositiveIntegerField(
