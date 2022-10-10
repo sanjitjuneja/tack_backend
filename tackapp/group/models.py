@@ -23,7 +23,7 @@ class Group(CoreModel):
     )
     is_public = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default=uuid4)
-    collect_stats = models.BooleanField(default=False)
+    collect_stats = models.BooleanField(default=True)
 
     def members_count(self):
         return GroupMembers.objects.filter(
