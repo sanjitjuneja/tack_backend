@@ -24,7 +24,7 @@ class GlobalStats(models.Model):
     avg_tackers_time_estimation = models.DecimalField(
         blank=True, null=True, default=None, max_digits=8, decimal_places=2
     )
-    avg_acceptance_time = models.DecimalField(
+    avg_first_offer_time = models.DecimalField(
         blank=True, null=True, default=None, max_digits=8, decimal_places=2
     )
     runner_tacker_ratio = models.DecimalField(
@@ -116,7 +116,7 @@ class GroupStats(models.Model):
     avg_tackers_time_estimation = models.DecimalField(
         blank=True, null=True, default=None, max_digits=8, decimal_places=2
     )
-    avg_acceptance_time = models.DecimalField(
+    avg_first_offer_time = models.DecimalField(
         blank=True, null=True, default=None, max_digits=8, decimal_places=2
     )
     runner_tacker_ratio = models.DecimalField(

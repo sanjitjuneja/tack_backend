@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -106,7 +107,9 @@ class GroupViewset(
         """Endpoint for accepting invitation from Invitation Link"""
 
         if request.user.is_anonymous:
+            logger.info(f"{request.META = }")
             return redirect("https://apps.apple.com/us/app/tack-task-marketplace/id1619995138")
+
         serializer = self.get_serializer(data=request.query_params)
         try:
             serializer.is_valid(raise_exception=True)
@@ -385,8 +388,9 @@ class InvitesView(
         """Endpoint for accepting pending Invites (for invitee)"""
 
         invite = self.get_object()
-        GroupMembers.objects.create(group=invite.group, member=invite.invitee)
-        invite.delete()
+        with transaction.atomic():
+            GroupMembers.objects.create(group=invite.group, member=invite.invitee)
+            invite.delete()
         return Response(
             {
                 "accepted group": GroupSerializer(

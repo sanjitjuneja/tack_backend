@@ -13,7 +13,7 @@ def get_tack_stats_dict(tack_stats: TackStats, *, group: Group = None):
             "num_tacks_completed_by_runners_last_hour": tack_stats.get_num_tacks_completed_by_runners_last_hour(**filters),
             "avg_price_last_hour": tack_stats.get_avg_price_last_hour(**filters),
             "avg_tackers_time_estimation": tack_stats.get_avg_tackers_time_estimation(**filters),
-            "avg_acceptance_time": tack_stats.get_avg_acceptance_time(**filters),
+            "avg_first_offer_time": tack_stats.get_avg_first_offer_time(**filters),
             "runner_tacker_ratio": tack_stats.get_runner_tacker_ratio(**filters),
             "avg_num_offers_before_accept": tack_stats.get_avg_num_offers_before_accept(**filters),
             "num_allowed_counteroffers": tack_stats.get_num_allowed_counteroffers(**filters),

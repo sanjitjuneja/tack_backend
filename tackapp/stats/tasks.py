@@ -7,7 +7,7 @@ from stats.models import GlobalStats, GroupStats
 from stats.payment.service import PaymentStats
 from stats.payment.utils import get_payment_stats_dict
 from stats.tack.service import TackStats
-from global_queries import created_tacks_last_hour, accepted_tacks_last_hour, completed_tacks_last_hour, \
+from stats.global_queries import created_tacks_last_hour, accepted_tacks_last_hour, completed_tacks_last_hour, \
     active_users_last_week
 from stats.tack.utils import get_tack_stats_dict
 from stats.user.service import UserStats
@@ -20,6 +20,8 @@ logger = logging.getLogger('django')
 
 @shared_task
 def collect_stats():
+    """Main task for collecting statistics for grafana"""
+
     tack_stats = TackStats(
         created_tacks_last_hour=created_tacks_last_hour,
         accepted_tacks_last_hour=accepted_tacks_last_hour,
@@ -30,7 +32,6 @@ def collect_stats():
     payment_stats = PaymentStats()
 
     start_time = time.time()
-    logger.info("Start of stats collection")
     global_tack_stats_dict = get_tack_stats_dict(tack_stats)
     global_user_stats_dict = get_user_stats_dict(user_stats)
     global_payment_stats_dict = get_payment_stats_dict(payment_stats)

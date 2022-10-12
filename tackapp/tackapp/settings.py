@@ -76,7 +76,7 @@ LOGGING = {
             'propagate': True,
         },
         'payments': {
-            'handlers': ('payment_file',),
+            'handlers': ('payment_file', 'console',),
             'level': 'INFO'
         },
         'tackapp.consumers': {
@@ -169,6 +169,7 @@ INSTALLED_APPS = [
     "socials.apps.SocialsConfig",
     "payment.apps.PaymentConfig",
     "dwolla_service.apps.DwollaServiceConfig",
+    "stats.apps.StatsConfig",
     "drf_spectacular",
     "rest_framework",
     "sslserver",
