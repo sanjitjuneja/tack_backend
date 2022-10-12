@@ -4,7 +4,7 @@ from datetime import timedelta
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Subquery
+from django.db.models import Subquery, Max, Value, Q
 from django.utils import timezone
 
 from payment.services import send_payment_to_runner
@@ -91,3 +91,20 @@ def tack_will_expire_soon(offer_id) -> None:
     FCMDevice.objects.filter(
         user_id=offer.runner_id
     ).send_message(message)
+
+
+@shared_task
+def delete_inactive_tacks():
+    """Task for soft-deleting Tacks that have not received Offers for 2 days"""
+
+    Tack.active.filter(
+        status=TackStatus.CREATED,
+        creation_time__lte=timezone.now() - timedelta(days=2)
+    ).annotate(
+        max_offer_creation_time=Max('offer__creation_time')
+    ).filter(
+        Q(max_offer_creation_time__isnull=True) |
+        Q(max_offer_creation_time__lte=timezone.now() - timedelta(days=2))
+    ).update(
+        is_active=False
+    )
