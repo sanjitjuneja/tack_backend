@@ -83,8 +83,8 @@ class MyAdminSite(admin.AdminSite):
                 ]
             }
         ]
-        logger = logging.getLogger('django')
-        logger.info(f"{app_list = }")
+        # logger = logging.getLogger('django')
+        # logger.info(f"{app_list = }")
 
         app_list = sorted(app_list, key=lambda x: ordering[x['name']] if x['name'] in ordering else 100)
         return apps + app_list

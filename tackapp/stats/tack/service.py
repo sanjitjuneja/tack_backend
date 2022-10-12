@@ -1,5 +1,6 @@
-from django.db.models import Count, Avg, FloatField, ExpressionWrapper, QuerySet
+from django.db.models import Count, Avg, FloatField, ExpressionWrapper, QuerySet, F, Min
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from group.models import Group
 from stats.utils import _setup_filters
@@ -87,17 +88,23 @@ class TackStats:
             tacker__in=tackers,
             **filters
         ).aggregate(
-            avg_time_estimation_sec=Avg('time_estimation_seconds')
+            avg_time_estimation_sec=Avg('estimation_time_seconds')
         )["avg_time_estimation_sec"] or 0
 
-    def get_avg_acceptance_time(self, group: Group = None):
+    def get_avg_first_offer_time(self, group: Group = None):
         filters = _setup_filters(group=group)
         return self.accepted_tacks_last_hour.filter(
             accepted_time__isnull=False,
             **filters
+        ).annotate(
+            offer_min_creation_time=Min('offer__creation_time'),
         ).aggregate(
-            avg_accepted_time=Avg('accepted_time')
-        )["avg_accepted_time"]
+            avg_first_offer_time=Avg(
+                Coalesce(
+                    F('offer_min_creation_time'),
+                    timezone.now()
+                ) - F('creation_time'))
+        )["avg_first_offer_time"] or 0
 
     def get_runner_tacker_ratio(self, group: Group = None):
         filters = _setup_filters(group=group)
@@ -125,7 +132,10 @@ class TackStats:
             num_offers=Count("offer")
         ).aggregate(
             avg_offer_num_before_accept=ExpressionWrapper(
-                Coalesce(Avg("num_offers"), 0),
+                Coalesce(
+                    Avg("num_offers"),
+                    0
+                ),
                 output_field=FloatField()
             )
         )["avg_offer_num_before_accept"]

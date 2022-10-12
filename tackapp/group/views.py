@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.template.response import TemplateResponse
 from django.urls import reverse
@@ -105,6 +106,7 @@ class GroupViewset(
         """Endpoint for accepting invitation from Invitation Link"""
 
         if request.user.is_anonymous:
+            logger.info(f"{request.META = }")
             return TemplateResponse(request, 'browser_group_invite.html', context={})
         serializer = self.get_serializer(data=request.query_params)
         try:
@@ -384,8 +386,9 @@ class InvitesView(
         """Endpoint for accepting pending Invites (for invitee)"""
 
         invite = self.get_object()
-        GroupMembers.objects.create(group=invite.group, member=invite.invitee)
-        invite.delete()
+        with transaction.atomic():
+            GroupMembers.objects.create(group=invite.group, member=invite.invitee)
+            invite.delete()
         return Response(
             {
                 "accepted group": GroupSerializer(
