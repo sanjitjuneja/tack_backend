@@ -45,7 +45,18 @@ services:
       - tackapp/local.env
     depends_on:
       - web
-      - redis
+      - rabbit
+
+  celery-beat:
+    build: .
+    container_name: 'celery-beat'
+    restart: always
+    command: celery -A tackapp beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - tackapp/local.env
+    depends_on:
+      - web
+      - rabbit
 
   redis:
     container_name: 'redis'
