@@ -27,12 +27,9 @@ class GroupMemberFilter(admin.SimpleListFilter):
     parameter_name = 'members_of_group'
 
     def lookups(self, request, model_admin):
-        logger = logging.getLogger('django')
-        groups = Group.active.all()
-        logger.info(f"{groups = }")
-        list1 = ([(group.id, f"{group.id}: {group.name}") for group in groups])
-        logger.info(f"{list1 = }")
-        return list1
+        groups = Group.active.all().order_by('id')
+        choices = ([(group.id, f"{group.id}: {group.name}") for group in groups])
+        return choices
 
     def queryset(self, request, queryset: QuerySet[User]):
         """
@@ -40,6 +37,8 @@ class GroupMemberFilter(admin.SimpleListFilter):
         provided in the query string and retrievable via
         `self.value()`.
         """
+        if not self.value():
+            return queryset
         return queryset.filter(
             groupmembers=self.value()
         )
