@@ -433,8 +433,15 @@ class OfferViewset(
         price = offer.price if offer.price else offer.tack.price
         if request.user.bankaccount.usd_balance < price:
             customer, created = djstripe.models.Customer.get_or_create(subscriber=request.user)
-            payment_intents = stripe.PaymentIntent.list(customer=customer.id)
-            logger.error(f"CRUTCH {payment_intents = }")
+            payment_intents = stripe.PaymentIntent.list(customer=customer.id, limit=10)
+            for payment_intent in payment_intents:
+                payment_intent: stripe.PaymentIntent
+                if payment_intent["status"] == "succeeded":
+                    logger.error(f"{payment_intent['id']}")
+
+
+
+            # logger.error(f"CRUTCH {payment_intents = }")
             # Transaction.objects.filter()
 
             return Response(

@@ -8,9 +8,9 @@ from stats.models import GlobalStats, GroupStats
 
 @admin.register(GlobalStats)
 class GlobalStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    pass
+    list_display = ("id", "timestamp")
 
 
 @admin.register(GroupStats)
 class GroupStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    pass
+    list_display = ("id", "group", "timestamp")
