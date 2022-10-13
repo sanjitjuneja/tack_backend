@@ -40,7 +40,7 @@ class GroupMemberFilter(admin.SimpleListFilter):
         if not self.value():
             return queryset
         return queryset.filter(
-            groupmembers=self.value()
+            groupmembers__group_id=self.value()
         )
 
 
