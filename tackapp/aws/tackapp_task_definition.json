@@ -8,7 +8,7 @@
                 "name": "rabbit",
                 "image": "rabbitmq:3.10-management",
                 "cpu": 0,
-                "memory": 200,
+                "memory": 150,
                 "portMappings": [
                     {
                         "containerPort": 15672,
@@ -44,7 +44,7 @@
                 "name": "redis",
                 "image": "redis:7-alpine",
                 "cpu": 0,
-                "memory": 300,
+                "memory": 250,
                 "portMappings": [
                     {
                         "containerPort": 6379,
@@ -190,7 +190,7 @@
                 "name": "celery-beat",
                 "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
                 "cpu": 0,
-                "memory": 100,
+                "memory": 200,
                 "links": [
                     "rabbit",
                     "redis",

@@ -12,9 +12,37 @@ from django.db.models import Q, Subquery, OuterRef, Count, QuerySet
 from django.utils import timezone
 
 from core.choices import TackerType, TackStatus
+from group.models import Group
 from tack.models import Tack
 from .models import *
 from django.utils.translation import gettext_lazy as _
+
+
+class GroupMemberFilter(admin.SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = 'Members of group'
+
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'members_of_group'
+
+    def lookups(self, request, model_admin):
+        logger = logging.getLogger('django')
+        groups = Group.active.all()
+        logger.info(f"{groups = }")
+        list1 = ([(group.id, f"{group.id}: {group.name}") for group in groups])
+        logger.info(f"{list1 = }")
+        return list1
+
+    def queryset(self, request, queryset: QuerySet[User]):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        return queryset.filter(
+            groupmembers=self.value()
+        )
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -143,7 +171,7 @@ class UserAdmin(AdminAdvancedFiltersMixin, CustomUserAdmin):
     list_per_page = 50
     list_display = ['id', 'phone_number', 'first_name', 'last_name', 'is_allowed_to_withdraw_money', 'tacker_type']
     list_display_links = ("phone_number",)
-    list_filter = ['is_staff', TackerTypeFilter]
+    list_filter = ['is_staff', TackerTypeFilter, GroupMemberFilter]
     advanced_filter_fields = (
         'tacks_rating',
         'tacks_amount',
