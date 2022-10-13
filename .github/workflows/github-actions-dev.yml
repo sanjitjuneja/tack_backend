@@ -87,7 +87,7 @@ jobs:
         id: task-celery-beat
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ steps.task-web.outputs.task-definition }}
+          task-definition: ${{ steps.task-celery.outputs.task-definition }}
           container-name: ${{ env.CONTAINER_NAME_CELERY_BEAT }}
           image: ${{ steps.build-image-web.outputs.image }}
 
@@ -95,7 +95,7 @@ jobs:
         id: task-nginx
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ steps.task-celery.outputs.task-definition }}
+          task-definition: ${{ steps.task-celery-beat.outputs.task-definition }}
           container-name: ${{ env.CONTAINER_NAME_NGINX }}
           image: ${{ steps.build-image-nginx.outputs.image }}
 

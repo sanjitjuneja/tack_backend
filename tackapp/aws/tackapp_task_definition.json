@@ -194,7 +194,9 @@
                 "memory": 100,
                 "links": [
                     "rabbit",
-                    "redis"
+                    "redis",
+                    "celery",
+                    "web"
                 ],
                 "portMappings": [],
                 "essential": true,
