@@ -1,6 +1,9 @@
 import datetime
 import logging
 
+import stripe
+
+import djstripe.models
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
@@ -9,6 +12,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
+from payment.models import Transaction
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 
@@ -428,6 +432,11 @@ class OfferViewset(
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         if request.user.bankaccount.usd_balance < price:
+            customer = djstripe.models.Customer.get_or_create(subscriber=request.user)
+            payment_intents = stripe.PaymentIntent.list(customer=customer.id)
+            logger.error(f"CRUTCH {payment_intents = }")
+            # Transaction.objects.filter()
+
             return Response(
                 {
                     "error": "Px2",
