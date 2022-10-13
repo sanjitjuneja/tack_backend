@@ -140,8 +140,7 @@
                 "memory": 400,
                 "links": [
                     "rabbit",
-                    "redis",
-                    "celery-beat"
+                    "redis"
                 ],
                 "portMappings": [],
                 "essential": true,
