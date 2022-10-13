@@ -8,7 +8,7 @@
                 "name": "rabbit",
                 "image": "rabbitmq:3.10-management",
                 "cpu": 0,
-                "memory": 300,
+                "memory": 200,
                 "portMappings": [
                     {
                         "containerPort": 15672,
