@@ -82,6 +82,7 @@ class GlobalStats(models.Model):
     avg_amount_per_bank_withdraw_wo_fees = models.DecimalField(
         blank=True, null=True, default=None, max_digits=8, decimal_places=2
     )
+    users_visits_per_hour = models.PositiveIntegerField(default=0)
 
     class Meta:
         db_table = "global_stats"
