@@ -13,9 +13,9 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from payment.models import Transaction
+from payment.services import add_money_to_bank_account
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
-
 
 logger = logging.getLogger('django')
 
@@ -431,19 +431,36 @@ class OfferViewset(
 
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
+        logger.info(f"{request.user.bankaccount.usd_balance = }")
         if request.user.bankaccount.usd_balance < price:
+            """
+            Additional check on desync Stripe transfers (due to webhook delay frontend trying to access
+            this endpoint before backend actually receiving payment confirmation via webhook)
+            """
+
             customer, created = djstripe.models.Customer.get_or_create(subscriber=request.user)
             payment_intents = stripe.PaymentIntent.list(customer=customer.id, limit=10)
-            for payment_intent in payment_intents:
-                payment_intent: stripe.PaymentIntent
-                if payment_intent["status"] == "succeeded":
-                    logger.error(f"{payment_intent['id']}")
+            succeded_payment_intents = [payment_intent for
+                                        payment_intent in payment_intents
+                                        if payment_intent.get("status") == "succeeded"]
+            id_of_payment_intents = [payment_intent.get("id") for
+                                     payment_intent in succeded_payment_intents]
+            desynced_transactions = Transaction.objects.filter(
+                transaction_id__in=id_of_payment_intents,
+                is_succeeded=False
+            )
+            logger.info(f"{succeded_payment_intents = }")
+            logger.info(f"{id_of_payment_intents = }")
+            logger.info(f"{desynced_transactions = }")
+            with transaction.atomic():
+                for tr in desynced_transactions:
+                    for pi in succeded_payment_intents:
+                        if pi.get("id") == tr.transaction_id:
+                            add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
+                            tr.is_succeeded = True
+                            tr.save()
 
-
-
-            # logger.error(f"CRUTCH {payment_intents = }")
-            # Transaction.objects.filter()
-
+        if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
                     "error": "Px2",
