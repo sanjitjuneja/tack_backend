@@ -1,18 +1,19 @@
-import datetime
 import logging
 from datetime import timedelta
 
-from django.contrib.admin import ModelAdmin
-
-from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
-from django.db.models import Count, Q, QuerySet, Subquery, F, Value, ExpressionWrapper, IntegerField, DateTimeField, \
-    Func
-from django.utils import timezone
-
-from core.choices import TackStatus
 from payment.services import convert_to_decimal
 from .models import Tack, Offer, PopularTack
+from django.contrib.admin import ModelAdmin
+from core.choices import TackStatus
+from django.utils import timezone
+from django.contrib import admin
+from django.db.models import (
+    Count,
+    Q,
+    QuerySet,
+    F,
+)
 
 
 class ExpiringTacksFilter(admin.SimpleListFilter):

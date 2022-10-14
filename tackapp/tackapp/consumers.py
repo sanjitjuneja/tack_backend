@@ -2,9 +2,16 @@ import json
 import logging
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from stats.models import UserVisits
+from tackapp.services import (
+    form_websocket_message,
+    get_tacks_runner,
+    get_user_groups,
+    get_tacks_tacker,
+    get_user_offers,
+    create_user_visit,
+)
 
-from tackapp.services import form_websocket_message, get_user_groups, get_tacks_tacker, get_user_offers, \
-    get_tacks_runner
 
 logger = logging.getLogger("django")
 
@@ -13,6 +20,7 @@ class MainConsumer(AsyncWebsocketConsumer):
     async def websocket_connect(self, event):
         self.user = self.scope['user']
         self.device_info = self.scope['device_info']
+        await create_user_visit(user=self.user)
         logger.info(f"WS connected for [{self.user} :: {self.device_info}]")
         if self.user.is_anonymous:
             await self.close()
@@ -23,7 +31,8 @@ class MainConsumer(AsyncWebsocketConsumer):
         # Join user_id room group
         await self.channel_layer.group_add(
             self.room_group_name,
-            self.channel_name)
+            self.channel_name
+        )
         logger.debug(f"[{self.user} :: {self.device_info}] Added to {self.room_group_name}")
 
         group_members = await get_user_groups(self.user)
