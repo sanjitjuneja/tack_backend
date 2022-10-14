@@ -440,11 +440,13 @@ class OfferViewset(
 
             customer, created = djstripe.models.Customer.get_or_create(subscriber=request.user)
             payment_intents = stripe.PaymentIntent.list(customer=customer.id, limit=10)
+
             succeded_payment_intents = [payment_intent for
                                         payment_intent in payment_intents
                                         if payment_intent.get("status") == "succeeded"]
             id_of_payment_intents = [payment_intent.get("id") for
                                      payment_intent in succeded_payment_intents]
+
             desynced_transactions = Transaction.objects.filter(
                 transaction_id__in=id_of_payment_intents,
                 is_succeeded=False
@@ -456,7 +458,10 @@ class OfferViewset(
                 for tr in desynced_transactions:
                     for pi in succeded_payment_intents:
                         if pi.get("id") == tr.transaction_id:
-                            add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
+                            add_money_to_bank_account(
+                                payment_intent=djstripe.models.PaymentIntent.objects.get(id=pi["id"]),
+                                cur_transaction=tr
+                            )
                             tr.is_succeeded = True
                             tr.save()
 
