@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 
 from core.choices import TackStatus
 from group.models import GroupMembers
+from stats.models import UserVisits
 from tack.models import Tack, Offer
 from user.models import User
 
@@ -61,3 +62,9 @@ def get_user_offers(user: User):
             "tack"
         )
     return list(offers)
+
+@database_sync_to_async
+def create_user_visit(user: User) -> None:
+    UserVisits.objects.create(
+        user=user
+    )
