@@ -458,8 +458,11 @@ class OfferViewset(
                 for tr in desynced_transactions:
                     for pi in succeded_payment_intents:
                         if pi.get("id") == tr.transaction_id:
+                            logger.info(f"{pi.id = }")
+                            logger.info(f"{pi.get('id') = }")
+                            logger.info(f"{type(pi) = }")
                             add_money_to_bank_account(
-                                payment_intent=djstripe.models.PaymentIntent.objects.get(id=pi["id"]),
+                                payment_intent=djstripe.models.PaymentIntent.objects.get(id=pi.id),
                                 cur_transaction=tr
                             )
                             tr.is_succeeded = True
