@@ -1,8 +1,11 @@
-from django.db.models import Avg, Sum
+import datetime
+import logging
+from django.db.models import Avg, Sum, Q
 
-from group.models import Group
-from payment.models import BankAccount
 from stats.utils import _setup_filters
+from payment.models import BankAccount
+from stats.models import UserVisits
+from group.models import Group
 from user.models import User
 
 
@@ -11,7 +14,7 @@ class UserStats:
         pass
 
     def get_avg_total_user_balance(self, group: Group = None):
-        filters = _setup_filters(groupmembers__in=group)
+        filters = _setup_filters(groupmembers__group=group)
         users = User.objects.filter(
             **filters,
         )
@@ -22,7 +25,7 @@ class UserStats:
         )["avg_user_balance"]
 
     def get_sum_total_user_balance(self, group: Group = None):
-        filters = _setup_filters(groupmembers__in=group)
+        filters = _setup_filters(groupmembers__group=group)
         users = User.objects.filter(
             **filters,
         )
@@ -31,3 +34,22 @@ class UserStats:
         ).aggregate(
             sum_user_balance=Sum('usd_balance')
         )["sum_user_balance"]
+
+    def get_user_visits_count_per_hour(self, group: Group = None) -> int:
+        """
+        Collect  information about attendance by users of the application
+        """
+        filters: dict = _setup_filters(groupmembers__group=group)
+        users: list[User] = User.objects.filter(
+            **filters,
+        )
+        count_users_visits: int = UserVisits.objects.filter(
+            Q(
+                user__in=users
+            )
+            &
+            Q(
+                timestamp__gte=datetime.datetime.today() - datetime.timedelta(hours=1)
+            )
+        ).count()
+        return count_users_visits

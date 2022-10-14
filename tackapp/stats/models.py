@@ -1,4 +1,5 @@
 from django.db import models
+from user.models import User
 
 
 class GlobalStats(models.Model):
@@ -81,6 +82,9 @@ class GlobalStats(models.Model):
     avg_amount_per_bank_withdraw_wo_fees = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
     )
+    users_visits_per_hour = models.PositiveIntegerField(
+        default=0
+    )
 
     class Meta:
         db_table = "global_stats"
@@ -134,8 +138,21 @@ class GroupStats(models.Model):
     sum_total_user_balance = models.PositiveIntegerField(
         blank=True, null=True, default=None
     )
+    users_visits_per_hour = models.PositiveIntegerField(
+        default=0
+    )
 
     class Meta:
         db_table = "group_stats"
         verbose_name = "Group Stats"
         verbose_name_plural = "Group Stats"
+
+
+class UserVisits(models.Model):
+    user = models.ForeignKey(to=User, verbose_name='User visits', related_name='visits', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_visits"
+        verbose_name = "User Visits"
+        verbose_name_plural = "User Visits"
