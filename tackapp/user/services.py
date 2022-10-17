@@ -36,7 +36,8 @@ def get_reviews_as_reviewer_by_user(user):
 
 def user_change_bio(user: User, data: OrderedDict):
     for key, value in data.items():
-        exec(f"user.{key} = value")
+        if hasattr(user, key):
+            setattr(user, key, value)
     user.save()
     dwolla_change_info(user)
     stripe_change_info(user)

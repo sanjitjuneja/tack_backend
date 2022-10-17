@@ -8,7 +8,7 @@
                 "name": "rabbit",
                 "image": "rabbitmq:3.10-management",
                 "cpu": 0,
-                "memory": 300,
+                "memory": 150,
                 "portMappings": [
                     {
                         "containerPort": 15672,
@@ -44,7 +44,7 @@
                 "name": "redis",
                 "image": "redis:7-alpine",
                 "cpu": 0,
-                "memory": 300,
+                "memory": 250,
                 "portMappings": [
                     {
                         "containerPort": 6379,
@@ -176,6 +176,68 @@
                     }
                 ],
                 "hostname": "celery",
+                "workingDirectory": "/app/tackapp",
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/tackapp-prod",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "ecs"
+                    }
+                }
+            },
+        {
+                "name": "celery-beat",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/backend_tackapp:v3",
+                "cpu": 0,
+                "memory": 200,
+                "links": [
+                    "rabbit",
+                    "redis",
+                    "celery",
+                    "web"
+                ],
+                "portMappings": [],
+                "essential": true,
+                "entryPoint": [],
+                "command": [
+                    "celery",
+                    "-A",
+                    "tackapp",
+                    "beat",
+                    "-l",
+                    "info",
+                    "--scheduler",
+                    "django_celery_beat.schedulers:DatabaseScheduler"
+                ],
+                "environment": [],
+                "mountPoints": [],
+                "volumesFrom": [],
+                "secrets": [
+                    {
+                        "name": "APP",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:APP::"
+                    },
+                    {
+                        "name": "AWS_ACCESS_KEY_ID",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_ACCESS_KEY_ID::"
+                    },
+                    {
+                        "name": "AWS_REGION",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_REGION::"
+                    },
+                    {
+                        "name": "AWS_SECRET_ACCESS_KEY",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:409937427980:secret:prod/tackapp/-ADrM1d:AWS_SECRET_ACCESS_KEY::"
+                    }
+                ],
+                "dependsOn": [
+                    {
+                        "containerName": "celery",
+                        "condition": "START"
+                    }
+                ],
+                "hostname": "celery-beat",
                 "workingDirectory": "/app/tackapp",
                 "logConfiguration": {
                     "logDriver": "awslogs",

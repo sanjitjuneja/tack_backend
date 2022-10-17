@@ -6,13 +6,25 @@ from django.contrib.admin import ModelAdmin
 
 from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
-from django.db.models import Count, Q, QuerySet, Subquery, F, Value, ExpressionWrapper, IntegerField, DateTimeField, \
-    Func, Case, When
 from django.utils import timezone
 
 from core.choices import TackStatus
 from payment.services import convert_to_decimal
 from .models import Tack, Offer, PopularTack
+from django.contrib.admin import ModelAdmin
+from core.choices import TackStatus
+from django.utils import timezone
+from django.contrib import admin
+from django.db.models import (
+    Count,
+    Q,
+    QuerySet,
+    F,
+    ExpressionWrapper,
+    DateTimeField,
+    Case,
+    When
+)
 
 
 class ExpiringTacksFilter(admin.SimpleListFilter):
@@ -209,13 +221,3 @@ class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
-
-#
-# class ProxyTack(Tack):
-#     class Meta:
-#         proxy = True
-#
-#
-# @admin.register(ProxyTack)
-# class ProxyTackAdmin(ModelAdmin):
-#     inlines = ()

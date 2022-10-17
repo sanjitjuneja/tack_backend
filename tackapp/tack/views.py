@@ -1,6 +1,9 @@
 import datetime
 import logging
 
+import stripe
+
+import djstripe.models
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
@@ -9,9 +12,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
+from payment.models import Transaction
+from payment.services import add_money_to_bank_account
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
-
 
 logger = logging.getLogger('django')
 
@@ -427,6 +431,43 @@ class OfferViewset(
 
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
+        logger.info(f"{request.user.bankaccount.usd_balance = }")
+        # if request.user.bankaccount.usd_balance < price:
+        #     """
+        #     Additional check on desync Stripe transfers (due to webhook delay frontend trying to access
+        #     this endpoint before backend actually receiving payment confirmation via webhook)
+        #     """
+
+            # customer, created = djstripe.models.Customer.get_or_create(subscriber=request.user)
+            # payment_intents = stripe.PaymentIntent.list(customer=customer.id, limit=10)
+            #
+            # succeded_payment_intents = [payment_intent for
+            #                             payment_intent in payment_intents
+            #                             if payment_intent.get("status") == "succeeded"]
+            # id_of_payment_intents = [payment_intent.get("id") for
+            #                          payment_intent in succeded_payment_intents]
+            #
+            # desynced_transactions = Transaction.objects.filter(
+            #     transaction_id__in=id_of_payment_intents,
+            #     is_succeeded=False
+            # )
+            # logger.info(f"{id_of_payment_intents = }")
+            # logger.info(f"{desynced_transactions = }")
+            # try:
+            #     with transaction.atomic():
+            #         for tr in desynced_transactions:
+            #             for pi in succeded_payment_intents:
+            #                 if pi.get("id") == tr.transaction_id:
+            #                     logger.info(f"{pi.id = }")
+            #                     dsPaymentIntent = djstripe.models.PaymentIntent.objects.get(id=pi.id)
+            #                     add_money_to_bank_account(
+            #                         payment_intent=dsPaymentIntent,
+            #                         cur_transaction=tr
+            #                     )
+            #                     tr.is_succeeded = True
+            #                     tr.save()
+            # except djstripe.models.PaymentIntent.DoesNotExist:
+            #     pass
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
@@ -437,20 +478,6 @@ class OfferViewset(
                 },
                 status=400)
 
-        accept_offer(offer)
-        serializer = OfferSerializer(offer)
-        return Response(serializer.data)
-
-    @action(
-        methods=("POST",),
-        detail=True,
-        permission_classes=(OfferTackOwnerPermission,),
-        serializer_class=AcceptOfferSerializer
-    )
-    def test_accept(self, request, *args, **kwargs):
-        """*For testing purposes* Endpoint for Tacker to accept Runner's offer"""
-
-        offer = self.get_object()
         accept_offer(offer)
         serializer = OfferSerializer(offer)
         return Response(serializer.data)

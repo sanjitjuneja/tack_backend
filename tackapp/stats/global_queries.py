@@ -9,7 +9,7 @@ from tack.models import Tack
 from user.models import User
 
 created_tacks_last_hour = Tack.objects.filter(
-    creation_time_gte=timezone.now() - timedelta(hours=1)
+    creation_time__gte=timezone.now() - timedelta(hours=1)
 )
 accepted_tacks_last_hour = Tack.objects.filter(
     accepted_time__gte=timezone.now() - timedelta(hours=1)
@@ -23,7 +23,7 @@ active_users_last_week = User.objects.filter(
 transactions_last_hour = Transaction.objects.filter(
     creation_time__gte=timezone.now() - timedelta(hours=1),
 )
-collected_groups = Group.active.fiter(
+collected_groups = Group.active.filter(
     collect_stats=True
 )
 bank_accounts = BankAccount.objects.all()

@@ -37,7 +37,6 @@ class UsersViewset(
 
     @action(methods=("GET",), detail=False, serializer_class=UserDetailSerializer)
     def me(self, request, *args, **kwargs):
-        self.queryset = User.objects.all()
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
@@ -48,7 +47,6 @@ class UsersViewset(
         serializer_class=UserDetailSerializer
     )
     def me_change_bio(self, request, *args, **kwargs):
-        self.queryset = User.objects.all()
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)

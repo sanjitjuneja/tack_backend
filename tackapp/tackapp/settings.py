@@ -58,7 +58,7 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'payment_file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': 'logs/payments.log',
             'formatter': 'json_formatter'
@@ -76,7 +76,7 @@ LOGGING = {
             'propagate': True,
         },
         'payments': {
-            'handlers': ('payment_file',),
+            'handlers': ('payment_file', 'console'),
             'level': 'DEBUG'
         },
         'tackapp.consumers': {
@@ -169,6 +169,7 @@ INSTALLED_APPS = [
     "socials.apps.SocialsConfig",
     "payment.apps.PaymentConfig",
     "dwolla_service.apps.DwollaServiceConfig",
+    "stats.apps.StatsConfig",
     "drf_spectacular",
     "rest_framework",
     "sslserver",
