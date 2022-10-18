@@ -156,3 +156,15 @@ class UserVisits(models.Model):
         db_table = "user_visits"
         verbose_name = "User Visits"
         verbose_name_plural = "User Visits"
+
+
+class Definitions(models.Model):
+    active_user_timedelta_days = models.PositiveSmallIntegerField(default=7)
+    amount_of_tacks_for_tacker = models.PositiveSmallIntegerField(default=1)
+    amount_of_tacks_for_runner = models.PositiveSmallIntegerField(default=3)
+    tack_created_last_x_days_for_tacker = models.PositiveSmallIntegerField(default=7)
+
+    class Meta:
+        db_table = "custom_definitions"
+        verbose_name = "Tack Definition"
+        verbose_name_plural = "Tack Definitions"
