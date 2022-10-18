@@ -39,6 +39,7 @@ def collect_stats():
     global_user_stats_dict = get_user_stats_dict(user_stats)
     global_payment_stats_dict = get_payment_stats_dict(payment_stats)
     global_stats_dict = global_tack_stats_dict | global_user_stats_dict | global_payment_stats_dict
+    logger.info(f"{global_stats_dict = }")
     GlobalStats.objects.create(**global_stats_dict)
     logger.info(f"Global stats took ~ {round(time.time() - start_time, 2)} seconds")
 
@@ -49,7 +50,7 @@ def collect_stats():
         group_tack_stats_dict = get_tack_stats_dict(tack_stats, group=group)
         group_user_stats_dict = get_user_stats_dict(user_stats, group=group)
         group_stats_dict = {"group": group} | group_tack_stats_dict | group_user_stats_dict
-        logger.info(f"{group_stats_dict}")
+        logger.info(f"{group_stats_dict = }")
         group_stats_list.append(GroupStats(**group_stats_dict))
     GroupStats.objects.bulk_create(group_stats_list)
     logger.info(f"Group stats took ~ {round(time.time() - start_time, 2)} seconds")

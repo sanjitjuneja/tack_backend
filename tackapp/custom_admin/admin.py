@@ -36,10 +36,25 @@ class MyAdminSite(admin.AdminSite):
                 'name': 'Grafana',
                 'models': [
                     {
-                        'name': 'Grafana',
+                        'name': 'Global Stats Dashboard',
                         'perms': {'change': True},
-                        'admin_url': 'https://grafana.backend.tackapp.net/dashboards'
-                    }
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/snnoHcIVk/global-stats-dashboard?orgId=1'
+                    },
+                    {
+                        'name': 'Group Stats Dashboard',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/SjAgApSVz/group-stats-dashboard?orgId=1'
+                    },
+                    {
+                        'name': 'Live Data Group Stats Dashboard',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/LFGfUX4Vz/live-data-each-groups-stats?orgId=1'
+                    },
+                    {
+                        'name': 'Live Data Groups Stats Dashboard',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/m2xlDEVVk/live-data-general-groups-info?orgId=1'
+                    },
                 ]
             },
             {
@@ -79,6 +94,16 @@ class MyAdminSite(admin.AdminSite):
                         'name': 'Transactions',
                         'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
                         'admin_url': '/admin/payment/transaction'
+                    },
+                    {
+                        'name': 'Group Memberships',
+                        'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
+                        'admin_url': '/admin/group/groupmembers'
+                    },
+                    {
+                        'name': 'Popular Tacks',
+                        'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
+                        'admin_url': '/admin/tack/populartack'
                     },
                 ]
             }
