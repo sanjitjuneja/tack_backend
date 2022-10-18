@@ -36,22 +36,22 @@ class MyAdminSite(admin.AdminSite):
                 'name': 'Grafana',
                 'models': [
                     {
-                        'name': 'Global Stats Dashboard',
+                        'name': 'Stored Data (Global)',
                         'perms': {'change': True},
                         'admin_url': 'https://grafana.backend.tackapp.net/d/snnoHcIVk/global-stats-dashboard?orgId=1'
                     },
                     {
-                        'name': 'Group Stats Dashboard',
+                        'name': 'Stored Data (Per Group)',
                         'perms': {'change': True},
                         'admin_url': 'https://grafana.backend.tackapp.net/d/SjAgApSVz/group-stats-dashboard?orgId=1'
                     },
                     {
-                        'name': 'Live Data Group Stats Dashboard',
+                        'name': 'Live Stats (Global)',
                         'perms': {'change': True},
                         'admin_url': 'https://grafana.backend.tackapp.net/d/LFGfUX4Vz/live-data-each-groups-stats?orgId=1'
                     },
                     {
-                        'name': 'Live Data Groups Stats Dashboard',
+                        'name': 'Live Stats (Per Group)',
                         'perms': {'change': True},
                         'admin_url': 'https://grafana.backend.tackapp.net/d/m2xlDEVVk/live-data-general-groups-info?orgId=1'
                     },
