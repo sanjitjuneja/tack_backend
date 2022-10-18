@@ -22,11 +22,11 @@ class GlobalStats(models.Model):
     avg_price_last_hour = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
     )
-    avg_tackers_time_estimation = models.DecimalField(
-        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    avg_tackers_time_estimation = models.PositiveIntegerField(
+        blank=True, null=True, default=None
     )
-    avg_first_offer_time = models.DecimalField(
-        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    avg_first_offer_time = models.DateTimeField(
+        blank=True, null=True, default=None,
     )
     runner_tacker_ratio = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
@@ -117,11 +117,11 @@ class GroupStats(models.Model):
     avg_price_last_hour = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
     )
-    avg_tackers_time_estimation = models.DecimalField(
-        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    avg_tackers_time_estimation = models.PositiveIntegerField(
+        blank=True, null=True, default=None
     )
-    avg_first_offer_time = models.DecimalField(
-        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    avg_first_offer_time = models.PositiveIntegerField(
+        blank=True, null=True, default=None
     )
     runner_tacker_ratio = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
