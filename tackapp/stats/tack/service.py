@@ -1,6 +1,7 @@
+import logging
 from datetime import timedelta
 
-from django.db.models import Count, Avg, FloatField, ExpressionWrapper, QuerySet, F, Min, Q
+from django.db.models import Count, Avg, FloatField, ExpressionWrapper, QuerySet, F, Min, Q, DateTimeField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -11,7 +12,6 @@ from tack.models import Tack
 from user.models import User
 from stats.global_queries import definitions
 
-
 tack_created_last_x_days_for_tacker = definitions.tack_created_last_x_days_for_tacker if definitions else 7
 amount_of_tacks_for_tacker = definitions.amount_of_tacks_for_tacker if definitions else 1
 amount_of_tacks_for_runner = definitions.amount_of_tacks_for_runner if definitions else 3
@@ -19,11 +19,11 @@ amount_of_tacks_for_runner = definitions.amount_of_tacks_for_runner if definitio
 
 class TackStats:
     def __init__(
-        self,
-        created_tacks_last_hour: QuerySet[Tack],
-        accepted_tacks_last_hour: QuerySet[Tack],
-        completed_tacks_last_hour: QuerySet[Tack],
-        active_users_last_week: QuerySet[User],
+            self,
+            created_tacks_last_hour: QuerySet[Tack],
+            accepted_tacks_last_hour: QuerySet[Tack],
+            completed_tacks_last_hour: QuerySet[Tack],
+            active_users_last_week: QuerySet[User],
     ):
         self.created_tacks_last_hour = created_tacks_last_hour
         self.accepted_tacks_last_hour = accepted_tacks_last_hour
@@ -116,7 +116,7 @@ class TackStats:
                     F('offer_min_creation_time'),
                     timezone.now()
                 ) - F('creation_time'))
-        )["avg_first_offer_time"] or 0
+        )["avg_first_offer_time"] or timedelta(minutes=0)
 
     def get_runner_tacker_ratio(self, group: Group = None):
         filters = _setup_filters(group=group)
