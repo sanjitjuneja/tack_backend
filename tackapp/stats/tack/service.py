@@ -122,7 +122,8 @@ class TackStats:
         filters = _setup_filters(group=group)
         tackers = self.active_users_last_week.filter(
             **filters,
-            tack_tacker__creation_time__gte=timezone.now() - timedelta(days=7)
+            tack_tacker__creation_time__gte=timezone.now() - timedelta(days=7),
+            tack_tacker__is_active=True,
         ).annotate(
             tack_num_as_tacker=Count('tack_tacker')
         ).filter(
