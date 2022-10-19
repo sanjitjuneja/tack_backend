@@ -448,7 +448,8 @@ class OfferViewset(
                 #     },
                 #     status=400
                 # )
-        if request.user.bankaccount.usd_balance < price:
+        ba = BankAccount.objects.get(user=request.user)
+        if ba.usd_balance < price:
             return Response(
                 {
                     "error": "Px2",
