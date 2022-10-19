@@ -134,3 +134,9 @@ class TackerType(models.TextChoices):
     SUPER_ACTIVE = "Active - Both", "Active - Both"
     ACTIVE = "Active - Neither", "Active - Neither"
     INACTIVE = "Inactive", "Inactive"
+
+
+class MethodType(models.TextChoices):
+    TACK_BALANCE = "tack_balance", "Tack Balance"
+    STRIPE = "stripe", "Stripe"
+    DWOLLA = "dwolla", "Dwolla"

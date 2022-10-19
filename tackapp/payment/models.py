@@ -95,6 +95,15 @@ class Transaction(models.Model):
     transaction_id = models.CharField(max_length=255)
     creation_time = models.DateTimeField(auto_now_add=True)
     is_succeeded = models.BooleanField(default=False)
+    paid_tack = models.ForeignKey(
+        "tack.Tack",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    def __str__(self):
+        return f"{self.action_type}, {self.service_name}, {self.transaction_id}, {self.amount_requested}"
 
 
 class ServiceFee(models.Model):

@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from django.utils import timezone
@@ -9,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
+from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack
 
@@ -424,9 +424,32 @@ class OfferViewset(
         """Endpoint for Tacker to accept Runner's offer"""
 
         offer = self.get_object()
-
+        serializer = self.get_serializer(data=request.data)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
+        logger.info(f"{request.user.bankaccount.usd_balance = }")
+        transaction_id = serializer.validated_data.get("transaction_id")
+        method_type = serializer.validated_data.get("method_type")
+
+        logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
+        match method_type:
+            case MethodType.TACK_BALANCE:
+                pass
+            case MethodType.STRIPE:
+                set_pay_for_tack_id(transaction_id, offer)
+                if request.user.bankaccount.usd_balance < price and transaction_id:
+                    stripe_desync_check(request, transaction_id)
+            case MethodType.DWOLLA:
+                set_pay_for_tack_id(transaction_id, offer)
+            case _:
+                return Response(
+                    {
+                        "error": "Ox3",
+                        "message": f"Validation error. Wrong Method type. "
+                                   f"Supported choices are: {MethodType.values}"
+                    },
+                    status=400
+                )
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
@@ -437,20 +460,6 @@ class OfferViewset(
                 },
                 status=400)
 
-        accept_offer(offer)
-        serializer = OfferSerializer(offer)
-        return Response(serializer.data)
-
-    @action(
-        methods=("POST",),
-        detail=True,
-        permission_classes=(OfferTackOwnerPermission,),
-        serializer_class=AcceptOfferSerializer
-    )
-    def test_accept(self, request, *args, **kwargs):
-        """*For testing purposes* Endpoint for Tacker to accept Runner's offer"""
-
-        offer = self.get_object()
         accept_offer(offer)
         serializer = OfferSerializer(offer)
         return Response(serializer.data)

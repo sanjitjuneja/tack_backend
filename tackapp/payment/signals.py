@@ -27,6 +27,9 @@ def add_balance_to_user(event, *args, **kwargs):
     logger.debug(f"{pi =}")
     logger.debug(f"{tr =}")
     with transaction.atomic():
+        if tr.is_succeeded:
+            logger.debug(f"{tr} is already succeeded")
+            return
         add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
         service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
         logger.debug(f"{service_fee =}")

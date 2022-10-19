@@ -371,7 +371,7 @@ def dwolla_transaction(
             ba.usd_balance += amount
             ba.save()
 
-    return response.body
+    return transaction_id
 
 
 def calculate_amount_with_fees(amount: int, service: str) -> int:

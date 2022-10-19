@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from core.choices import MethodType
 from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from group.serializers import GroupSerializer
 from user.serializers import UserListSerializer
@@ -83,6 +85,9 @@ class TackCompleteSerializer(CustomSerializer):
 
 
 class AcceptOfferSerializer(CustomModelSerializer):
+    transaction_id = serializers.CharField(allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_null=True, required=False)
+
     class Meta:
         model = Offer
         fields = "__all__"
