@@ -11,8 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
-from .services import accept_offer, complete_tack, confirm_complete_tack
-
+from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
 logger = logging.getLogger('django')
 
@@ -110,11 +109,7 @@ class TackViewset(
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
-        Offer.active.filter(
-            tack=tack
-        ).update(
-            status=OfferStatus.DELETED
-        )
+        delete_tack_offers(tack)
         self.perform_destroy(tack)
         return Response(status=204)
 
@@ -426,6 +421,7 @@ class OfferViewset(
 
         offer = self.get_object()
         serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         logger.info(f"{request.user.bankaccount.usd_balance = }")
@@ -443,14 +439,15 @@ class OfferViewset(
             case MethodType.DWOLLA:
                 set_pay_for_tack_id(transaction_id, offer)
             case _:
-                return Response(
-                    {
-                        "error": "Ox3",
-                        "message": f"Validation error. Wrong Method type. "
-                                   f"Supported choices are: {MethodType.values}"
-                    },
-                    status=400
-                )
+                pass
+                # return Response(
+                #     {
+                #         "error": "Ox3",
+                #         "message": f"Validation error. Wrong Method type. "
+                #                    f"Supported choices are: {MethodType.values}"
+                #     },
+                #     status=400
+                # )
         if request.user.bankaccount.usd_balance < price:
             return Response(
                 {
