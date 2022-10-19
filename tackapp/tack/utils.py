@@ -22,18 +22,25 @@ def stripe_desync_check(request, transaction_id):
     """
 
     pi = stripe.PaymentIntent.retrieve(transaction_id)
+    logger.info("INSIDE stripe_desync_check")
+    logger.info(f"{pi = }")
+    logger.info(f"{pi.status = }")
     if pi.status == "succeeded":
+        logger.info(f"pi status succeeded")
         try:
             desynced_transaction = Transaction.objects.get(
                 transaction_id=pi.id,
                 is_succeeded=False
             )
+            logger.info(f"{desynced_transaction = }")
         except Transaction.DoesNotExist:
             return
         else:
             with transaction.atomic():
                 try:
+                    logger.info(f"DB transaction started")
                     ds_pi = dsPaymentIntent.objects.get(id=pi.id)
+                    logger.info(f"{ds_pi = }")
                 except dsPaymentIntent.DoesNotExist:
                     return
                 else:
