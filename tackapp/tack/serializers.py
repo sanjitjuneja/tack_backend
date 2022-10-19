@@ -85,8 +85,8 @@ class TackCompleteSerializer(CustomSerializer):
 
 
 class AcceptOfferSerializer(CustomModelSerializer):
-    transaction_id = serializers.CharField(allow_null=True, required=False)
-    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_null=True, required=False)
+    transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_blank=True, allow_null=True, required=False)
 
     class Meta:
         model = Offer
