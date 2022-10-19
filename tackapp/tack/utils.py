@@ -42,12 +42,14 @@ def stripe_desync_check(request, transaction_id):
                     ds_pi = dsPaymentIntent.objects.get(id=pi.id)
                     logger.info(f"{ds_pi = }")
                 except dsPaymentIntent.DoesNotExist:
-                    return
-                else:
-                    add_money_to_bank_account(
-                        payment_intent=ds_pi,
-                        cur_transaction=desynced_transaction
+                    ds_pi = dsPaymentIntent.objects.create(
+                        **pi
                     )
+                    logger.info(f"{ds_pi = }")
+                add_money_to_bank_account(
+                    payment_intent=ds_pi,
+                    cur_transaction=desynced_transaction
+                )
                 desynced_transaction.is_succeeded = True
                 desynced_transaction.save()
 

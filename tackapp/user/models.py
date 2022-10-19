@@ -87,8 +87,7 @@ class User(AbstractUser):
         return {"phone_number": self.phone_number, "email": self.email}
 
     def __str__(self):
-        user = User.objects.get(id=self.id)
-        return f"{user.last_name} {user.first_name} {user.phone_number}"
+        return f"{self.last_name} {self.first_name} {self.phone_number}"
 
     class Meta:
         db_table = "users"
