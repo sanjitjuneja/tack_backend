@@ -32,7 +32,7 @@ class UserStats:
         return BankAccount.objects.filter(
             user__in=users
         ).aggregate(
-            sum_user_balance=Avg('usd_balance')
+            sum_user_balance=Sum('usd_balance')
         )["sum_user_balance"]
 
     def get_user_visits_count_per_hour(self, group: Group = None) -> int:

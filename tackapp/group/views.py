@@ -3,6 +3,7 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from drf_spectacular.types import OpenApiTypes
@@ -107,7 +108,8 @@ class GroupViewset(
 
         if request.user.is_anonymous:
             logger.info(f"{request.META = }")
-            return TemplateResponse(request, 'browser_group_invite.html', context={})
+            return redirect("https://apps.apple.com/us/app/tack-task-marketplace/id1619995138")
+
         serializer = self.get_serializer(data=request.query_params)
         try:
             serializer.is_valid(raise_exception=True)

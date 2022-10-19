@@ -44,6 +44,15 @@ def delete_other_tack_offers(offer: Offer):
     )
 
 
+def delete_tack_offers(tack: Tack):
+    Offer.active.filter(
+        tack=tack
+    ).update(
+        status=OfferStatus.DELETED,
+        is_active=False
+    )
+
+
 @transaction.atomic
 def complete_tack(tack: Tack, message: str = None):
     tack.completion_message = message

@@ -138,7 +138,9 @@ class GroupStats(models.Model):
     sum_total_user_balance = models.PositiveIntegerField(
         blank=True, null=True, default=None
     )
-    users_visits_per_hour = models.PositiveIntegerField(default=0)
+    users_visits_per_hour = models.PositiveIntegerField(
+        default=0
+    )
 
     class Meta:
         db_table = "group_stats"

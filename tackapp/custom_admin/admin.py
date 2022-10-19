@@ -17,6 +17,7 @@ class MyAdminSite(admin.AdminSite):
         ordering = {
             # "Grafana": 0,
             # "Important": 1,
+            "Advanced_Filters": 0,
             "Tack": 1,
             "Group": 2,
             "Review": 3,
@@ -26,7 +27,6 @@ class MyAdminSite(admin.AdminSite):
             "FCM Devices": 7,
             "Periodic Tasks": 8,
             "Token Blacklist": 9,
-            "ADVANCED_FILTERS": 10,
             "djstripe": 11,
             "Dwolla service": 12,
         }
@@ -36,10 +36,25 @@ class MyAdminSite(admin.AdminSite):
                 'name': 'Grafana',
                 'models': [
                     {
-                        'name': 'Grafana',
+                        'name': 'Stored Data (Global)',
                         'perms': {'change': True},
-                        'admin_url': 'https://grafana.backend.tackapp.net/dashboards'
-                    }
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/snnoHcIVk/global-stats-dashboard?orgId=1'
+                    },
+                    {
+                        'name': 'Stored Data (Per Group)',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/SjAgApSVz/group-stats-dashboard?orgId=1'
+                    },
+                    {
+                        'name': 'Live Stats (Global)',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/LFGfUX4Vz/live-data-each-groups-stats?orgId=1'
+                    },
+                    {
+                        'name': 'Live Stats (Per Group)',
+                        'perms': {'change': True},
+                        'admin_url': 'https://grafana.backend.tackapp.net/d/m2xlDEVVk/live-data-general-groups-info?orgId=1'
+                    },
                 ]
             },
             {
@@ -79,6 +94,16 @@ class MyAdminSite(admin.AdminSite):
                         'name': 'Transactions',
                         'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
                         'admin_url': '/admin/payment/transaction'
+                    },
+                    {
+                        'name': 'Group Memberships',
+                        'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
+                        'admin_url': '/admin/group/groupmembers'
+                    },
+                    {
+                        'name': 'Popular Tacks',
+                        'perms': {'add': False, 'change': False, 'delete': False, 'view': True},
+                        'admin_url': '/admin/tack/populartack'
                     },
                 ]
             }

@@ -1,3 +1,4 @@
+from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
@@ -69,7 +70,7 @@ class ServiceFeeAdmin(ModelAdmin):
 
 
 @admin.register(Transaction)
-class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
+class TransactionAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
     list_display = (
         'user',
         'human_readable_amount_requested',
@@ -82,6 +83,15 @@ class TransactionAdmin(ReadOnlyMixin, ModelAdmin):
         'transaction_id',
     )
     list_filter = ('creation_time', 'service_name', 'action_type')
+    advanced_filter_fields = (
+        'amount_requested',
+        'amount_with_fees',
+        'service_fee',
+        'fee_difference',
+        'service_name',
+        'action_type',
+        'is_succeeded',
+    )
     search_fields = ('user__first_name', 'user__last_name', 'transaction_id')
     search_help_text = "Search by User id, name, Transaction id"
 

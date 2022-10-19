@@ -1,18 +1,19 @@
 from advanced_filters.admin import AdminAdvancedFiltersMixin
 from stats.models import GlobalStats, GroupStats, UserVisits, Definitions
 from django.contrib.admin import ModelAdmin
+
 from payment.admin import ReadOnlyMixin
 from django.contrib import admin
 
 
 @admin.register(GlobalStats)
 class GlobalStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    pass
+    list_display = ("id", "timestamp")
 
 
 @admin.register(GroupStats)
 class GroupStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    pass
+    list_display = ("id", "timestamp", "group")
 
 
 @admin.register(Definitions)

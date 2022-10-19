@@ -1,7 +1,14 @@
+import datetime
 import logging
 from datetime import timedelta
 
+from django.contrib.admin import ModelAdmin
+
+from django.contrib import admin
 from advanced_filters.admin import AdminAdvancedFiltersMixin
+from django.utils import timezone
+
+from core.choices import TackStatus
 from payment.services import convert_to_decimal
 from .models import Tack, Offer, PopularTack
 from django.contrib.admin import ModelAdmin
@@ -13,6 +20,10 @@ from django.db.models import (
     Q,
     QuerySet,
     F,
+    ExpressionWrapper,
+    DateTimeField,
+    Case,
+    When
 )
 
 
@@ -39,36 +50,54 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
         """
         if self.value() == "expire_soon":
             expiring_tacks = queryset.filter(
-                Q(
-                    start_completion_time__isnull=False,
-                    start_completion_time__lt=timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
-                    is_active=True
-                ) |
-                Q(
-                    status__in=(
-                        TackStatus.CREATED,
-                        TackStatus.ACTIVE,
-                        TackStatus.ACCEPTED,
-                        TackStatus.IN_PROGRESS
-                    ),
-                    is_active=True
+                start_completion_time__isnull=False
+            ).annotate(
+                expiration_time=ExpressionWrapper(
+                    timedelta(seconds=1) * F('estimation_time_seconds') * 0.9 + timezone.now(),
+                    output_field=DateTimeField()
                 )
+            ).filter(
+                start_completion_time__lt=F('expiration_time'),
+                is_active=True
+            ).exclude(
+                status__in=(TackStatus.FINISHED, TackStatus.WAITING_REVIEW)
             ).order_by(
-                'id'
+                'expiration_time'
             )
-            return expiring_tacks
+            ordering = (TackStatus.IN_PROGRESS, TackStatus.ACCEPTED, TackStatus.ACTIVE, TackStatus.CREATED)
+            preserved = Case(*[When(status=status, then=pos) for pos, status in enumerate(ordering)])
+            other_tacks_included = queryset.filter(
+                status__in=(
+                    TackStatus.CREATED,
+                    TackStatus.ACTIVE,
+                    TackStatus.ACCEPTED,
+                    TackStatus.IN_PROGRESS
+                ),
+                is_active=True
+            ).order_by(
+                preserved
+            )
+            logger.info(f"{expiring_tacks.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            logger.info(f"{other_tacks_included.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            union_result = (expiring_tacks | other_tacks_included).distinct()
+            logger.info(f"{union_result.values('id', 'status', 'creation_time', 'estimation_time_seconds') = }")
+            return union_result
         return queryset
 
 
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'human_readable_price', 'status', 'is_active', 'tacker', 'runner', 'num_offers',
-                    'allow_counter_offer', 'group', 'creation_time']
+    list_display = ['id', 'title', 'human_readable_price', 'status', 'expires_at', 'is_active', 'tacker', 'runner',
+                    'num_offers', 'allow_counter_offer', 'group', 'creation_time']
     list_display_links = ("title",)
-    list_filter = ['is_active', 'allow_counter_offer', 'status', 'creation_time', 'group', ExpiringTacksFilter]
+    list_filter = [ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'is_paid', 'group']
     advanced_filter_fields = (
         'status',
+        'price',
+        'allow_counter_offer',
+        'is_paid',
+        'is_canceled',
     )
     search_fields = (
         "title",
@@ -81,7 +110,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     )
     search_help_text = "Search by Tack title, Tacker name, Runner name, Group id, name"
     actions = ['cancel_tacks']
-    ordering = ('-id',)
+    # ordering = ('-id',)
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -120,6 +149,12 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
 
+    @admin.display(description="Expires at")
+    def expires_at(self, obj: Tack):
+        if not (obj.start_completion_time and obj.estimation_time_seconds):
+            return "-"
+        return obj.start_completion_time + timedelta(seconds=obj.estimation_time_seconds)
+
 
 @admin.register(PopularTack)
 class PopularTacksAdmin(ModelAdmin):
@@ -142,14 +177,16 @@ class PopularTacksAdmin(ModelAdmin):
 
 
 @admin.register(Offer)
-class OfferAdmin(ModelAdmin):
+class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         parent_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "tack":
-            kwargs["queryset"] = Tack.active.filter(
-                tack_id=parent_id
-            ) if parent_id else \
-                Tack.active.filter(
+            if parent_id:
+                kwargs["queryset"] = Tack.objects.filter(
+                    offer=parent_id
+                )
+            else:
+                kwargs["queryset"] = Tack.active.filter(
                     status__in=(
                         TackStatus.CREATED,
                         TackStatus.ACTIVE
@@ -161,6 +198,12 @@ class OfferAdmin(ModelAdmin):
     list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
     list_display_links = ("view_offer_str",)
     list_filter = ['offer_type', 'is_active', 'status']
+    advanced_filter_fields = (
+        'status',
+        'is_active',
+        'offer_type',
+        'price',
+    )
     search_fields = ['id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name']
     search_help_text = "Search by Offer id, title, description; Tack title; Runner name"
     ordering = ('-id',)
@@ -178,13 +221,3 @@ class OfferAdmin(ModelAdmin):
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
-
-#
-# class ProxyTack(Tack):
-#     class Meta:
-#         proxy = True
-#
-#
-# @admin.register(ProxyTack)
-# class ProxyTackAdmin(ModelAdmin):
-#     inlines = ()
