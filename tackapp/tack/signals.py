@@ -126,7 +126,7 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
         case TackStatus.WAITING_REVIEW:
             ws_tack_waiting_review(instance)
             notification_on_tack_waiting_review(instance)
-            change_tack_status_finished.apply_async(countdown=3600, kwargs={"tack_id": instance.id})
+            change_tack_status_finished.apply_async(countdown=43200, kwargs={"tack_id": instance.id})
         # status changed to finished (tacker confirmed tack completion)
         case TackStatus.FINISHED:
             ws_tack_finished(instance)
