@@ -11,6 +11,7 @@ from core.choices import TackStatus
 from payment.models import BankAccount
 from payment.serializers import BankAccountSerializer
 from review.serializers import ReviewSerializer
+from stats.models import UserVisits
 from tack.models import Tack
 from .serializers import *
 from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
@@ -138,3 +139,10 @@ class UsersViewset(
 
         ba, created = BankAccount.objects.get_or_create(user=request.user)
         return Response(BankAccountSerializer(ba).data)
+
+    @action(methods=("POST",), detail=False, url_path="me/visit", serializer_class=None)
+    def add_visit(self, request, *args, **kwargs):
+        UserVisits.objects.create(
+            user=request.user
+        )
+        return Response()
