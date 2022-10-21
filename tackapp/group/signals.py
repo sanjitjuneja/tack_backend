@@ -60,7 +60,7 @@ def post_delete_group_members(instance: GroupMembers, *args, **kwargs):
     # set another active group if user leaving his current active group
 
 
-@receiver(signal=pre_delete, sender=GroupMembers)
+@receiver(signal=post_delete, sender=GroupMembers)
 def pre_delete_group_members(instance: GroupMembers, *args, **kwargs):
     logging.getLogger().warning(f"{instance = }")
     logging.getLogger().warning(f"{instance.group = }")
