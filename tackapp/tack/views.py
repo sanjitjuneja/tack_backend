@@ -13,7 +13,7 @@ from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 class TackViewset(
