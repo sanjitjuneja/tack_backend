@@ -420,7 +420,17 @@ class OfferViewset(
         """Endpoint for Tacker to accept Runner's offer"""
 
         offer = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        if offer.status != OfferStatus.CREATED:
+            return Response(
+                {
+                    "error": "Tx13",
+                    "message": "Offer already accepted"
+                },
+                status=400
+            )
+        logger.info(f"{request.data = }")
+        data = request.data if request.data else {}
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
