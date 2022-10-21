@@ -13,7 +13,7 @@ from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
-logger = logging.getLogger('debug')
+logger = logging.getLogger('django')
 
 
 class TackViewset(
@@ -420,9 +420,16 @@ class OfferViewset(
         """Endpoint for Tacker to accept Runner's offer"""
 
         offer = self.get_object()
-        logger.debug(f"{offer = }")
-        logger.debug(f"{request.data = }")
-        serializer = self.get_serializer(data=request.data)
+        if offer.status != OfferStatus.CREATED:
+            return Response(
+                {
+                    "error": "Tx13",
+                    "message": "Offer already accepted"
+                },
+                status=400
+            )
+        data = request.data if request.data else {}
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
