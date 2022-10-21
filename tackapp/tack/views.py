@@ -420,6 +420,8 @@ class OfferViewset(
         """Endpoint for Tacker to accept Runner's offer"""
 
         offer = self.get_object()
+        logger.debug(f"{offer = }")
+        logger.debug(f"{request.data = }")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         # TODO: to service

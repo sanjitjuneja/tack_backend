@@ -48,7 +48,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
@@ -74,6 +74,10 @@ LOGGING = {
         'django': {
             'handlers': ('console',),
             'propagate': True,
+        },
+        'debug': {
+            'handlers': ('console',),
+            'level': 'DEBUG',
         },
         'payments': {
             'handlers': ('payment_file', 'console',),
