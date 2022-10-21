@@ -6,7 +6,7 @@
     "containerDefinitions": [
             {
                 "name": "rabbit",
-                "image": "rabbitmq:3.10-management",
+                "image": "409937427980.dkr.ecr.us-east-1.amazonaws.com/rabbit_tackapp:v1",
                 "cpu": 0,
                 "memory": 300,
                 "portMappings": [
