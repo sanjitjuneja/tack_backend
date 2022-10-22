@@ -436,16 +436,22 @@ class OfferViewset(
         logger.info(f"{request.user.bankaccount.usd_balance = }")
         transaction_id = serializer.validated_data.get("transaction_id")
         method_type = serializer.validated_data.get("method_type")
-
+        
+        logger.info(f"{transaction_id = }")
+        logger.info(f"{method_type = }")
+        
         logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
         match method_type:
             case MethodType.TACK_BALANCE:
+                logger.debug("case MethodType.TACK_BALANCE")
                 pass
             case MethodType.STRIPE:
+                logger.debug("case MethodType.STRIPE")
                 set_pay_for_tack_id(transaction_id, offer)
                 if request.user.bankaccount.usd_balance < price and transaction_id:
                     stripe_desync_check(request, transaction_id)
             case MethodType.DWOLLA:
+                logger.debug("case MethodType.DWOLLA")
                 set_pay_for_tack_id(transaction_id, offer)
             case _:
                 pass
@@ -458,6 +464,8 @@ class OfferViewset(
                 #     status=400
                 # )
         ba = BankAccount.objects.get(user=request.user)
+        logger.info(f"{ba = }")
+        logger.info(f"{ba.usd_balance = }")
         if ba.usd_balance < price:
             return Response(
                 {
