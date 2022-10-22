@@ -17,10 +17,12 @@ logger = logging.getLogger("django")
 
 @transaction.atomic
 def accept_offer(offer: Offer):
+    logger.info("ACCEPT_OFFER")
     delete_other_tack_offers(offer)
     offer.status = OfferStatus.ACCEPTED
     offer.save()
-
+    logger.info(f"offer status after save: {offer.status}")
+    
     price = offer.price if offer.price else offer.tack.price
     offer.tack.runner = offer.runner
     offer.tack.accepted_offer = offer
@@ -28,10 +30,12 @@ def accept_offer(offer: Offer):
     offer.tack.accepted_time = timezone.now()
     offer.tack.price = price
     offer.tack.save()
-
+    logger.info(f"offer.tack.status after save: {offer.tack.status}")
+    
     offer.tack.tacker.bankaccount.usd_balance -= price
     offer.tack.tacker.bankaccount.save()
-
+    logger.info(f"offer.tack.tacker.bankaccount.usd_balance after save: {offer.tack.tacker.bankaccount.usd_balance}")
+    
 
 def delete_other_tack_offers(offer: Offer):
     Offer.active.filter(
