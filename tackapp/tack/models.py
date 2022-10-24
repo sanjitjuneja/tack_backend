@@ -40,6 +40,7 @@ class Tack(CoreModel):
     is_paid = models.BooleanField(default=False)
     is_canceled = models.BooleanField(default=False)
     estimation_time_seconds = models.PositiveIntegerField(null=True, blank=True, default=None)
+    auto_accept = models.BooleanField(default=False)
     # setting after Tacker accepts Runner's Offer
     accepted_time = models.DateTimeField(null=True, blank=True)
     accepted_offer = models.ForeignKey("tack.Offer", on_delete=models.SET_NULL, blank=True, null=True, default=None, related_name="tack_accepted_offer")
@@ -134,6 +135,7 @@ class PopularTack(models.Model):
             MaxValueValidator(999_999_99),
         ),
     )
+    auto_accept = models.BooleanField(default=False)
     group = models.ForeignKey("group.Group", on_delete=models.SET_NULL, null=True, blank=True)
     description = models.CharField(max_length=512)
     allow_counter_offer = models.BooleanField()

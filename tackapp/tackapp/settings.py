@@ -48,7 +48,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
@@ -76,11 +76,11 @@ LOGGING = {
             'propagate': True,
         },
         'debug': {
-            'handlers': ('console',),
+            'handlers': ('debug_console',),
             'level': 'DEBUG',
         },
         'payments': {
-            'handlers': ('payment_file', 'console',),
+            'handlers': ('console',),
             'level': 'INFO'
         },
         'tackapp.consumers': {

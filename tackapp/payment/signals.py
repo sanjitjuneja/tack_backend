@@ -26,9 +26,6 @@ def add_balance_to_user(event, *args, **kwargs):
     tr = Transaction.objects.get(transaction_id=pi.id)
     logger.debug(f"{pi =}")
     logger.debug(f"{tr =}")
-    if tr.is_succeeded:  # already succeeded (probably duplicate)
-        logger.info(f"Duplicate transaction {tr = }")
-        return
     with transaction.atomic():
         if tr.is_succeeded:
             logger.debug(f"{tr} is already succeeded")
