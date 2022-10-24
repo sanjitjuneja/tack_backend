@@ -75,6 +75,10 @@ LOGGING = {
             'handlers': ('console',),
             'propagate': True,
         },
+        'debug': {
+            'handlers': ('debug_console',),
+            'level': 'DEBUG',
+        },
         'payments': {
             'handlers': ('console',),
             'level': 'INFO'

@@ -1,6 +1,6 @@
-import datetime
-import logging
+from datetime import timedelta
 from django.db.models import Avg, Sum, Q
+from django.utils import timezone
 
 from stats.utils import _setup_filters
 from payment.models import BankAccount
@@ -49,7 +49,7 @@ class UserStats:
             )
             &
             Q(
-                timestamp__gte=datetime.datetime.today() - datetime.timedelta(hours=1)
+                timestamp__gte=timezone.now() - timedelta(hours=1)
             )
         ).count()
         return count_users_visits

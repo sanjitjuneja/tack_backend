@@ -16,14 +16,17 @@ from user.models import User
 from fcm_django.models import FCMDevice
 
 
-logger_services = logging.getLogger("django")
+logger = logging.getLogger("django")
 
 
 @shared_task
 @transaction.atomic
 def change_tack_status_finished(tack_id: int):
+    logger.debug(f"change_tack_status_finished {tack_id = }")
     tack = Tack.objects.get(pk=tack_id)
+    logger.debug(f"change_tack_status_finished {tack = }")
     if tack.status != TackStatus.FINISHED:
+        logger.debug("inside if stmt of change_tack_status_finished")
         tack.is_paid = send_payment_to_runner(tack)
         tack.status = TackStatus.FINISHED
         tack.tacker.tacks_amount += 1
@@ -63,7 +66,7 @@ def set_tack_active_on_user_last_login(user_id: int) -> None:
 @shared_task
 def tack_long_inactive(tack_id) -> None:
     # if this tack already had offers - do not send notification
-    logger_services.debug("tack.tasks.tack_long_inactive")
+    logger.debug("tack.tasks.tack_long_inactive")
     if Offer.objects.filter(tack=tack_id).exists():
         return
     # if this tack is not in active objects(deleted) - do not send notification

@@ -6,7 +6,7 @@ from django.db import transaction
 from payment.models import Transaction
 from djstripe.models import PaymentIntent as dsPaymentIntent
 from payment.services import add_money_to_bank_account
-
+from tack.models import Tack
 
 logger = logging.getLogger('django')
 
@@ -53,7 +53,7 @@ def stripe_desync_check(request, transaction_id):
                 desynced_transaction.save()
 
 
-def set_pay_for_tack_id(transaction_id, offer):
+def set_pay_for_tack_id(transaction_id, tack: Tack):
     """Setting up Tack into Transaction for subsequent Statistics collection"""
 
     if transaction_id:
@@ -62,5 +62,5 @@ def set_pay_for_tack_id(transaction_id, offer):
         except Transaction.DoesNotExist:
             pass
         else:
-            tr.paid_tack = offer.tack
+            tr.paid_tack = tack
             tr.save()

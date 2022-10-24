@@ -39,9 +39,15 @@ class TackViewset(
         else:
             return super().get_serializer_class()
 
-    @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
+    @extend_schema(request=inline_serializer(
+        name="tack_create_serializer_v2",
+        fields={
+            "tack": TackCreateSerializer(),
+            "payment_info": PaymentInfoSerializer(),
+        }
+    ), responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
-        serializer = TackCreateSerializer(data=request.data)
+        serializer = TackCreateSerializerv2(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
@@ -61,10 +67,39 @@ class TackViewset(
                     "message": "You are not a member of this Group"
                 },
                 status=400)
-        tack = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        output_serializer = TackDetailSerializer(tack, context={"request": request})  # Refactor
-        return Response(output_serializer.data, status=201, headers=headers)
+        price = serializer.validated_data.get("price")
+        with transaction.atomic():
+            if serializer.validated_data.get("auto_accept"):
+                transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
+                method_type = serializer.validated_data.get("payment_info").get("method_type")
+
+                match method_type:
+                    case MethodType.TACK_BALANCE:
+                        pass
+                    case MethodType.STRIPE:
+                        if request.user.bankaccount.usd_balance < price and transaction_id:
+                            stripe_desync_check(request, transaction_id)
+                    case MethodType.DWOLLA:
+                        pass
+                    case _:
+                        pass
+
+                if request.user.bankaccount.usd_balance < price:
+                    return Response(
+                        {
+                            "error": "Px2",
+                            "message": "Not enough money",
+                            "balance": request.user.bankaccount.usd_balance,
+                            "tack_price": price
+                        },
+                        status=400)
+                request.user.bankaccount.usd_balance -= price
+            tack = self.perform_create(serializer)
+        logger.debug(f"Tack id {tack.id} paid by {method_type}")
+        if transaction_id:
+            set_pay_for_tack_id(transaction_id, tack)
+        output_serializer = TackDetailSerializer(tack, context={"request": request})
+        return Response(output_serializer.data, status=201)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -109,8 +144,11 @@ class TackViewset(
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
-        delete_tack_offers(tack)
-        self.perform_destroy(tack)
+        with transaction.atomic():
+            delete_tack_offers(tack)
+            if tack.auto_accept:
+                request.user.bankaccount.usd_balance += tack.price
+            self.perform_destroy(tack)
         return Response(status=204)
 
     @action(methods=["GET"], detail=False, url_path="me/as_tacker")
@@ -405,7 +443,9 @@ class OfferViewset(
                     "message": "You can create Offers only on Active Tacks"
                 },
                 status=400)
-        self.perform_create(serializer)
+        created_offer = self.perform_create(serializer)
+        if tack.auto_accept:
+            accept_offer(created_offer)
         headers = self.get_success_headers(serializer.data)
 
         return Response(serializer.data, status=201, headers=headers)
@@ -435,29 +475,22 @@ class OfferViewset(
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         logger.info(f"{request.user.bankaccount.usd_balance = }")
-        transaction_id = serializer.validated_data.get("transaction_id")
-        method_type = serializer.validated_data.get("method_type")
+        transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
+        method_type = serializer.validated_data.get("payment_info").get("method_type")
 
         logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
         match method_type:
             case MethodType.TACK_BALANCE:
                 pass
             case MethodType.STRIPE:
-                set_pay_for_tack_id(transaction_id, offer)
+                set_pay_for_tack_id(transaction_id, offer.tack)
                 if request.user.bankaccount.usd_balance < price and transaction_id:
                     stripe_desync_check(request, transaction_id)
             case MethodType.DWOLLA:
-                set_pay_for_tack_id(transaction_id, offer)
+                set_pay_for_tack_id(transaction_id, offer.tack)
             case _:
                 pass
-                # return Response(
-                #     {
-                #         "error": "Ox3",
-                #         "message": f"Validation error. Wrong Method type. "
-                #                    f"Supported choices are: {MethodType.values}"
-                #     },
-                #     status=400
-                # )
+
         ba = BankAccount.objects.get(user=request.user)
         if ba.usd_balance < price:
             return Response(
@@ -501,4 +534,4 @@ class OfferViewset(
         return Response(status=204)
 
     def perform_create(self, serializer):
-        serializer.save(runner=self.request.user)
+        return serializer.save(runner=self.request.user)
