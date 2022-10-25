@@ -46,7 +46,7 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     #     return
     if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
         return
-    if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED, OfferStatus.ACCEPTED):
+    if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
         related_offers = Offer.objects.filter(
             tack=instance.tack,
             status=OfferStatus.CREATED)
