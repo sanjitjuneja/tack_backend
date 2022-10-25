@@ -58,13 +58,13 @@ class TackViewset(
                     "details": e.detail,
                 },
                 status=400)
-
+        tack_info = serializer.validated_data.get("tack")
         payment_info = serializer.validated_data.get("payment_info") or {}
         transaction_id = payment_info.get("transaction_id", None)
         method_type = payment_info.get("method_type", None)
 
         try:
-            GroupMembers.objects.get(member=request.user, group=serializer.validated_data.get("tack")["group"])
+            GroupMembers.objects.get(member=request.user, group=tack_info["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
@@ -72,9 +72,9 @@ class TackViewset(
                     "message": "You are not a member of this Group"
                 },
                 status=400)
-        price = serializer.validated_data.get("price")
+        price = tack_info.get("price")
         with transaction.atomic():
-            if serializer.validated_data.get("auto_accept"):
+            if tack_info.get("auto_accept"):
                 match method_type:
                     case MethodType.TACK_BALANCE:
                         pass
