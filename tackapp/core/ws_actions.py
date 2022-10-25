@@ -45,10 +45,10 @@ def ws_offer_accepted(offer: Offer):
         f"user_{offer.tack_id}_tacker",
         'offer.delete',
         offer.id)
-    ws_sender.send_message(
-        f"user_{offer.runner_id}",
-        'runnertack.update',
-        TacksOffersSerializer(offer).data)
+    # ws_sender.send_message(
+    #     f"user_{offer.runner_id}",
+    #     'runnertack.update',
+    #     TacksOffersSerializer(offer).data)
     # ws_sender.send_message(
     #     f"user_{offer.tack.tacker_id}",  # tack_{offer.tack_id}_tacker
     #     'tack.update',
@@ -246,10 +246,10 @@ def ws_tack_accepted(tack: Tack):
         f"user_{tack.tacker_id}",
         'tack.update',
         TackDetailSerializer(tack).data)
-    # ws_sender.send_message(
-    #     f"user_{tack.runner_id}",
-    #     'runnertack.update',
-    #     TacksOffersSerializer(tack.accepted_offer).data)
+    ws_sender.send_message(
+        f"user_{tack.runner_id}",
+        'runnertack.update',
+        TacksOffersSerializer(tack.accepted_offer).data)
 
 
 def ws_tack_in_progress(tack: Tack):
