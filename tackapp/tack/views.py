@@ -150,6 +150,7 @@ class TackViewset(
             delete_tack_offers(tack)
             if tack.auto_accept:
                 request.user.bankaccount.usd_balance += tack.price
+                request.user.bankaccount.save()
             self.perform_destroy(tack)
         return Response(status=204)
 
