@@ -24,7 +24,7 @@ from core.choices import TackStatus
 
 
 ws_sender = WSSender()
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 @receiver(signal=post_save, sender=Offer)
@@ -46,7 +46,7 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
     #     return
     if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
         return
-    if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
+    if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED, OfferStatus.ACCEPTED):
         related_offers = Offer.objects.filter(
             tack=instance.tack,
             status=OfferStatus.CREATED)

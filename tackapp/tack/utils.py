@@ -8,7 +8,7 @@ from djstripe.models import PaymentIntent as dsPaymentIntent
 from payment.services import add_money_to_bank_account
 from tack.models import Tack
 
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 def stripe_desync_check(request, transaction_id):

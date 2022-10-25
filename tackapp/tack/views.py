@@ -13,7 +13,7 @@ from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 class TackViewset(
@@ -476,8 +476,9 @@ class OfferViewset(
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         logger.info(f"{request.user.bankaccount.usd_balance = }")
-        transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
-        method_type = serializer.validated_data.get("payment_info").get("method_type")
+        payment_info = serializer.validated_data.get("payment_info") or {}
+        transaction_id = payment_info.get("transaction_id", None)
+        method_type = payment_info.get("method_type", None)
 
         logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
         match method_type:

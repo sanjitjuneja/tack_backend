@@ -11,7 +11,7 @@ from tackapp.services import (
 )
 
 
-logger = logging.getLogger("django")
+logger = logging.getLogger("debug")
 
 
 class MainConsumer(AsyncWebsocketConsumer):

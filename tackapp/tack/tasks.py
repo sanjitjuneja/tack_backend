@@ -16,7 +16,7 @@ from user.models import User
 from fcm_django.models import FCMDevice
 
 
-logger = logging.getLogger("django")
+logger = logging.getLogger("debug")
 
 
 @shared_task

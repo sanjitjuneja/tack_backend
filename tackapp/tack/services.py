@@ -12,7 +12,7 @@ from .notification import build_ntf_message
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
 
-logger = logging.getLogger("django")
+logger = logging.getLogger("debug")
 
 
 @transaction.atomic
