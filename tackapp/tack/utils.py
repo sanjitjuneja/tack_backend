@@ -3,9 +3,10 @@ import logging
 import stripe
 from django.db import transaction
 
+import djstripe.models
 from payment.models import Transaction
 from djstripe.models import PaymentIntent as dsPaymentIntent
-from payment.services import add_money_to_bank_account
+from payment.services import add_money_to_bank_account, add_money_to_bank_account_custom
 from tack.models import Tack
 
 logger = logging.getLogger('debug')
@@ -42,12 +43,15 @@ def stripe_desync_check(request, transaction_id):
                     ds_pi = dsPaymentIntent.objects.get(id=pi.id)
                     logger.info(f"{ds_pi = }")
                 except dsPaymentIntent.DoesNotExist:
-                    ds_pi = dsPaymentIntent.objects.create(
-                        **pi
-                    )
-                    logger.info(f"{ds_pi = }")
-                add_money_to_bank_account(
-                    payment_intent=ds_pi,
+                    pass
+                    # logger.error(f"CREATED NEW dsPaymentIntent manually")
+                    # customer, created = djstripe.models.Customer.get_or_create(subscriber=desynced_transaction.user)
+                    # ds_pi = dsPaymentIntent.objects.create(
+                    #     **pi,
+                    #     customer=customer
+                    # )
+                    # logger.info(f"{ds_pi = }")
+                add_money_to_bank_account_custom(
                     cur_transaction=desynced_transaction
                 )
                 desynced_transaction.is_succeeded = True

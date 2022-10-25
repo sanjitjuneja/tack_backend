@@ -86,17 +86,18 @@ class TackViewset(
                     case _:
                         pass
 
-                if request.user.bankaccount.usd_balance < price:
+                ba = BankAccount.objects.get(user=request.user)
+                if ba.usd_balance < price:
                     return Response(
                         {
                             "error": "Px2",
                             "message": "Not enough money",
-                            "balance": request.user.bankaccount.usd_balance,
+                            "balance": ba.usd_balance,
                             "tack_price": price
                         },
                         status=400)
-                request.user.bankaccount.usd_balance -= price
-                request.user.bankaccount.save()
+                ba.usd_balance -= price
+                ba.usd_balance.save()
             tack = self.perform_create(serializer)
         if transaction_id:
             set_pay_for_tack_id(transaction_id, tack)
@@ -495,12 +496,13 @@ class OfferViewset(
                 pass
 
         ba = BankAccount.objects.get(user=request.user)
+        logger.debug(f"{ba = }")
         if ba.usd_balance < price:
             return Response(
                 {
                     "error": "Px2",
                     "message": "Not enough money",
-                    "balance": request.user.bankaccount.usd_balance,
+                    "balance": ba.usd_balance,
                     "tack_price": price
                 },
                 status=400)
