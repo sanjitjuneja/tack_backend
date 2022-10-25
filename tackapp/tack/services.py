@@ -29,7 +29,8 @@ def accept_offer(offer: Offer):
     offer.tack.price = price
     offer.tack.save()
 
-    offer.tack.tacker.bankaccount.usd_balance -= price
+    if not offer.tack.auto_accept:
+        offer.tack.tacker.bankaccount.usd_balance -= price
     offer.tack.tacker.bankaccount.save()
 
 
