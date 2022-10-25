@@ -58,8 +58,11 @@ class TackViewset(
                     "details": e.detail,
                 },
                 status=400)
+
+        transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
+        method_type = serializer.validated_data.get("payment_info").get("method_type")
         try:
-            GroupMembers.objects.get(member=request.user, group=serializer.validated_data["group"])
+            GroupMembers.objects.get(member=request.user, group=serializer.validated_data.get("tack")["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
@@ -70,9 +73,6 @@ class TackViewset(
         price = serializer.validated_data.get("price")
         with transaction.atomic():
             if serializer.validated_data.get("auto_accept"):
-                transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
-                method_type = serializer.validated_data.get("payment_info").get("method_type")
-
                 match method_type:
                     case MethodType.TACK_BALANCE:
                         pass
@@ -95,7 +95,6 @@ class TackViewset(
                         status=400)
                 request.user.bankaccount.usd_balance -= price
             tack = self.perform_create(serializer)
-        logger.debug(f"Tack id {tack.id} paid by {method_type}")
         if transaction_id:
             set_pay_for_tack_id(transaction_id, tack)
         output_serializer = TackDetailSerializer(tack, context={"request": request})
