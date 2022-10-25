@@ -65,6 +65,8 @@ def offer_ws_actions(instance: Offer, created: bool, *args, **kwargs):
     logger.debug(f"### OFFER.TACK {instance.tack.status = }")
     match instance.status:
         case OfferStatus.CREATED:
+            if instance.tack.auto_accept:
+                return
             ws_offer_created(instance)
             notification_on_offer_created(instance)
         case OfferStatus.ACCEPTED:

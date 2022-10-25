@@ -59,8 +59,10 @@ class TackViewset(
                 },
                 status=400)
 
-        transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
-        method_type = serializer.validated_data.get("payment_info").get("method_type")
+        payment_info = serializer.validated_data.get("payment_info") or {}
+        transaction_id = payment_info.get("transaction_id", None)
+        method_type = payment_info.get("method_type", None)
+
         try:
             GroupMembers.objects.get(member=request.user, group=serializer.validated_data.get("tack")["group"])
         except GroupMembers.DoesNotExist:

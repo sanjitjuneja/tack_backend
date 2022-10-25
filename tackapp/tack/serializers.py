@@ -88,7 +88,7 @@ class PaymentInfoSerializer(serializers.Serializer):
 
 
 class TackCreateSerializerv2(CustomSerializer):
-    payment_info = PaymentInfoSerializer(required=False)
+    payment_info = PaymentInfoSerializer(allow_null=True, required=False)
     tack = TackCreateSerializer(required=False)
 
     def __init__(self, *args, **kwargs):
