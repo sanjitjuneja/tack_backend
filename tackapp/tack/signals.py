@@ -115,6 +115,8 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
             ws_tack_created_from_active(instance)
         # status changed from created to active (first offer was sent to this tack)
         case TackStatus.ACTIVE:
+            if instance.auto_accept:
+                return
             ws_tack_active(instance)
         # status changed to accepted (tacker accepted offer)
         case TackStatus.ACCEPTED:
