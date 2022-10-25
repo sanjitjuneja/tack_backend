@@ -142,8 +142,21 @@ class TackCompleteSerializer(CustomSerializer):
 
 
 class AcceptOfferSerializer(CustomModelSerializer):
-    # transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    # method_type = serializers.ChoiceField(choices=MethodType.choices, allow_blank=True, allow_null=True, required=False)
+    def __init__(self, *args, **kwargs):
+        """
+        Added for reverse compatibility with old AcceptOfferSerializer
+        If there is no 'payment_info' entity inside JSON structure -
+        We add payment_info["method_type"] field default to MethodType.TACK_BALANCE
+        """
+
+        payment_info = kwargs['data'].get('payment_info', None)
+        if payment_info:
+            super().__init__(*args, **kwargs)
+        else:
+            kwargs = {'data': {}}
+            kwargs['data']["payment_info"] = {"method_type": MethodType.TACK_BALANCE.value}
+            super().__init__(*args, **kwargs)
+
     payment_info = PaymentInfoSerializer(required=False)
 
     class Meta:

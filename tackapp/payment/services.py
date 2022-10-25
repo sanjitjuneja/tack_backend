@@ -432,7 +432,7 @@ def dwolla_webhook_handler(request):
         created=request.data.get("created"),
     )
     match topic:
-        case "transfer_completed":
+        case "transfer_completed" | "customer_transfer_completed" | "bank_transfer_completed":
             transfer_id = request.data.get("_links").get("resource").get("href").split("/")[-1]
             try:
                 trnsctn = Transaction.objects.get(transaction_id=transfer_id)
