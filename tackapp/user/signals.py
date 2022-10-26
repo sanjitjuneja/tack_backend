@@ -16,18 +16,22 @@ logger = logging.getLogger('django')
 
 @receiver(signal=post_save, sender=User)
 def create_stripe_dwolla_account(instance: User, created: bool, *args, **kwargs):
-    # Creating record in our system
-    if created:
+    if created and not instance.is_superuser:
+        stripe_id, dwolla_id = create_api_accounts(instance)
+
+        # Creating record in our system
         BankAccount.objects.create(
             user=instance,
+            stripe_user=stripe_id,
+            dwolla_user=dwolla_id
         )
-        ws_sender.send_message(
-            f"user_{instance.id}",
-            'user.update',
-            UserDetailSerializer(instance).data)
+    ws_sender.send_message(
+        f"user_{instance.id}",
+        'user.update',
+        UserDetailSerializer(instance).data)
 
 
-# @receiver(signal=pre_delete, sender=User)
-# def delete_stripe_dwolla_account(instance: User, *args, **kwargs):
-#     deactivate_dwolla_customer(instance)
-#     delete_stripe_customer(instance)
+@receiver(signal=pre_delete, sender=User)
+def delete_stripe_dwolla_account(instance: User, *args, **kwargs):
+    deactivate_dwolla_customer(instance)
+    delete_stripe_customer(instance)
