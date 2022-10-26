@@ -22,7 +22,7 @@ class UserStats:
             user__in=users
         ).aggregate(
             avg_user_balance=Avg('usd_balance')
-        )["avg_user_balance"]
+        )["avg_user_balance"] or 0
 
     def get_sum_total_user_balance(self, group: Group = None):
         filters = _setup_filters(groupmembers__group=group)
@@ -33,7 +33,7 @@ class UserStats:
             user__in=users
         ).aggregate(
             sum_user_balance=Sum('usd_balance')
-        )["sum_user_balance"]
+        )["sum_user_balance"] or 0
 
     def get_user_visits_count_per_hour(self, group: Group = None) -> int:
         """

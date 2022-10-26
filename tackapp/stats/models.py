@@ -138,6 +138,36 @@ class GroupStats(models.Model):
     sum_total_user_balance = models.PositiveIntegerField(
         blank=True, null=True, default=None
     )
+    total_sum_fees_we_paid_last_hour = models.PositiveIntegerField(
+        blank=True, null=True, default=None
+    )
+    num_card_deposits_last_hour = models.PositiveIntegerField(
+        blank=True, null=True, default=None,
+    )
+    num_dg_wallets_last_hour = models.PositiveIntegerField(
+        blank=True, null=True, default=None,
+    )
+    num_banks_deposits_last_hour = models.PositiveIntegerField(
+        blank=True, null=True, default=None,
+    )
+    avg_amount_per_card_deposit_w_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
+    avg_amount_per_dg_wallet_deposit_w_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
+    avg_amount_per_bank_deposit_w_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
+    avg_amount_per_card_deposit_wo_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
+    avg_amount_per_dg_wallet_deposit_wo_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
+    avg_amount_per_bank_deposit_wo_fees = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=14, decimal_places=2
+    )
     users_visits_per_hour = models.PositiveIntegerField(
         default=0
     )
