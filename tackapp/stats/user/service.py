@@ -40,16 +40,11 @@ class UserStats:
         Collect  information about attendance by users of the application
         """
         filters: dict = _setup_filters(groupmembers__group=group)
-        users: list[User] = User.objects.filter(
+        users = User.objects.filter(
             **filters,
         )
         count_users_visits: int = UserVisits.objects.filter(
-            Q(
-                user__in=users
-            )
-            &
-            Q(
+                user__in=users,
                 timestamp__gte=timezone.now() - timedelta(hours=1)
-            )
         ).count()
         return count_users_visits
