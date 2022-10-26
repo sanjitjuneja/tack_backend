@@ -14,7 +14,7 @@ from core.exceptions import InvalidActionError
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiExample
 from rest_framework import views, serializers
 from rest_framework.response import Response
 
@@ -38,7 +38,81 @@ class AddBalanceStripe(views.APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    @extend_schema(request=AddBalanceStripeSerializer, responses=AddBalanceStripeSerializer)
+    @extend_schema(
+        request=AddBalanceStripeSerializer,
+        responses=inline_serializer(
+            name="add_balance_stripe_response",
+            fields={
+              "id": serializers.CharField(),
+              "object": serializers.CharField(),
+              "application": serializers.CharField(),
+              "cancellation_reason": serializers.CharField(),
+              "client_secret": serializers.CharField(),
+              "created": serializers.IntegerField(),
+              "customer": serializers.CharField(),
+              "description": serializers.CharField(),
+              "flow_directions": serializers.CharField(),
+              "last_setup_error": serializers.CharField(),
+              "latest_attempt": serializers.CharField(),
+              "livemode": serializers.BooleanField(),
+              "mandate": serializers.CharField(),
+              "metadata": {},
+              "next_action": serializers.CharField(),
+              "on_behalf_of": serializers.CharField(),
+              "payment_method": serializers.CharField(),
+              "payment_method_options": {
+                "card": {
+                  "mandate_options": serializers.CharField(),
+                  "network": serializers.CharField(),
+                  "request_three_d_secure": serializers.CharField()
+                }
+              },
+              "payment_method_types": [
+                serializers.ChoiceField(choices=[("card", "Card")])
+              ],
+              "single_use_mandate": serializers.CharField(),
+              "status": serializers.CharField(),
+              "usage": serializers.CharField()
+            }
+        ),
+        examples=[
+            OpenApiExample(
+                name="Stripe example",
+                value={
+                    "id": "seti_0LLoAbHRDqRuKWfqoTU94LQX",
+                    "object": "setup_intent",
+                    "application": None,
+                    "cancellation_reason": None,
+                    "client_secret": "seti_1LUoAbHUDqRuKWfqhTU99LQX_secret_MDEdKZgh36f6WeXXgroCfGSuwr2zICi",
+                    "created": 1660035144,
+                    "customer": None,
+                    "description": None,
+                    "flow_directions": None,
+                    "last_setup_error": None,
+                    "latest_attempt": None,
+                    "livemode": False,
+                    "mandate": None,
+                    "metadata": {},
+                    "next_action": None,
+                    "on_behalf_of": None,
+                    "payment_method": None,
+                    "payment_method_options": {
+                        "card": {
+                          "mandate_options": None,
+                          "network": None,
+                          "request_three_d_secure": "automatic"
+                        }
+                    },
+                    "payment_method_types": [
+                        "card"
+                    ],
+                    "single_use_mandate": None,
+                    "status": "requires_payment_method",
+                    "usage": "off_session"
+                }
+            )
+        ]
+    )
     def post(self, request):
         serializer = AddBalanceStripeSerializer(data=request.data)
         try:
@@ -112,7 +186,15 @@ class AddBalanceDwolla(views.APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    @extend_schema(request=AddBalanceDwollaSerializer, responses=AddBalanceDwollaSerializer)
+    @extend_schema(
+        request=AddBalanceDwollaSerializer,
+        responses=inline_serializer(
+            name="add_balance_dwolla_response",
+            fields={
+              "id": serializers.CharField()
+            }
+        )
+    )
     def post(self, request):
         serializer = AddBalanceDwollaSerializer(data=request.data)
         try:
@@ -152,12 +234,12 @@ class AddBalanceDwolla(views.APIView):
                     "message": "Insufficient funds"
                 }, status=400)
         try:
-            response_body = dwolla_transaction(
+            transaction_id = dwolla_transaction(
                 user=request.user,
                 action=PaymentAction.DEPOSIT,
                 **serializer.validated_data
             )
-            logger.info(f"AddBalanceDwolla {response_body = }")
+            logger.info(f"AddBalanceDwolla {transaction_id = }")
         except InvalidActionError as e:
             logger.warning(f"InvalidActionError {e = }")
             return Response(
@@ -171,7 +253,12 @@ class AddBalanceDwolla(views.APIView):
             logger.warning(f"dwollav2.Error {e = }")
             return Response(e.body)
 
-        return Response(response_body)
+        return Response(
+            {
+                "id": transaction_id
+            },
+            status=200
+        )
 
 
 class AddPaymentMethod(views.APIView):

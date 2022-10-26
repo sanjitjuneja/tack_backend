@@ -1,8 +1,15 @@
+import logging
+
 from rest_framework import serializers
+
+from core.choices import MethodType
 from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from group.serializers import GroupSerializer
 from user.serializers import UserListSerializer
 from .models import *
+
+
+logger = logging.getLogger('debug')
 
 
 class TackSerializer(CustomModelSerializer):
@@ -16,6 +23,7 @@ class TackSerializer(CustomModelSerializer):
             "price",
             "status",
             "estimation_time_seconds",
+            "auto_accept",
         )
         read_only_fields = (
             "id",
@@ -46,6 +54,20 @@ class TackDetailSerializer(CustomModelSerializer):
 
 
 class TackCreateSerializer(CustomModelSerializer):
+
+    # def validate(self, attrs):
+    #     logger.debug(f"{attrs = }")
+    #     return attrs
+
+    def to_internal_value(self, data):
+        logger.debug(f"{data = }")
+        logger.debug(f"{self.fields = }")
+        if data.get("auto_accept"):
+            data["allow_counter_offer"] = False
+
+        logger.debug(f"{data = }")
+        return super().to_internal_value(data)
+
     class Meta:
         model = Tack
         fields = (
@@ -55,8 +77,45 @@ class TackCreateSerializer(CustomModelSerializer):
             "price",
             "description",
             "allow_counter_offer",
-            "estimation_time_seconds"
+            "estimation_time_seconds",
+            "auto_accept",
         )
+
+
+class PaymentInfoSerializer(serializers.Serializer):
+    transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_blank=True, allow_null=True, required=False)
+
+
+class TackCreateSerializerv2(CustomSerializer):
+    payment_info = PaymentInfoSerializer(allow_null=True, required=False)
+    tack = TackCreateSerializer(required=False)
+
+    def __init__(self, *args, **kwargs):
+        """
+        Added for reverse compatibility with TackCreateSerializer from older builds
+        If there is no 'tack' entity inside JSON structure -
+        we form our V2 Serializer based on TackCreateSerializer fields
+        Also we add payment_info["method_type"] field default to MethodType.TACK_BALANCE
+        """
+
+        tack = kwargs['data'].get('tack', None)
+        if tack:
+            super().__init__(*args, **kwargs)
+        else:
+            tack_data = {}
+            for key in kwargs['data']:
+                tack_data[key] = kwargs['data'].get(key)
+            kwargs = {'data': {}}
+            kwargs['data']["payment_info"] = {}
+            kwargs['data']["tack"] = tack_data
+            kwargs['data']["payment_info"]["method_type"] = MethodType.TACK_BALANCE.value
+            super().__init__(*args, **kwargs)
+
+    def create(self, validated_data):
+        logger.debug(f"{validated_data = }")
+        tack_validated_data = validated_data.pop("tack")
+        return Tack.objects.create(**tack_validated_data, tacker=validated_data.get("tacker"))
 
 
 class TackRunnerSerializer(CustomModelSerializer):
@@ -83,6 +142,23 @@ class TackCompleteSerializer(CustomSerializer):
 
 
 class AcceptOfferSerializer(CustomModelSerializer):
+    def __init__(self, *args, **kwargs):
+        """
+        Added for reverse compatibility with old AcceptOfferSerializer
+        If there is no 'payment_info' entity inside JSON structure -
+        We add payment_info["method_type"] field default to MethodType.TACK_BALANCE
+        """
+
+        payment_info = kwargs['data'].get('payment_info', None)
+        if payment_info:
+            super().__init__(*args, **kwargs)
+        else:
+            kwargs = {'data': {}}
+            kwargs['data']["payment_info"] = {"method_type": MethodType.TACK_BALANCE.value}
+            super().__init__(*args, **kwargs)
+
+    payment_info = PaymentInfoSerializer(required=False)
+
     class Meta:
         model = Offer
         fields = "__all__"
@@ -155,13 +231,29 @@ class TacksOffersSerializer(CustomSerializer):
 class PopularTackSerializer(CustomModelSerializer):
     class Meta:
         model = PopularTack
-        fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
+        fields = (
+            "title",
+            "description",
+            "type",
+            "price",
+            "allow_counter_offer",
+            "estimation_time_seconds",
+            "auto_accept",
+        )
 
 
 class TackTemplateSerializer(CustomModelSerializer):
     class Meta:
         model = Tack
-        fields = ("title", "description", "type", "price", "allow_counter_offer", "estimation_time_seconds")
+        fields = (
+            "title",
+            "description",
+            "type",
+            "price",
+            "allow_counter_offer",
+            "estimation_time_seconds",
+            "auto_accept",
+        )
 
 
 class ContactsSerializer(CustomModelSerializer):

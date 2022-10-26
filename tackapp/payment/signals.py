@@ -26,10 +26,10 @@ def add_balance_to_user(event, *args, **kwargs):
     tr = Transaction.objects.get(transaction_id=pi.id)
     logger.debug(f"{pi =}")
     logger.debug(f"{tr =}")
-    if tr.is_succeeded:  # already succeeded (probably duplicate)
-        logger.info(f"Duplicate transaction {tr = }")
-        return
     with transaction.atomic():
+        if tr.is_succeeded:
+            logger.debug(f"{tr} is already succeeded")
+            return
         add_money_to_bank_account(payment_intent=pi, cur_transaction=tr)
         service_fee = calculate_service_fee(amount=pi.amount, service=PaymentService.STRIPE)
         logger.debug(f"{service_fee =}")

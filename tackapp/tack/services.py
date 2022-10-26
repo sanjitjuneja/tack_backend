@@ -12,7 +12,7 @@ from .notification import build_ntf_message
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
 
-logger = logging.getLogger("django")
+logger = logging.getLogger("debug")
 
 
 @transaction.atomic
@@ -29,7 +29,8 @@ def accept_offer(offer: Offer):
     offer.tack.price = price
     offer.tack.save()
 
-    offer.tack.tacker.bankaccount.usd_balance -= price
+    if not offer.tack.auto_accept:
+        offer.tack.tacker.bankaccount.usd_balance -= price
     offer.tack.tacker.bankaccount.save()
 
 
@@ -38,6 +39,15 @@ def delete_other_tack_offers(offer: Offer):
         tack=offer.tack
     ).exclude(
         id=offer.id
+    ).update(
+        status=OfferStatus.DELETED,
+        is_active=False
+    )
+
+
+def delete_tack_offers(tack: Tack):
+    Offer.active.filter(
+        tack=tack
     ).update(
         status=OfferStatus.DELETED,
         is_active=False

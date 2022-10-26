@@ -4,18 +4,23 @@ from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
 
 from core.choices import PaymentService, PaymentAction
+from group.models import Group
 from payment.models import Transaction
+from stats.utils import _setup_filters
 
 
 class PaymentStats:
     def __init__(
             self,
+            group: Group = None
     ):
-        self.payment_data_last_hour = self.get_payment_stats()
+        self.payment_data_last_hour = self.get_payment_stats(group)
 
-    def get_payment_stats(self):
+    def get_payment_stats(self, group: Group = None):
+        filters = _setup_filters(paid_tack__group=group)
         return Transaction.objects.filter(
             creation_time__gte=timezone.now() - timedelta(hours=1),
+            **filters
         ).aggregate(
             sum_fees_paid=Sum(
                 'fee_difference'

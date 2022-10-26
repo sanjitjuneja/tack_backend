@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import filters
@@ -11,9 +13,13 @@ from core.choices import TackStatus
 from payment.models import BankAccount
 from payment.serializers import BankAccountSerializer
 from review.serializers import ReviewSerializer
+from stats.models import UserVisits
 from tack.models import Tack
 from .serializers import *
 from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
+
+
+logger = logging.getLogger('django')
 
 
 class UsersViewset(
@@ -138,3 +144,12 @@ class UsersViewset(
 
         ba, created = BankAccount.objects.get_or_create(user=request.user)
         return Response(BankAccountSerializer(ba).data)
+
+    @action(methods=("POST",), detail=False, url_path="me/visit", serializer_class=None)
+    def add_visit(self, request, *args, **kwargs):
+        logger.info(f"{request.data = }")
+        logger.info(f"{request.META = }")
+        UserVisits.objects.create(
+            user=request.user
+        )
+        return Response()

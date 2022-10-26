@@ -62,10 +62,3 @@ def get_user_offers(user: User):
             "tack"
         )
     return list(offers)
-
-
-@database_sync_to_async
-def create_user_visit(user: User) -> None:
-    UserVisits.objects.create(
-        user=user
-    )

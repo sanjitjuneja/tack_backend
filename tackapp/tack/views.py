@@ -1,9 +1,6 @@
 import datetime
 import logging
 
-import stripe
-
-import djstripe.models
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
@@ -12,12 +9,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
-from payment.models import Transaction
-from payment.services import add_money_to_bank_account
+from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
-from .services import accept_offer, complete_tack, confirm_complete_tack
+from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 class TackViewset(
@@ -43,9 +39,15 @@ class TackViewset(
         else:
             return super().get_serializer_class()
 
-    @extend_schema(request=TackCreateSerializer, responses=TackDetailSerializer)
+    @extend_schema(request=inline_serializer(
+        name="tack_create_serializer_v2",
+        fields={
+            "tack": TackCreateSerializer(),
+            "payment_info": PaymentInfoSerializer(),
+        }
+    ), responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
-        serializer = TackCreateSerializer(data=request.data)
+        serializer = TackCreateSerializerv2(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
@@ -56,8 +58,13 @@ class TackViewset(
                     "details": e.detail,
                 },
                 status=400)
+        tack_info = serializer.validated_data.get("tack")
+        payment_info = serializer.validated_data.get("payment_info") or {}
+        transaction_id = payment_info.get("transaction_id", None)
+        method_type = payment_info.get("method_type", None)
+
         try:
-            GroupMembers.objects.get(member=request.user, group=serializer.validated_data["group"])
+            GroupMembers.objects.get(member=request.user, group=tack_info["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
@@ -65,10 +72,37 @@ class TackViewset(
                     "message": "You are not a member of this Group"
                 },
                 status=400)
-        tack = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        output_serializer = TackDetailSerializer(tack, context={"request": request})  # Refactor
-        return Response(output_serializer.data, status=201, headers=headers)
+        price = tack_info.get("price")
+        with transaction.atomic():
+            if tack_info.get("auto_accept"):
+                match method_type:
+                    case MethodType.TACK_BALANCE:
+                        pass
+                    case MethodType.STRIPE:
+                        if request.user.bankaccount.usd_balance < price and transaction_id:
+                            stripe_desync_check(request, transaction_id)
+                    case MethodType.DWOLLA:
+                        pass
+                    case _:
+                        pass
+
+                ba = BankAccount.objects.get(user=request.user)
+                if ba.usd_balance < price:
+                    return Response(
+                        {
+                            "error": "Px2",
+                            "message": "Not enough money",
+                            "balance": ba.usd_balance,
+                            "tack_price": price
+                        },
+                        status=400)
+                ba.usd_balance -= price
+                ba.save()
+            tack = self.perform_create(serializer)
+        if transaction_id:
+            set_pay_for_tack_id(transaction_id, tack)
+        output_serializer = TackDetailSerializer(tack, context={"request": request})
+        return Response(output_serializer.data, status=201)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -113,12 +147,12 @@ class TackViewset(
                     "message": "You can not delete tacks when you accepted an Offer"
                 },
                 status=400)
-        Offer.active.filter(
-            tack=tack
-        ).update(
-            status=OfferStatus.DELETED
-        )
-        self.perform_destroy(tack)
+        with transaction.atomic():
+            delete_tack_offers(tack)
+            if tack.auto_accept:
+                request.user.bankaccount.usd_balance += tack.price
+                request.user.bankaccount.save()
+            self.perform_destroy(tack)
         return Response(status=204)
 
     @action(methods=["GET"], detail=False, url_path="me/as_tacker")
@@ -413,7 +447,9 @@ class OfferViewset(
                     "message": "You can create Offers only on Active Tacks"
                 },
                 status=400)
-        self.perform_create(serializer)
+        created_offer = self.perform_create(serializer)
+        if tack.auto_accept:
+            accept_offer(created_offer)
         headers = self.get_success_headers(serializer.data)
 
         return Response(serializer.data, status=201, headers=headers)
@@ -428,52 +464,45 @@ class OfferViewset(
         """Endpoint for Tacker to accept Runner's offer"""
 
         offer = self.get_object()
-
+        if offer.status != OfferStatus.CREATED:
+            return Response(
+                {
+                    "error": "Tx13",
+                    "message": "Offer already accepted"
+                },
+                status=400
+            )
+        data = request.data if request.data else {}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         logger.info(f"{request.user.bankaccount.usd_balance = }")
-        # if request.user.bankaccount.usd_balance < price:
-        #     """
-        #     Additional check on desync Stripe transfers (due to webhook delay frontend trying to access
-        #     this endpoint before backend actually receiving payment confirmation via webhook)
-        #     """
+        payment_info = serializer.validated_data.get("payment_info") or {}
+        transaction_id = payment_info.get("transaction_id", None)
+        method_type = payment_info.get("method_type", None)
 
-            # customer, created = djstripe.models.Customer.get_or_create(subscriber=request.user)
-            # payment_intents = stripe.PaymentIntent.list(customer=customer.id, limit=10)
-            #
-            # succeded_payment_intents = [payment_intent for
-            #                             payment_intent in payment_intents
-            #                             if payment_intent.get("status") == "succeeded"]
-            # id_of_payment_intents = [payment_intent.get("id") for
-            #                          payment_intent in succeded_payment_intents]
-            #
-            # desynced_transactions = Transaction.objects.filter(
-            #     transaction_id__in=id_of_payment_intents,
-            #     is_succeeded=False
-            # )
-            # logger.info(f"{id_of_payment_intents = }")
-            # logger.info(f"{desynced_transactions = }")
-            # try:
-            #     with transaction.atomic():
-            #         for tr in desynced_transactions:
-            #             for pi in succeded_payment_intents:
-            #                 if pi.get("id") == tr.transaction_id:
-            #                     logger.info(f"{pi.id = }")
-            #                     dsPaymentIntent = djstripe.models.PaymentIntent.objects.get(id=pi.id)
-            #                     add_money_to_bank_account(
-            #                         payment_intent=dsPaymentIntent,
-            #                         cur_transaction=tr
-            #                     )
-            #                     tr.is_succeeded = True
-            #                     tr.save()
-            # except djstripe.models.PaymentIntent.DoesNotExist:
-            #     pass
-        if request.user.bankaccount.usd_balance < price:
+        logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
+        match method_type:
+            case MethodType.TACK_BALANCE:
+                pass
+            case MethodType.STRIPE:
+                set_pay_for_tack_id(transaction_id, offer.tack)
+                if request.user.bankaccount.usd_balance < price and transaction_id:
+                    stripe_desync_check(request, transaction_id)
+            case MethodType.DWOLLA:
+                set_pay_for_tack_id(transaction_id, offer.tack)
+            case _:
+                pass
+
+        ba = BankAccount.objects.get(user=request.user)
+        logger.debug(f"{ba = }")
+        if ba.usd_balance < price:
             return Response(
                 {
                     "error": "Px2",
                     "message": "Not enough money",
-                    "balance": request.user.bankaccount.usd_balance,
+                    "balance": ba.usd_balance,
                     "tack_price": price
                 },
                 status=400)
@@ -510,4 +539,4 @@ class OfferViewset(
         return Response(status=204)
 
     def perform_create(self, serializer):
-        serializer.save(runner=self.request.user)
+        return serializer.save(runner=self.request.user)

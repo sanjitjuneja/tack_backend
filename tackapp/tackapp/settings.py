@@ -55,7 +55,7 @@ LOGGING = {
         'debug_console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
+            'formatter': 'simple'
         },
         'payment_file': {
             'level': 'INFO',
@@ -73,27 +73,36 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ('console',),
-            'propagate': True,
+            'propagate': False,
+        },
+        'debug': {
+            'handlers': ('debug_console',),
+            'level': 'DEBUG',
+            'propagate': False,
         },
         'payments': {
-            'handlers': ('payment_file', 'console'),
-            'level': 'DEBUG'
+            'handlers': ('console', 'payment_file'),
+            'level': 'INFO',
+            'propagate': False,
         },
         'tackapp.consumers': {
             'handlers': ('console',),
-            'level': 'INFO'
+            'level': 'INFO',
+            'propagate': False,
         },
         'tackapp.channels_middleware': {
             'handlers': ('console',),
-            'level': 'ERROR'
+            'level': 'ERROR',
+            'propagate': False,
         },
         'sql_time_measurement': {
             'handlers': ('sql_measurement',),
-            'level': 'INFO'
+            'level': 'INFO',
+            'propagate': False,
         }
     }
 }
-os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+
 logger = logging.getLogger('django')
 
 
@@ -407,8 +416,12 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-    json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+
+if app != "local":
+    os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+    with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+        json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
 
