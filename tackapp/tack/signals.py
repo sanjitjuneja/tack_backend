@@ -24,7 +24,7 @@ from core.choices import TackStatus
 
 
 ws_sender = WSSender()
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 @receiver(signal=post_save, sender=Offer)
@@ -44,7 +44,7 @@ def tack_status_on_offer_save(instance: Offer, *args, **kwargs):
 
     # if instance.status != OfferStatus.CREATED:
     #     return
-    if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE):
+    if instance.tack.status not in (TackStatus.CREATED, TackStatus.ACTIVE) or instance.tack.auto_accept:
         return
     if instance.status in (OfferStatus.CREATED, OfferStatus.EXPIRED, OfferStatus.DELETED):
         related_offers = Offer.objects.filter(
@@ -115,6 +115,8 @@ def tack_ws_actions(instance: Tack, created: bool, *args, **kwargs):
             ws_tack_created_from_active(instance)
         # status changed from created to active (first offer was sent to this tack)
         case TackStatus.ACTIVE:
+            if instance.auto_accept:
+                return
             ws_tack_active(instance)
         # status changed to accepted (tacker accepted offer)
         case TackStatus.ACCEPTED:

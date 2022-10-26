@@ -39,8 +39,8 @@ def user_change_bio(user: User, data: OrderedDict):
         if hasattr(user, key):
             setattr(user, key, value)
     user.save()
-    # dwolla_change_info(user)
-    # stripe_change_info(user)
+    dwolla_change_info(user)
+    stripe_change_info(user)
     return user
 
 

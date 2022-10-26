@@ -13,7 +13,7 @@ from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
 from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
 
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 class TackViewset(
@@ -58,13 +58,13 @@ class TackViewset(
                     "details": e.detail,
                 },
                 status=400)
-
+        tack_info = serializer.validated_data.get("tack")
         payment_info = serializer.validated_data.get("payment_info") or {}
         transaction_id = payment_info.get("transaction_id", None)
         method_type = payment_info.get("method_type", None)
 
         try:
-            GroupMembers.objects.get(member=request.user, group=serializer.validated_data.get("tack")["group"])
+            GroupMembers.objects.get(member=request.user, group=tack_info["group"])
         except GroupMembers.DoesNotExist:
             return Response(
                 {
@@ -72,9 +72,9 @@ class TackViewset(
                     "message": "You are not a member of this Group"
                 },
                 status=400)
-        price = serializer.validated_data.get("price")
+        price = tack_info.get("price")
         with transaction.atomic():
-            if serializer.validated_data.get("auto_accept"):
+            if tack_info.get("auto_accept"):
                 match method_type:
                     case MethodType.TACK_BALANCE:
                         pass
@@ -86,17 +86,18 @@ class TackViewset(
                     case _:
                         pass
 
-                if request.user.bankaccount.usd_balance < price:
+                ba = BankAccount.objects.get(user=request.user)
+                if ba.usd_balance < price:
                     return Response(
                         {
                             "error": "Px2",
                             "message": "Not enough money",
-                            "balance": request.user.bankaccount.usd_balance,
+                            "balance": ba.usd_balance,
                             "tack_price": price
                         },
                         status=400)
-                request.user.bankaccount.usd_balance -= price
-                request.user.bankaccount.save()
+                ba.usd_balance -= price
+                ba.save()
             tack = self.perform_create(serializer)
         if transaction_id:
             set_pay_for_tack_id(transaction_id, tack)
@@ -150,6 +151,7 @@ class TackViewset(
             delete_tack_offers(tack)
             if tack.auto_accept:
                 request.user.bankaccount.usd_balance += tack.price
+                request.user.bankaccount.save()
             self.perform_destroy(tack)
         return Response(status=204)
 
@@ -470,15 +472,15 @@ class OfferViewset(
                 },
                 status=400
             )
-        logger.info(f"{request.data = }")
         data = request.data if request.data else {}
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         # TODO: to service
         price = offer.price if offer.price else offer.tack.price
         logger.info(f"{request.user.bankaccount.usd_balance = }")
-        transaction_id = serializer.validated_data.get("payment_info").get("transaction_id")
-        method_type = serializer.validated_data.get("payment_info").get("method_type")
+        payment_info = serializer.validated_data.get("payment_info") or {}
+        transaction_id = payment_info.get("transaction_id", None)
+        method_type = payment_info.get("method_type", None)
 
         logger.debug(f"Tack id {offer.tack_id} paid by {method_type}")
         match method_type:
@@ -494,12 +496,13 @@ class OfferViewset(
                 pass
 
         ba = BankAccount.objects.get(user=request.user)
+        logger.debug(f"{ba = }")
         if ba.usd_balance < price:
             return Response(
                 {
                     "error": "Px2",
                     "message": "Not enough money",
-                    "balance": request.user.bankaccount.usd_balance,
+                    "balance": ba.usd_balance,
                     "tack_price": price
                 },
                 status=400)

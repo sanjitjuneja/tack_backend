@@ -580,3 +580,17 @@ def calculate_transaction_loss(amount: int, service: str):
     service_fee = calculate_service_fee(amount=amount, service=service)
     amount_with_fees = calculate_amount_with_fees(amount=amount, service=service)
     return service_fee - (amount_with_fees - amount)
+
+
+@transaction.atomic
+def add_money_to_bank_account_custom(cur_transaction: Transaction):
+    """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
+
+    try:
+        ba = BankAccount.objects.get(user=cur_transaction.user)
+        ba.usd_balance += cur_transaction.amount_requested
+        ba.save()
+    except BankAccount.DoesNotExist:
+        # TODO: Error handling/create BA
+        pass
+        # logger.error(f"Bank account of {payment_intent.customer} is not found")
