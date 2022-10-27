@@ -86,7 +86,7 @@ class PaymentInfoSerializer(serializers.Serializer):
 
 
 class TackCreateSerializerv2(CustomSerializer):
-    payment_info = PaymentInfoSerializer(required=True)
+    payment_info = PaymentInfoSerializer(allow_null=True, required=True)
     tack = TackCreateSerializer(required=True)
 
     def __init__(self, *args, **kwargs):
@@ -114,6 +114,15 @@ class TackCreateSerializerv2(CustomSerializer):
         logger.debug(f"{validated_data = }")
         tack_validated_data = validated_data.pop("tack")
         return Tack.objects.create(**tack_validated_data, tacker=validated_data.get("tacker"))
+
+    def validate(self, attrs):
+        tack = attrs.get("tack")
+        payment_info = attrs.get("payment_info")
+        if tack.get("auto_accept") and not payment_info:
+            raise serializers.ValidationError(
+                "Field payment_info can not be null with Tack auto_accept = True "
+            )
+        return attrs
 
 
 class TackRunnerSerializer(CustomModelSerializer):
