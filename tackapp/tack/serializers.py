@@ -60,8 +60,6 @@ class TackCreateSerializer(CustomModelSerializer):
     #     return attrs
 
     def to_internal_value(self, data):
-        logger.debug(f"{data = }")
-        logger.debug(f"{self.fields = }")
         if data.get("auto_accept"):
             data["allow_counter_offer"] = False
 
@@ -84,12 +82,12 @@ class TackCreateSerializer(CustomModelSerializer):
 
 class PaymentInfoSerializer(serializers.Serializer):
     transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_blank=True, allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, required=True)
 
 
 class TackCreateSerializerv2(CustomSerializer):
-    payment_info = PaymentInfoSerializer(allow_null=True, required=False)
-    tack = TackCreateSerializer(required=False)
+    payment_info = PaymentInfoSerializer(allow_null=True, required=True)
+    tack = TackCreateSerializer(required=True)
 
     def __init__(self, *args, **kwargs):
         """
@@ -116,6 +114,15 @@ class TackCreateSerializerv2(CustomSerializer):
         logger.debug(f"{validated_data = }")
         tack_validated_data = validated_data.pop("tack")
         return Tack.objects.create(**tack_validated_data, tacker=validated_data.get("tacker"))
+
+    def validate(self, attrs):
+        tack = attrs.get("tack")
+        payment_info = attrs.get("payment_info")
+        if tack.get("auto_accept") and not payment_info:
+            raise serializers.ValidationError(
+                "Field payment_info can not be null with Tack auto_accept = True "
+            )
+        return attrs
 
 
 class TackRunnerSerializer(CustomModelSerializer):
