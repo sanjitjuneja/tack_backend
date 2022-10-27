@@ -26,10 +26,10 @@ def collect_stats():
     """Main task for collecting statistics for grafana"""
 
     tack_stats = TackStats(
-        created_tacks_last_hour=created_tacks_last_hour,
-        accepted_tacks_last_hour=accepted_tacks_last_hour,
-        completed_tacks_last_hour=completed_tacks_last_hour,
-        active_users_last_week=active_users_last_week,
+        created_tacks_last_hour=created_tacks_last_hour.all(),
+        accepted_tacks_last_hour=accepted_tacks_last_hour.all(),
+        completed_tacks_last_hour=completed_tacks_last_hour.all(),
+        active_users_last_week=active_users_last_week.all(),
     )
     user_stats = UserStats()
     payment_stats = PaymentStats()
