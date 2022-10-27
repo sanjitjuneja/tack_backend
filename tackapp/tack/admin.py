@@ -190,7 +190,8 @@ class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
                     status__in=(
                         TackStatus.CREATED,
                         TackStatus.ACTIVE
-                    )
+                    ),
+                    auto_accept=False
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
