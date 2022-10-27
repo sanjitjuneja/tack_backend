@@ -25,14 +25,3 @@ completed_tacks_last_hour = Tack.objects.filter(
 active_users_last_week = User.objects.filter(
     last_login__gte=timezone.now() - timedelta(days=active_user_timedelta_days)
 )
-transactions_last_hour = Transaction.objects.filter(
-    creation_time__gte=timezone.now() - timedelta(hours=1),
-)
-collected_groups = Group.active.filter(
-    collect_stats=True
-)
-bank_accounts = BankAccount.objects.all()
-bank_accounts_stats = bank_accounts.aggregate(
-    avg_user_balance=Avg('usd_balance'),
-    sum_user_balance=Sum('usd_balance'),
-)
