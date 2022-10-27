@@ -84,12 +84,12 @@ class TackCreateSerializer(CustomModelSerializer):
 
 class PaymentInfoSerializer(serializers.Serializer):
     transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    method_type = serializers.ChoiceField(choices=MethodType.choices, allow_blank=True, allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, required=True)
 
 
 class TackCreateSerializerv2(CustomSerializer):
-    payment_info = PaymentInfoSerializer(allow_null=True, required=False)
-    tack = TackCreateSerializer(required=False)
+    payment_info = PaymentInfoSerializer(required=True)
+    tack = TackCreateSerializer(required=True)
 
     def __init__(self, *args, **kwargs):
         """
