@@ -47,6 +47,8 @@ class TackViewset(
         }
     ), responses=TackDetailSerializer)
     def create(self, request, *args, **kwargs):
+        logger.debug(f"Tack creation endpoint")
+        logger.debug(f"{request.data = }")
         serializer = TackCreateSerializerv2(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)

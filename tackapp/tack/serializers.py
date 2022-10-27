@@ -60,8 +60,6 @@ class TackCreateSerializer(CustomModelSerializer):
     #     return attrs
 
     def to_internal_value(self, data):
-        logger.debug(f"{data = }")
-        logger.debug(f"{self.fields = }")
         if data.get("auto_accept"):
             data["allow_counter_offer"] = False
 
