@@ -417,10 +417,10 @@ FIREBASE_CONFIG = {
 }
 
 
-if app != "local":
-    os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
-    with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
-        json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
+# if app != "local":
+#     os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
+#     with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
+#         json.dump(FIREBASE_CONFIG, firebase_config_file, indent=2)
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_APPLICATION_CREDENTIALS")
 FIREBASE_APP = initialize_app()
