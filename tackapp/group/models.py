@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.utils.safestring import mark_safe
 
 from core.abstract_models import CoreModel
 
@@ -29,6 +30,12 @@ class Group(CoreModel):
         return GroupMembers.objects.filter(
             group_id=self.id
         ).count()
+
+    @property
+    def image_preview(self):
+        if self.image:
+            return mark_safe('<img src="{}" width="50" height="50" />'.format(self.image.url))
+        return ""
 
     def __str__(self):
         return f"{self.id}: {self.name}"

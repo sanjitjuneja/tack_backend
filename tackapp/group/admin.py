@@ -7,7 +7,7 @@ from .models import *
 @admin.register(Group)
 class GroupAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ('id_name', 'creator', 'description', 'collect_stats')
+    list_display = ('id_name', 'creator', 'description', 'image_preview', 'collect_stats')
     list_editable = ('collect_stats',)
     list_filter = ('is_public',)
     readonly_fields = ('creation_time',)
