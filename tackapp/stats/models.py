@@ -5,13 +5,13 @@ from user.models import User
 class GlobalStats(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     num_tacks_created_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Created Tacks"
     )
     num_tacks_accepted_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Accepted Tacks"
     )
     num_tacks_completed_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Completed Tacks"
     )
     num_tacks_created_by_tackers_last_hour = models.PositiveIntegerField(
         blank=True, null=True, default=None,
@@ -27,6 +27,9 @@ class GlobalStats(models.Model):
     )
     avg_first_offer_time = models.DurationField(
         blank=True, null=True, default=None,
+    )
+    avg_first_offer_time_seconds = models.PositiveIntegerField(
+        blank=True, null=True, default=None, verbose_name="First Offer Time Seconds"
     )
     runner_tacker_ratio = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
@@ -100,13 +103,13 @@ class GroupStats(models.Model):
         "group.Group", blank=True, null=True, on_delete=models.SET_NULL, default=None
     )
     num_tacks_created_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Created Tacks"
     )
     num_tacks_accepted_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Accepted Tacks"
     )
     num_tacks_completed_last_hour = models.PositiveIntegerField(
-        blank=True, null=True, default=None,
+        blank=True, null=True, default=None, verbose_name="Completed Tacks"
     )
     num_tacks_created_by_tackers_last_hour = models.PositiveIntegerField(
         blank=True, null=True, default=None,
@@ -122,6 +125,9 @@ class GroupStats(models.Model):
     )
     avg_first_offer_time = models.DurationField(
         blank=True, null=True, default=None
+    )
+    avg_first_offer_time_seconds = models.PositiveIntegerField(
+        blank=True, null=True, default=None, verbose_name="First Offer Time Seconds"
     )
     runner_tacker_ratio = models.DecimalField(
         blank=True, null=True, default=None, max_digits=14, decimal_places=2
