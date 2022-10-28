@@ -37,13 +37,13 @@ class BankAccountAdmin(ModelAdmin):
             return f"${str(decimal_amount)}"
 
 
-# @admin.register(UserPaymentMethods)
-# class UserPaymentMethodsAdmin(ModelAdmin):
-#     list_per_page = 50
-#     list_display = ('bank_account', 'dwolla_payment_method')
-#     search_fields = ('bank_account', 'dwolla_payment_method')
-#     search_help_text = "Search by Bank account id, Dwolla method id"
-#     ordering = ('id',)
+@admin.register(UserPaymentMethods)
+class UserPaymentMethodsAdmin(ModelAdmin):
+    list_per_page = 50
+    list_display = ('bank_account', 'dwolla_payment_method')
+    search_fields = ('bank_account', 'dwolla_payment_method')
+    search_help_text = "Search by Bank account id, Dwolla method id"
+    ordering = ('id',)
 
 
 @admin.register(Fee)
