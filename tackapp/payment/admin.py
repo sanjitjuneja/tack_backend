@@ -49,14 +49,96 @@ class UserPaymentMethodsAdmin(ModelAdmin):
 @admin.register(Fee)
 class FeeAdmin(ModelAdmin):
     list_display = (
-        'max_loss',
-        'fee_percent_stripe',
-        'fee_min_stripe',
-        'fee_max_stripe',
-        'fee_percent_dwolla',
-        'fee_min_dwolla',
-        'fee_max_dwolla'
+        'human_readable_max_loss',
+        'human_readable_fee_percent_stripe',
+        'human_readable_fee_min_stripe',
+        'human_readable_fee_max_stripe',
+        'human_readable_fee_percent_dwolla',
+        'human_readable_fee_min_dwolla',
+        'human_readable_fee_max_dwolla'
     )
+
+    @admin.display(description="Max 24h loss", ordering='max_loss')
+    def human_readable_max_loss(self, obj: Fee):
+        if obj.max_loss is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.max_loss)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
+
+    @admin.display(description="Fee percent Stripe", ordering='fee_percent_stripe')
+    def human_readable_fee_percent_stripe(self, obj: Fee):
+        if obj.fee_percent_stripe is None:
+            return "-"
+        return f"{obj.fee_percent_stripe} %"
+
+    @admin.display(description="Fee min Stripe", ordering='fee_min_stripe')
+    def human_readable_fee_min_stripe(self, obj: Fee):
+        if obj.fee_min_stripe is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.fee_min_stripe)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
+
+    @admin.display(description="Fee max Stripe", ordering='fee_max_stripe')
+    def human_readable_fee_max_stripe(self, obj: Fee):
+        if obj.fee_max_stripe is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.fee_max_stripe)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
+
+    @admin.display(description="Fee percent Dwolla", ordering='fee_percent_dwolla')
+    def human_readable_fee_percent_dwolla(self, obj: Fee):
+        if obj.fee_percent_dwolla is None:
+            return "-"
+        return f"{obj.fee_percent_dwolla} %"
+
+    @admin.display(description="Fee min Dwolla", ordering='fee_min_dwolla')
+    def human_readable_fee_min_dwolla(self, obj: Fee):
+        if obj.fee_min_dwolla is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.fee_min_dwolla)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
+
+    @admin.display(description="Fee max Dwolla", ordering='fee_max_dwolla')
+    def human_readable_fee_max_dwolla(self, obj: Fee):
+        if obj.fee_max_dwolla is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.fee_max_dwolla)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
 
 
 @admin.register(StripePaymentMethodsHolder)

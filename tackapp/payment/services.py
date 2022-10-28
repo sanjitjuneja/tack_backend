@@ -575,8 +575,11 @@ def get_sum24h_transactions(user: User) -> int:
 
 
 def calculate_transaction_loss(amount: int, service: PaymentService):
+    logger.debug("INSIDE calculate_transaction_loss")
     service_fee = calculate_service_fee(amount=amount, service=service)
+    logger.debug(f"{service_fee = }")
     amount_with_fees = calculate_amount_with_fees(amount=amount, service=service)
+    logger.debug(f"{amount_with_fees = }")
     return amount_with_fees - amount - service_fee
 
 
