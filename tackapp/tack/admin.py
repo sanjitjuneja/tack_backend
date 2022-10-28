@@ -88,10 +88,11 @@ class ExpiringTacksFilter(admin.SimpleListFilter):
 @admin.register(Tack)
 class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'human_readable_price', 'status', 'expires_at', 'is_active', 'tacker', 'runner',
-                    'num_offers', 'allow_counter_offer', 'group', 'creation_time']
+    list_display = ('id', 'title', 'human_readable_price', 'status', 'expires_at', 'is_active', 'tacker', 'runner',
+                    'num_offers', 'allow_counter_offer', 'group', 'creation_time')
     list_display_links = ("title",)
-    list_filter = [ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'is_paid', 'group']
+    list_filter = (ExpiringTacksFilter, 'is_active', 'allow_counter_offer', 'status', 'creation_time', 'is_paid', 'group')
+    readonly_fields = ('creation_time',)
     advanced_filter_fields = (
         'status',
         'price',
@@ -109,7 +110,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         "group__id",
     )
     search_help_text = "Search by Tack title, Tacker name, Runner name, Group id, name"
-    actions = ['cancel_tacks']
+    actions = ('cancel_tacks',)
     # ordering = ('-id',)
 
     def get_actions(self, request):
@@ -159,9 +160,9 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
 @admin.register(PopularTack)
 class PopularTacksAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ['id', 'title', 'group', 'human_readable_price', 'allow_counter_offer']
+    list_display = ('id', 'title', 'group', 'human_readable_price', 'allow_counter_offer')
     list_display_links = ("title",)
-    list_filter = ['allow_counter_offer', 'group']
+    list_filter = ('allow_counter_offer', 'group')
     search_fields = ("title", "group__name")
     search_help_text = "Search by Title; Group name"
     ordering = ('-id',)
@@ -196,16 +197,17 @@ class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     list_per_page = 50
-    list_display = ['id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active']
+    list_display = ('id', 'view_offer_str', 'offer_type', 'human_readable_price', 'status', 'is_active')
     list_display_links = ("view_offer_str",)
-    list_filter = ['offer_type', 'is_active', 'status']
+    list_filter = ('offer_type', 'is_active', 'status')
+    readonly_fields = ('creation_time',)
     advanced_filter_fields = (
         'status',
         'is_active',
         'offer_type',
         'price',
     )
-    search_fields = ['id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name']
+    search_fields = ('id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name')
     search_help_text = "Search by Offer id, title, description; Tack title; Runner name"
     ordering = ('-id',)
 
