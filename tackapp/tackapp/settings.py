@@ -58,7 +58,7 @@ LOGGING = {
             'formatter': 'simple'
         },
         'payment_file': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/payments.log',
             'formatter': 'json_formatter'
@@ -82,7 +82,7 @@ LOGGING = {
         },
         'payments': {
             'handlers': ('console',),
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
         'tackapp.consumers': {
