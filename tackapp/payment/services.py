@@ -374,7 +374,7 @@ def dwolla_transaction(
     return transaction_id
 
 
-def calculate_amount_with_fees(amount: int, service: str) -> int:
+def calculate_amount_with_fees(amount: int, service: PaymentService) -> int:
     """
     Function that calculates new amount based on Fee that we charge users
     :param amount: amount in absolute minimal values e.g. cents
@@ -548,7 +548,7 @@ def update_dwolla_pms_with_primary(pms: dict, user: User):
     return data
 
 
-def calculate_service_fee(amount: int, service: str):
+def calculate_service_fee(amount: int, service: PaymentService):
     service_fee = ServiceFee.objects.last()
     match service:
         case PaymentService.DWOLLA:
@@ -557,7 +557,7 @@ def calculate_service_fee(amount: int, service: str):
             return int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum)
         case PaymentService.STRIPE:
             logger.debug("calculate_service_fee, STRIPE")
-            logger.debug(int(amount * service_fee.dwolla_percent / 100 + service_fee.dwolla_const_sum))
+            logger.debug(int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum))
             return int(amount * service_fee.stripe_percent / 100 + service_fee.stripe_const_sum)
 
 
@@ -568,18 +568,19 @@ def get_sum24h_transactions(user: User) -> int:
                 creation_time__gt=timezone.now() - timedelta(hours=24)
             ).aggregate(
                 sum24h=Sum(
-                    F('service_fee') - (
-                            F('amount_with_fees') - F('amount_requested')
-                    )
+                    F('amount_with_fees') - F('amount_requested') - F('service_fee')
                 )
             )['sum24h']
     return sum24h if sum24h else 0
 
 
-def calculate_transaction_loss(amount: int, service: str):
-    service_fee = calculate_service_fee(amount=amount, service=service)
+def calculate_transaction_loss(amount: int, service: PaymentService):
+    logger.debug("INSIDE calculate_transaction_loss")
     amount_with_fees = calculate_amount_with_fees(amount=amount, service=service)
-    return service_fee - (amount_with_fees - amount)
+    service_fee = calculate_service_fee(amount=amount_with_fees, service=service)
+    logger.debug(f"{service_fee = }")
+    logger.debug(f"{amount_with_fees = }")
+    return amount_with_fees - amount - service_fee
 
 
 @transaction.atomic

@@ -130,18 +130,18 @@ class AddBalanceStripe(views.APIView):
 
         # Calculate new amount because we charge fees
         amount_with_fees = calculate_amount_with_fees(
-            serializer.validated_data["amount"],
+            amount=serializer.validated_data.get("amount"),
             service=PaymentService.STRIPE
         )
 
         sum24h = get_sum24h_transactions(user=request.user)
         current_transaction_loss = calculate_transaction_loss(
-            amount=serializer.validated_data["amount"],
+            amount=serializer.validated_data.get("amount"),
             service=PaymentService.STRIPE
         )
 
         logger.debug(f"{current_transaction_loss = }")
-        total_loss = sum24h + current_transaction_loss
+        total_loss = - (sum24h + current_transaction_loss)
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
@@ -212,11 +212,11 @@ class AddBalanceDwolla(views.APIView):
 
         sum24h = get_sum24h_transactions(user=request.user)
         current_transaction_loss = calculate_transaction_loss(
-            amount=serializer.validated_data["amount"],
-            service=PaymentService.DWOLLA
+            amount=serializer.validated_data.get("amount"),
+            service=PaymentService.STRIPE
         )
         logger.debug(f"{current_transaction_loss = }")
-        total_loss = sum24h + current_transaction_loss
+        total_loss = - (sum24h + current_transaction_loss)
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
@@ -456,10 +456,10 @@ class DwollaMoneyWithdraw(views.APIView):
 
         sum24h = get_sum24h_transactions(user=request.user)
         current_transaction_loss = calculate_transaction_loss(
-            amount=serializer.validated_data["amount"],
+            amount=serializer.validated_data.get("amount"),
             service=PaymentService.DWOLLA
         )
-        total_loss = sum24h + current_transaction_loss
+        total_loss = - (sum24h + current_transaction_loss)
         if total_loss >= Fee.objects.all().last().max_loss:
             return Response(
                 {
