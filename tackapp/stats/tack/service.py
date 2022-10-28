@@ -7,10 +7,12 @@ from django.utils import timezone
 
 from core.choices import TackStatus
 from group.models import Group
+from stats.models import Definitions
 from stats.utils import _setup_filters
 from tack.models import Tack
 from user.models import User
-from stats.global_queries import definitions
+
+definitions = Definitions.objects.last()
 
 tack_created_last_x_days_for_tacker = definitions.tack_created_last_x_days_for_tacker if definitions else 7
 amount_of_tacks_for_tacker = definitions.amount_of_tacks_for_tacker if definitions else 1
@@ -117,6 +119,22 @@ class TackStats:
                     timezone.now()
                 ) - F('creation_time'))
         )["avg_first_offer_time"] or timedelta(minutes=0)
+
+    def get_avg_first_offer_time_seconds(self, group: Group = None):
+        filters = _setup_filters(group=group)
+        avg_first_offer_time_seconds = self.accepted_tacks_last_hour.filter(
+            accepted_time__isnull=False,
+            **filters
+        ).annotate(
+            offer_min_creation_time=Min('offer__creation_time'),
+        ).aggregate(
+            avg_first_offer_time=Avg(
+                Coalesce(
+                    F('offer_min_creation_time'),
+                    timezone.now()
+                ) - F('creation_time'))
+        )["avg_first_offer_time"]
+        return avg_first_offer_time_seconds.total_seconds() if avg_first_offer_time_seconds else 0
 
     def get_runner_tacker_ratio(self, group: Group = None):
         filters = _setup_filters(group=group)

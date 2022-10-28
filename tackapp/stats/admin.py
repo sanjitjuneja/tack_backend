@@ -8,12 +8,27 @@ from django.contrib import admin
 
 @admin.register(GlobalStats)
 class GlobalStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    list_display = ("id", "timestamp")
+    list_display = (
+        "id",
+        "timestamp",
+        "num_tacks_created_last_hour",
+        "num_tacks_accepted_last_hour",
+        "num_tacks_completed_last_hour",
+        "avg_first_offer_time_seconds",
+    )
 
 
 @admin.register(GroupStats)
 class GroupStatsAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
-    list_display = ("id", "timestamp", "group")
+    list_display = (
+        "id",
+        "timestamp",
+        "group",
+        "num_tacks_created_last_hour",
+        "num_tacks_accepted_last_hour",
+        "num_tacks_completed_last_hour",
+        "avg_first_offer_time_seconds",
+    )
 
 
 @admin.register(Definitions)
