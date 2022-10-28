@@ -122,17 +122,23 @@ class TackStats:
 
     def get_avg_first_offer_time_seconds(self, group: Group = None):
         filters = _setup_filters(group=group)
-        avg_first_offer_time_seconds = self.accepted_tacks_last_hour.filter(
-            accepted_time__isnull=False,
-            **filters
+        avg_first_offer_time_seconds = Tack.active.filter(
+            **filters,
+            status__in=(
+                TackStatus.CREATED,
+                TackStatus.ACTIVE,
+                TackStatus.ACCEPTED,
+                TackStatus.IN_PROGRESS
+            ),
         ).annotate(
-            offer_min_creation_time=Min('offer__creation_time'),
+            first_offer_time=Coalesce(
+                Min('offer__creation_time'),
+                timezone.now()
+            ) - F('creation_time')
         ).aggregate(
             avg_first_offer_time=Avg(
-                Coalesce(
-                    F('offer_min_creation_time'),
-                    timezone.now()
-                ) - F('creation_time'))
+                'first_offer_time'
+            )
         )["avg_first_offer_time"]
         return avg_first_offer_time_seconds.total_seconds() if avg_first_offer_time_seconds else 0
 
