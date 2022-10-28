@@ -7,9 +7,10 @@ from .models import *
 @admin.register(Group)
 class GroupAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ('id_name', 'creator', 'description', 'collect_stats')
+    list_display = ('id_name', 'creator', 'description', 'image_preview', 'collect_stats')
     list_editable = ('collect_stats',)
     list_filter = ('is_public',)
+    readonly_fields = ('creation_time',)
     search_fields = ("name", "id", "owner__first_name", "owner__last_name")
     search_help_text = "Search by Group name, id, Owner name"
     ordering = ('id',)
@@ -29,6 +30,7 @@ class GroupMembersAdmin(ModelAdmin):
     list_display = ('id', 'group', 'member', 'is_muted')
     list_filter = ('group',)
     search_fields = ('id', 'member')
+    readonly_fields = ('date_joined',)
     search_help_text = "Search by Group id, Member id"
     ordering = ('id',)
 

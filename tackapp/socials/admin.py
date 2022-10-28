@@ -7,7 +7,7 @@ from .models import PhoneVerification, TimeoutSettings, FailedLoginAttempts, Not
 @admin.register(PhoneVerification)
 class PhoneVerificationAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ['uuid', 'user', 'phone_number', 'sms_code', 'sms_type', 'is_verified']
+    list_display = ('uuid', 'user', 'phone_number', 'sms_code', 'sms_type', 'is_verified')
     search_fields = ("uuid", "user", "user__firstname", "user__lastname", "sms_code")
     search_help_text = "Search by uuid;, User id, name; sms code"
 
@@ -15,7 +15,7 @@ class PhoneVerificationAdmin(ModelAdmin):
 @admin.register(FailedLoginAttempts)
 class FailedLoginAttemptsAdmin(ModelAdmin):
     list_per_page = 50
-    list_display = ['credentials', 'device_id', 'user', 'device_type', 'device_name', 'timestamp']
+    list_display = ('credentials', 'device_id', 'user', 'device_type', 'device_name', 'timestamp')
     search_fields = ("credentials", "device_id", "user", "user__firstname", "user_lastname", "device_name")
     search_help_text = "Search by Credentials; Device id, name; User id, name"
 
