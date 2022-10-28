@@ -148,7 +148,52 @@ class StripePaymentMethodsHolderAdmin(ModelAdmin):
 
 @admin.register(ServiceFee)
 class ServiceFeeAdmin(ModelAdmin):
-    list_display = ('stripe_percent', 'stripe_const_sum', 'dwolla_percent', 'dwolla_const_sum')
+    list_display = (
+        'human_readable_fee_stripe_percent',
+        'human_readable_stripe_const_sum',
+        'human_readable_dwolla_percent',
+        'human_readable_dwolla_const_sum'
+    )
+
+    @admin.display(description="Service Fee percent Stripe", ordering='stripe_percent')
+    def human_readable_fee_stripe_percent(self, obj: ServiceFee):
+        if obj.stripe_percent is None:
+            return "-"
+        return f"{obj.stripe_percent} %"
+
+    @admin.display(description="Stripe const amount", ordering='stripe_const_sum')
+    def human_readable_stripe_const_sum(self, obj: ServiceFee):
+        if obj.stripe_const_sum is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.stripe_const_sum)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
+
+    @admin.display(description="Service Fee percent Stripe", ordering='dwolla_percent')
+    def human_readable_dwolla_percent(self, obj: ServiceFee):
+        if obj.dwolla_percent is None:
+            return "-"
+        return f"{obj.dwolla_percent} %"
+
+    @admin.display(description="Dwolla const amount", ordering='dwolla_const_sum')
+    def human_readable_dwolla_const_sum(self, obj: ServiceFee):
+        if obj.dwolla_const_sum is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.dwolla_const_sum)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"
 
 
 @admin.register(Transaction)
