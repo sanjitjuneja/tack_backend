@@ -29,6 +29,7 @@ class MyAdminSite(admin.AdminSite):
             "Token Blacklist": 9,
             "djstripe": 11,
             "Dwolla service": 12,
+            "Administration": 13
         }
 
         apps = [
