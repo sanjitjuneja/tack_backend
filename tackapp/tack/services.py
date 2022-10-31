@@ -35,14 +35,13 @@ def accept_offer(offer: Offer):
 
 
 def delete_other_tack_offers(offer: Offer):
-    Offer.active.filter(
+    other_offers = Offer.active.filter(
         tack=offer.tack
     ).exclude(
         id=offer.id
-    ).update(
-        status=OfferStatus.DELETED,
-        is_active=False
     )
+    for offer in other_offers:
+        offer.delete()
 
 
 def delete_tack_offers(tack: Tack):
