@@ -59,9 +59,20 @@ def delete_other_tack_offers(offer: Offer):
 
 
 def delete_tack_offers(tack: Tack):
-    Offer.active.filter(
+    deleted_offers = Offer.active.filter(
         tack=tack
-    ).update(
+    )
+    for offer in deleted_offers:
+        logger.debug(f"{offer = }")
+        ws_sender.send_message(
+            f"user_{offer.tack.tacker_id}",  # tack_id_tacker
+            'offer.delete',
+            offer.id)
+        ws_sender.send_message(
+            f"user_{offer.runner_id}",  # tack_id_runner
+            'runnertack.delete',
+            offer.id)
+    deleted_offers.update(
         status=OfferStatus.DELETED,
         is_active=False
     )

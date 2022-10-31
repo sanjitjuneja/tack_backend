@@ -5,7 +5,7 @@ from django.db.models import Count, Avg, FloatField, ExpressionWrapper, QuerySet
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from group.models import Group
 from stats.models import Definitions
 from stats.utils import _setup_filters
@@ -40,11 +40,10 @@ class TackStats:
             tack_num_as_tacker__gte=amount_of_tacks_for_tacker
         )
         self.runners = self.active_users_last_week.filter(
-            tack_runner__status__in=(
-                TackStatus.ACCEPTED,
-                TackStatus.IN_PROGRESS,
-                TackStatus.WAITING_REVIEW,
-                TackStatus.FINISHED
+            offer_status__in=(
+                OfferStatus.ACCEPTED,
+                OfferStatus.IN_PROGRESS,
+                OfferStatus.FINISHED
             )
         ).annotate(
             tack_num_as_runner=Count('tack_runner')
