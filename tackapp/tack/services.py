@@ -7,12 +7,14 @@ from fcm_django.models import FCMDevice
 from core.choices import TackStatus, OfferStatus, NotificationType, OfferType
 from group.models import GroupMembers
 from payment.services import send_payment_to_runner
+from tackapp.websocket_messages import WSSender
 from .models import Offer, Tack
 from .notification import build_ntf_message
 from .tasks import tack_long_inactive, tack_will_expire_soon
 
 
 logger = logging.getLogger("debug")
+ws_sender = WSSender()
 
 
 @transaction.atomic
@@ -41,7 +43,19 @@ def delete_other_tack_offers(offer: Offer):
         id=offer.id
     )
     for offer in other_offers:
-        offer.delete()
+        logger.debug(f"{offer = }")
+        ws_sender.send_message(
+            f"user_{offer.tack.tacker_id}",  # tack_id_tacker
+            'offer.delete',
+            offer.id)
+        ws_sender.send_message(
+            f"user_{offer.runner_id}",  # tack_id_runner
+            'runnertack.delete',
+            offer.id)
+    other_offers.update(
+        status=OfferStatus.DELETED,
+        is_active=False
+    )
 
 
 def delete_tack_offers(tack: Tack):
