@@ -23,6 +23,12 @@ class BankAccountAdmin(ModelAdmin):
     search_help_text = "Search by User id, name, stripe id, dwolla id"
     ordering = ('id',)
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
     @admin.display(description="USD balance", ordering='usd_balance')
     def human_readable_usd_balance(self, obj: BankAccount):
         if obj.usd_balance is None:
@@ -46,6 +52,11 @@ class UserPaymentMethodsAdmin(ModelAdmin):
     search_help_text = "Search by Bank account id, Dwolla method id"
     ordering = ('id',)
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 @admin.register(Fee)
 class FeeAdmin(ModelAdmin):
@@ -146,6 +157,12 @@ class FeeAdmin(ModelAdmin):
 class StripePaymentMethodsHolderAdmin(ModelAdmin):
     list_display = ('stripe_pm', 'is_primary')
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 
 @admin.register(ServiceFee)
 class ServiceFeeAdmin(ModelAdmin):
@@ -222,6 +239,7 @@ class TransactionAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
     )
     search_fields = ('user__first_name', 'user__last_name', 'transaction_id')
     search_help_text = "Search by User id, name, Transaction id"
+    readonly_fields = ('creation_time',)
 
     @admin.display(description="Requested", ordering='amount_requested')
     def human_readable_amount_requested(self, obj: Transaction):
@@ -266,3 +284,9 @@ class LogEntryAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ("id", "action_time", "action_flag", "user", "content_type", "object_id")
     list_display_links = ("id", "action_time")
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
