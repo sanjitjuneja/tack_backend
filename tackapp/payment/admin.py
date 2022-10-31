@@ -1,6 +1,7 @@
 from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.contrib.admin.models import LogEntry
 
 from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee, Transaction
 from .services import convert_to_decimal
@@ -258,3 +259,10 @@ class TransactionAdmin(AdminAdvancedFiltersMixin, ReadOnlyMixin, ModelAdmin):
         if decimal_amount % 1:
             return f"${decimal_amount:.2f}"
         return f"${str(decimal_amount)}"
+
+
+@admin.register(LogEntry)
+class LogEntryAdmin(ModelAdmin):
+    list_per_page = 50
+    list_display = ("id", "action_time", "action_flag", "user", "content_type", "object_id")
+    list_display_links = ("id", "action_time")
