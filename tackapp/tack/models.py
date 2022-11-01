@@ -50,6 +50,9 @@ class Tack(CoreModel):
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
 
+    def delete(self, using=None, keep_parents=False):
+        super().delete()
+
     def cancel(self):
         if self.is_canceled:
             return

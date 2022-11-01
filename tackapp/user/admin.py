@@ -77,9 +77,14 @@ class CustomUserAdmin(UserAdmin):
         "username",
     )
     list_display_links = "phone_number",
-    search_fields = ("first_name", "last_name", "phone_number",
-                     "email", "username")
-    search_help_text = "Search by User name, username, phone number, email"
+    search_fields = (
+        "first_name",
+        "last_name",
+        "phone_number",
+        "email",
+        "username"
+    )
+    search_help_text = "Search by User's first_name, last_name, phone number, email, username"
     fieldsets = (
         (None, {"fields": ("phone_number", "password")}),
         (_("Personal info"), {"fields": (
@@ -128,8 +133,8 @@ class TackerTypeFilter(admin.SimpleListFilter):
         `self.value()`.
         """
         inactive_users = queryset.filter(
-                    Q(last_login=None) | Q(last_login__lte=timezone.now() - timedelta(days=7))
-                ).values_list("pk", flat=True)
+            Q(last_login=None) | Q(last_login__lte=timezone.now() - timedelta(days=7))
+        ).values_list("pk", flat=True)
         last_week_tackers = list(Tack.objects.filter(
             creation_time__gte=timezone.now() - timedelta(days=7),
         ).values_list("tacker_id", flat=True))
