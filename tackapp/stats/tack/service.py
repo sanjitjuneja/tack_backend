@@ -40,7 +40,7 @@ class TackStats:
             tack_num_as_tacker__gte=amount_of_tacks_for_tacker
         )
         self.runners = self.active_users_last_week.filter(
-            offer_status__in=(
+            offer__status__in=(
                 OfferStatus.ACCEPTED,
                 OfferStatus.IN_PROGRESS,
                 OfferStatus.FINISHED
