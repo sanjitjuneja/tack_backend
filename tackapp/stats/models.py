@@ -46,7 +46,7 @@ class GlobalStats(models.Model):
     sum_total_user_balance = models.PositiveIntegerField(
         blank=True, null=True, default=None
     )
-    total_sum_fees_we_paid_last_hour = models.PositiveIntegerField(
+    total_sum_fees_we_paid_last_hour = models.IntegerField(
         blank=True, null=True, default=None
     )
     num_card_deposits_last_hour = models.PositiveIntegerField(
@@ -144,7 +144,7 @@ class GroupStats(models.Model):
     sum_total_user_balance = models.PositiveIntegerField(
         blank=True, null=True, default=None
     )
-    total_sum_fees_we_paid_last_hour = models.PositiveIntegerField(
+    total_sum_fees_we_paid_last_hour = models.IntegerField(
         blank=True, null=True, default=None
     )
     num_card_deposits_last_hour = models.PositiveIntegerField(
