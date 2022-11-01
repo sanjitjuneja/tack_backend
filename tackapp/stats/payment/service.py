@@ -91,7 +91,7 @@ class PaymentStats:
             num_bank_withdraws=Count(
                 'id',
                 filter=Q(
-                    service_name=PaymentService.STRIPE,
+                    service_name=PaymentService.DWOLLA,
                     action_type=PaymentAction.WITHDRAW,
                 )
             ),
