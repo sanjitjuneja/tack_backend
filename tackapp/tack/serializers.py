@@ -5,6 +5,7 @@ from rest_framework import serializers
 from core.choices import MethodType
 from core.custom_serializers import CustomModelSerializer, CustomSerializer
 from group.serializers import GroupSerializer
+from payment.serializers import PaymentInfoSerializer
 from user.serializers import UserListSerializer
 from .models import *
 
@@ -79,10 +80,6 @@ class TackCreateSerializer(CustomModelSerializer):
             "auto_accept",
         )
 
-
-class PaymentInfoSerializer(serializers.Serializer):
-    transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
-    method_type = serializers.ChoiceField(choices=MethodType.choices, required=True)
 
 
 class TackCreateSerializerv2(CustomSerializer):

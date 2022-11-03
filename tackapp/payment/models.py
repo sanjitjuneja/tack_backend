@@ -2,7 +2,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
-from core.choices import PaymentService, PaymentAction
+from core.abstract_models import CoreModel
+from core.choices import PaymentService, PaymentAction, MethodType
 from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
@@ -119,3 +120,11 @@ class ServiceFee(models.Model):
         max_digits=4,
         validators=(percent_validator,))
     dwolla_const_sum = models.PositiveIntegerField(default=0)
+
+
+class Transfer(CoreModel):
+    sender = models.ForeignKey('user.User', null=True, on_delete=models.SET_NULL, related_name='sender')
+    receiver = models.ForeignKey('user.User', null=True, on_delete=models.SET_NULL, related_name='receiver')
+    amount = models.PositiveIntegerField()
+    transaction_id = models.CharField(max_length=255, null=True, default=None)
+    method_type = models.CharField(max_length=12, choices=MethodType.choices)
