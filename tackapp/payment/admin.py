@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.models import LogEntry
 
-from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee, Transaction
+from .models import BankAccount, UserPaymentMethods, Fee, StripePaymentMethodsHolder, ServiceFee, Transaction, Transfer
 from .services import convert_to_decimal
 
 
@@ -290,3 +290,31 @@ class LogEntryAdmin(ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+
+@admin.register(Transfer)
+class TransferAdmin(ReadOnlyMixin, ModelAdmin):
+    list_per_page = 50
+    list_display = ("id", "sender", "receiver", "human_readable_amount", "creation_time")
+    list_display_links = ("id",)
+    search_help_text = ""
+    search_fields = (
+        "transaction_id",
+        "sender__first_name",
+        "sender__last_name",
+        "amount"
+    )
+
+    @admin.display(description="USD amount", ordering='amount')
+    def human_readable_amount(self, obj: Transfer):
+        if obj.amount is None:
+            return "-"
+        decimal_amount = convert_to_decimal(obj.amount)
+        if decimal_amount.is_signed():
+            if decimal_amount % 1:
+                return f"-${abs(decimal_amount):.2f}"
+            return f"-${str(abs(decimal_amount))}"
+        else:
+            if decimal_amount % 1:
+                return f"${decimal_amount:.2f}"
+            return f"${str(decimal_amount)}"

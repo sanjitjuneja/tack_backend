@@ -1,6 +1,10 @@
 from django.urls import path
+from rest_framework import routers
 
 from .views import *
+
+router = routers.SimpleRouter()
+router.register(r"transfers", TransferViewset)
 
 urlpatterns = [
     path("payment/deposit-stripe/", AddBalanceStripe.as_view()),
@@ -17,3 +21,5 @@ urlpatterns = [
     path("payment/get-fees/", GetFees.as_view()),
     path("webhooks/dwolla/", DwollaWebhook.as_view()),
 ]
+
+urlpatterns += router.urls
