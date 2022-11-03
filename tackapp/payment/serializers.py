@@ -1,11 +1,19 @@
+import logging
+
+from django.db import transaction
+from rest_framework.exceptions import ValidationError
+
 import djstripe.models
 import stripe
 from rest_framework import serializers
 from djstripe.models.payment_methods import PaymentMethod as dsPaymentMethod
 
-from core.choices import images_dict, PaymentType
+from core.choices import images_dict, PaymentType, MethodType
 from core.validators import supported_currency
-from payment.models import BankAccount, StripePaymentMethodsHolder, Fee
+from payment.models import BankAccount, StripePaymentMethodsHolder, Fee, Transfer
+
+
+logger = logging.getLogger('debug')
 
 
 class AddBalanceStripeSerializer(serializers.Serializer):
@@ -141,3 +149,52 @@ class FeeSerializer(serializers.Serializer):
             "fee_min": obj.fee_min_dwolla,
             "fee_max": obj.fee_max_dwolla
         }
+
+
+class PaymentInfoSerializer(serializers.Serializer):
+    transaction_id = serializers.CharField(allow_blank=True, allow_null=True, required=False)
+    method_type = serializers.ChoiceField(choices=MethodType.choices, required=True)
+
+
+class TransferSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        logger.debug(f"inside TransferSerializer validate {attrs = }")
+        if attrs['amount'] <= 0:
+            raise ValidationError(
+                {
+                    "amount": "Amount should be more than 0"
+                }
+            )
+        return attrs
+
+    class Meta:
+        model = Transfer
+        fields = "__all__"
+        read_only_fields = ("creation_time", "is_active", "sender", "id", "transaction_id", "method_type")
+
+
+class TransferCreateSerializer(serializers.Serializer):
+    payment_info = PaymentInfoSerializer()
+    transfer = TransferSerializer()
+
+    def create(self, validated_data):
+        logger.debug(f"{validated_data = }")
+        transfer = validated_data.get("transfer")
+        payment_info = validated_data.get("payment_info")
+        sender = validated_data.get("sender")
+        receiver = transfer.get("receiver")
+        amount = transfer.get("amount")
+
+        with transaction.atomic():
+            db_transfer = Transfer.objects.create(
+                sender=sender,
+                **transfer,
+                **payment_info
+            )
+            ba_sender = BankAccount.objects.get(user=sender)
+            ba_receiver = BankAccount.objects.get(user=receiver)
+            ba_sender.usd_balance -= amount
+            ba_receiver.usd_balance += amount
+            ba_sender.save()
+            ba_receiver.save()
+        return db_transfer

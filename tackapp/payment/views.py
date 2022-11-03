@@ -9,20 +9,20 @@ import plaid
 import stripe
 from django.core.exceptions import ObjectDoesNotExist
 
-from core.choices import PaymentType, PaymentService, PaymentAction
+from core.choices import PaymentType, PaymentService, PaymentAction, MethodType
 from core.exceptions import InvalidActionError
 
 from djstripe.models import Customer as dsCustomer
 from djstripe.models import PaymentMethod as dsPaymentMethod
 from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiExample
-from rest_framework import views, serializers
+from rest_framework import views, serializers, viewsets, mixins
 from rest_framework.response import Response
 
-from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee
+from payment.models import BankAccount, UserPaymentMethods, Transaction, Fee, Transfer
 from payment.serializers import StripePaymentMethodSerializer, AddWithdrawMethodSerializer, \
     DwollaMoneyWithdrawSerializer, DwollaPaymentMethodSerializer, GetCardByIdSerializer, \
     DeletePaymentMethodSerializer, SetPrimaryPaymentMethodSerializer, AddBalanceDwollaSerializer, \
-    AddBalanceStripeSerializer, FeeSerializer
+    AddBalanceStripeSerializer, FeeSerializer, TransferSerializer, TransferCreateSerializer
 from payment.services import get_dwolla_payment_methods, get_dwolla_id, get_link_token, get_access_token, \
     get_accounts_with_processor_tokens, attach_all_accounts_to_dwolla, save_dwolla_access_token, check_dwolla_balance, \
     get_dwolla_pms_by_id, dwolla_webhook_handler, dwolla_transaction, detach_dwolla_funding_source, set_primary_method, \
@@ -602,3 +602,65 @@ class DwollaWebhook(views.APIView):
         dwolla_webhook_handler(request)
         # logging.getLogger().warning(f"{request.data = }")
         return Response()
+
+
+class TransferViewset(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = TransferCreateSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = Transfer.objects.all()
+
+    @extend_schema(request=TransferCreateSerializer, responses=None)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        logger.debug(f"{serializer = }")
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            return Response(
+                {
+                    "error": "Ox3",
+                    "message": "Validation error. Some of the fields have invalid values",
+                    "details": e.detail,
+                },
+                status=400
+            )
+
+        payment_info = serializer.validated_data.get("payment_info")
+        transfer = serializer.validated_data.get("transfer")
+
+        if self.request.user.id == transfer.get("receiver").id:
+            return Response(
+                {
+                    "error": "Px9",
+                    "message": "You can't transfer money to yourself"
+                },
+                status=400
+            )
+
+        amount = transfer.get("amount")
+        match payment_info.get("method_type"):
+            case MethodType.TACK_BALANCE:
+                pass
+            case MethodType.STRIPE:
+                pass
+            case MethodType.DWOLLA:
+                pass
+        ba = BankAccount.objects.get(user=request.user)
+        if ba.usd_balance < amount:
+            return Response(
+                {
+                    "error": "Px2",
+                    "message": "Not enough money",
+                    "balance": ba.usd_balance,
+                    "tack_price": amount
+                },
+                status=400
+            )
+        self.perform_create(serializer)
+        return Response(status=201)
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
