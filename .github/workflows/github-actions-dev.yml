@@ -35,14 +35,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@master
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@aaf69d68aa3fb14c1d5a6be9ac61fe15b48453a2
-
       - name: Set up image name Web
         id: web-name
         env:
@@ -57,60 +49,43 @@ jobs:
         run: |
           echo "::set-output name=image::$ECR_REPOSITORY_NGINX:$IMAGE_TAG"
 
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-single-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-single-buildx
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@aaf69d68aa3fb14c1d5a6be9ac61fe15b48453a2
+
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
 
       - name: Build, tag, and push web image to Amazon ECR
         id: build-image-web
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          builder: ${{ steps.buildx.outputs.name }}
-          file: Dockerfile
-          push: true # This would be set to true in a real world deployment scenario.
-          tags: ${{ steps.web-name.outputs.image }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          IMAGE_TAG: ${{ github.sha }}
-#        run: |
-#          # Build a docker container and
-#          # push it to ECR so that it can
-#          # be deployed to ECS.
-#          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
-#          docker push $ECR_REPOSITORY:$IMAGE_TAG
-#          echo "::set-output name=image::$ECR_REPOSITORY:$IMAGE_TAG"
-
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.web-name.outputs.image }}
+        run: |
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          echo "::set-output name=image::$ECR_REPOSITORY:$IMAGE_TAG"
+#      - uses: satackey/action-docker-layer-caching@v0.0.11
+#        continue-on-error: true
+      -
       - name: Build, tag, and push nginx image to Amazon ECR
         id: build-image-nginx
-        uses: docker/build-push-action@v2
-        with:
-          context: /nginx
-          builder: ${{ steps.buildx.outputs.name }}
-          file: Dockerfile
-          push: true # This would be set to true in a real world deployment scenario.
-          tags: ${{ steps.nginx-name.outputs.image }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          IMAGE_TAG: ${{ github.sha }}
-#        run: |
-#          # Build a docker container and
-#          # push it to ECR so that it can
-#          # be deployed to ECS.
-#          cd nginx
-#          docker build -t $ECR_REPOSITORY_NGINX:$IMAGE_TAG .
-#          docker push $ECR_REPOSITORY_NGINX:$IMAGE_TAG
-#          echo "::set-output name=image::$ECR_REPOSITORY_NGINX:$IMAGE_TAG"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.nginx-name.outputs.image }}
+        run: |
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          cd nginx
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          echo "::set-output name=image::$ECR_REPOSITORY_NGINX:$IMAGE_TAG"
+
       - name: Fill in the new web image ID in the Amazon ECS task definition
         id: task-web
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -125,7 +100,7 @@ jobs:
         with:
           task-definition: ${{ steps.task-web.outputs.task-definition }}
           container-name: ${{ env.CONTAINER_NAME_CELERY }}
-          image: ${{ steps.nginx-name.outputs.image }}
+          image: ${{ steps.web-name.outputs.image }}
 
       - name: Fill in the new celery-beat image ID in the Amazon ECS task definition
         id: task-celery-beat
@@ -133,7 +108,7 @@ jobs:
         with:
           task-definition: ${{ steps.task-celery.outputs.task-definition }}
           container-name: ${{ env.CONTAINER_NAME_CELERY_BEAT }}
-          image: ${{ steps.build-image-web.outputs.image }}
+          image: ${{ steps.web-name.outputs.image }}
 
       - name: Fill in the new nginx image ID in the Amazon ECS task definition
         id: task-nginx
@@ -141,7 +116,7 @@ jobs:
         with:
           task-definition: ${{ steps.task-celery-beat.outputs.task-definition }}
           container-name: ${{ env.CONTAINER_NAME_NGINX }}
-          image: ${{ steps.build-image-nginx.outputs.image }}
+          image: ${{ steps.nginx-name.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
