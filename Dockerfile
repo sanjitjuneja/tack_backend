@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 FROM base AS python-deps
 
 RUN pip install --upgrade pip
-RUN  pip install pipenv
+RUN pip install pipenv
 
 COPY Pipfile Pipfile.lock ./
 RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
@@ -18,4 +18,4 @@ ENV PATH="/.venv/bin:$PATH"
 WORKDIR /app/tackapp
 COPY . /app/
 RUN ["chmod", "+x", "/app/docker-entrypoint.sh"]
-RUN ["chmod", "+x", "/app/run_sudo docker.sh"]
+RUN ["chmod", "+x", "/app/run_worker.sh"]
