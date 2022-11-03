@@ -73,7 +73,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: Dockerfile
           push: true # This would be set to true in a real world deployment scenario.
-          tags: ${{ steps.web-name.outputs.name }}
+          tags: ${{ steps.web-name.outputs.image }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
@@ -97,7 +97,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: Dockerfile
           push: true # This would be set to true in a real world deployment scenario.
-          tags: ${{ steps.nginx-name.outputs.name }}
+          tags: ${{ steps.nginx-name.outputs.image }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 #        env:
