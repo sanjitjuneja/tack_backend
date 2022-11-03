@@ -1,10 +1,22 @@
-FROM python:3.10.5-slim
+FROM python:3.10.5-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+FROM base AS python-deps
+
+RUN apt-get update && apt-get -y install pipenv
+
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --system --deploy --ignore-pipfile
+
+FROM base AS runtime
+
+COPY --from=python-deps /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+COPY --from=python-deps /usr/local/bin/ /usr/local/bin/
 
 WORKDIR /app/tackapp
-RUN apt-get update && apt-get -y install pipenv
-COPY Pipfile.lock /app/
-COPY Pipfile /app/
-RUN pipenv install --system --deploy --ignore-pipfile
+ENV PYTHONPATH /app/tackapp:$PYTHONPATH
 COPY . /app/
 RUN ["chmod", "+x", "/app/docker-entrypoint.sh"]
 RUN ["chmod", "+x", "/app/run_worker.sh"]
