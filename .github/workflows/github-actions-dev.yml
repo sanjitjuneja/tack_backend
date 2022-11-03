@@ -71,7 +71,7 @@ jobs:
           echo "::set-output name=image::$ECR_REPOSITORY:$IMAGE_TAG"
 #      - uses: satackey/action-docker-layer-caching@v0.0.11
 #        continue-on-error: true
-      -
+
       - name: Build, tag, and push nginx image to Amazon ECR
         id: build-image-nginx
         env:
