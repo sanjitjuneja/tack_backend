@@ -11,12 +11,14 @@ from payment.services import send_payment_to_runner
 from tack.models import Tack, Offer
 from core.choices import TackStatus, OfferStatus, NotificationType
 from tack.notification import build_ntf_message
+from tackapp.websocket_messages import WSSender
 from user.models import User
 
 from fcm_django.models import FCMDevice
 
 
 logger = logging.getLogger("debug")
+ws_sender = WSSender()
 
 
 @shared_task
@@ -45,22 +47,6 @@ def set_expire_offer_task(offer_id: int) -> None:
         return None
     if offer.status == OfferStatus.CREATED:
         offer.set_expired_status()
-
-
-@shared_task
-def set_tack_inactive_on_user_last_login() -> None:
-    Tack.objects.filter(
-        tacker__in=Subquery(
-            User.objects.filter(
-                last_login__gt=timezone.now() - timedelta(days=1)
-            )
-        )
-    ).update(is_active=False)
-
-
-@shared_task
-def set_tack_active_on_user_last_login(user_id: int) -> None:
-    Tack.objects.filter(tacker=user_id).update(is_active=True)
 
 
 @shared_task
@@ -100,7 +86,7 @@ def tack_will_expire_soon(offer_id) -> None:
 def delete_inactive_tacks():
     """Task for soft-deleting Tacks that have not received Offers for 2 days"""
 
-    Tack.active.filter(
+    del_tacks = Tack.active.filter(
         status=TackStatus.CREATED,
         creation_time__lte=timezone.now() - timedelta(days=2)
     ).annotate(
@@ -108,6 +94,18 @@ def delete_inactive_tacks():
     ).filter(
         Q(max_offer_creation_time__isnull=True) |
         Q(max_offer_creation_time__lte=timezone.now() - timedelta(days=2))
-    ).update(
+    )
+    for tack in del_tacks:
+        ws_sender.send_message(
+            f"user_{tack.tacker_id}",
+            "tack.delete",
+            tack.id
+        )
+        ws_sender.send_message(
+            f"group_{tack.group_id}",
+            "grouptack.delete",
+            tack.id
+        )
+    del_tacks.update(
         is_active=False
     )
