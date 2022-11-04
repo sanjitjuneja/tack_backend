@@ -1,4 +1,4 @@
-name: Deploy to Amazon ECS
+name: Deploy from develop to ECS
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: production
+    environment: develop
 
     steps:
       - name: Checkout
