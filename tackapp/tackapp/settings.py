@@ -22,7 +22,6 @@ from django.utils.encoding import force_str
 from firebase_admin import initialize_app
 
 from core.logs_formatter import CustomJsonFormatter
-from tackapp.logger_filters import HealthCheckFilter
 from tackapp.services_env import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
@@ -47,23 +46,16 @@ LOGGING = {
             '()': CustomJsonFormatter
         }
     },
-    'filters': {
-        'healthcheck_filter': {
-            '()': HealthCheckFilter
-        }
-    },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
-            'filters': ('healthcheck_filter',),
         },
         'debug_console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
-            'filters': ('healthcheck_filter',),
         },
         'payment_file': {
             'level': 'DEBUG',
