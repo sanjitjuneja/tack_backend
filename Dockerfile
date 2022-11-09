@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 FROM base AS python-deps
 
 RUN apt-get update && apt-get -y install pipenv
-RUN apt install libcurl4-gnutls-dev librtmp-dev
+RUN apt -y install libcurl4-gnutls-dev librtmp-dev
 
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy --ignore-pipfile
