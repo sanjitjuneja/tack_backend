@@ -353,7 +353,7 @@ task_default_queue = "celery_tackapp_dev"
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'predefined_queues': {
-        'HIGH_PRIORITY': {
+        'celery_tackapp_dev': {
             'url': read_secrets(app, env, "CELERY_SQS_URL"),
             'access_key_id': read_secrets(app, env, "AWS_ACCESS_KEY_ID"),
             'secret_access_key': read_secrets(app, env, "AWS_SECRET_ACCESS_KEY"),

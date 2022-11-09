@@ -23,7 +23,7 @@ phonenumbers = "*"
 pytest-mock = "*"
 django = "*"
 django-filter = "*"
-celery = {extras = ["sqs"], version = "*"}
+celery = "*"
 flower = "*"
 django-money = "*"
 drf-spectacular = "*"
