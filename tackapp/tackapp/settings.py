@@ -350,7 +350,7 @@ MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
 # task_default_queue = "celery_tackapp_dev"
-# CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
+CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
 # CELERY_BROKER_TRANSPORT_OPTIONS = {
 #     'predefined_queues': {
 #         'celery_tackapp_dev': {
