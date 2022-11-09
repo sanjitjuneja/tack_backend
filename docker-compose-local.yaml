@@ -32,8 +32,8 @@ services:
       - .:/app/
     env_file:
       - tackapp/local.env
-    command: ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-#    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
+#    command: ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "tackapp.asgi:application"]
     depends_on:
       - postgres
 
