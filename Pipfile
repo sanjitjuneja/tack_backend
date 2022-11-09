@@ -49,7 +49,6 @@ dj-stripe = "*"
 python-json-logger = "*"
 django-jet-reboot = "*"
 django-advanced-filters = "*"
-daphne = "*"
 
 [dev-packages]
 
