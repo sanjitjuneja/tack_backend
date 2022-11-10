@@ -350,8 +350,17 @@ MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
 # task_default_queue = "celery_tackapp_dev"
+CELERY_BROKER_TRANSPORT = "sqs"
+CELERY_DEFAULT_QUEUE = "default"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_CONTENT_ENCODING = "utf-8"
+CELERY_ENABLE_REMOTE_CONTROL = False
+
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
-# CELERY_BROKER_TRANSPORT_OPTIONS = {
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'region': read_secrets(app, env, "AWS_REGION"),
 #     'predefined_queues': {
 #         'celery_tackapp_dev': {
 #             'url': read_secrets(app, env, "CELERY_SQS_URL"),
@@ -360,7 +369,7 @@ CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
 #             'region': read_secrets(app, env, "AWS_REGION"),
 #         },
 #     }
-# }
+}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=9),
