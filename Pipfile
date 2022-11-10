@@ -46,6 +46,7 @@ firebase-admin = "==5.4.0"
 dj-stripe = "==2.6.2"
 python-json-logger = "==2.0.4"
 django-advanced-filters = "==2.0.0"
+pycurl = "==7.45.1"
 
 [dev-packages]
 
