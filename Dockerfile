@@ -9,6 +9,8 @@ RUN apt-get update && apt-get -y install pipenv
 
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --system --deploy --ignore-pipfile
+RUN apt -y install libcurl4-gnutls-dev librtmp-dev
+
 
 FROM base AS runtime
 

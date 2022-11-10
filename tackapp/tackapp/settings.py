@@ -358,7 +358,17 @@ MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
-
+task_default_queue = "celery_tackapp_dev"
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'predefined_queues': {
+        'celery': {
+            'url': read_secrets(app, env, "CELERY_SQS_URL"),
+            'access_key_id': read_secrets(app, env, "AWS_ACCESS_KEY_ID"),
+            'secret_access_key': read_secrets(app, env, "AWS_SECRET_ACCESS_KEY"),
+            'region': read_secrets(app, env, "AWS_REGION"),
+        },
+    }
+}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=9),

@@ -46,7 +46,7 @@ services:
       - tackapp/local.env
     depends_on:
       - web
-      - rabbit
+#      - rabbit
 
   celery-beat:
     build: .
@@ -57,7 +57,7 @@ services:
       - tackapp/local.env
     depends_on:
       - web
-      - rabbit
+#      - rabbit
 
   redis:
     container_name: 'redis'
@@ -66,25 +66,25 @@ services:
     ports:
       - "6379:6379"
 
-  rabbit:
-    container_name: 'rabbit'
-    build: ./rabbitmq
-    restart: always
-    env_file:
-      - tackapp/local.env
-    ports:
-      - "15672:15672"
+#  rabbit:
+#    container_name: 'rabbit'
+#    build: ./rabbitmq
+#    restart: always
+#    env_file:
+#      - tackapp/local.env
+#    ports:
+#      - "15672:15672"
 
-  flower:
-    build: .
-    container_name: 'flower'
-    restart: always
-    command: celery -A tackapp --broker=redis://redis:6379/0 flower --port=5555
-    ports:
-      - "5555:5555"
-    env_file:
-      - tackapp/local.env
-    depends_on:
-      - web
-      - redis
-      - celery
+#  flower:
+#    build: .
+#    container_name: 'flower'
+#    restart: always
+#    command: celery -A tackapp --broker=redis://redis:6379/0 flower --port=5555
+#    ports:
+#      - "5555:5555"
+#    env_file:
+#      - tackapp/local.env
+#    depends_on:
+#      - web
+#      - redis
+#      - celery
