@@ -349,18 +349,18 @@ TWILIO_AUTH_TOKEN = read_secrets(app, env, "TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
 
-# task_default_queue = "celery_tackapp_dev"
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
-# CELERY_BROKER_TRANSPORT_OPTIONS = {
-#     'predefined_queues': {
-#         'celery_tackapp_dev': {
-#             'url': read_secrets(app, env, "CELERY_SQS_URL"),
-#             'access_key_id': read_secrets(app, env, "AWS_ACCESS_KEY_ID"),
-#             'secret_access_key': read_secrets(app, env, "AWS_SECRET_ACCESS_KEY"),
-#             'region': read_secrets(app, env, "AWS_REGION"),
-#         },
-#     }
-# }
+task_default_queue = "celery_tackapp_dev"
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'predefined_queues': {
+        'celery': {
+            'url': read_secrets(app, env, "CELERY_SQS_URL"),
+            'access_key_id': read_secrets(app, env, "AWS_ACCESS_KEY_ID"),
+            'secret_access_key': read_secrets(app, env, "AWS_SECRET_ACCESS_KEY"),
+            'region': read_secrets(app, env, "AWS_REGION"),
+        },
+    }
+}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=9),
@@ -455,4 +455,3 @@ S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
 
 # X_FRAME_OPTIONS = 'SAMEORIGIN'
-# restart for broker service
