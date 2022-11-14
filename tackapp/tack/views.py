@@ -1,7 +1,3 @@
-import datetime
-import logging
-
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -11,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import *
 from tack.utils import set_pay_for_tack_id, stripe_desync_check
 from .serializers import *
-from .services import accept_offer, complete_tack, confirm_complete_tack, delete_tack_offers
+from .services import delete_tack_offers
 
 logger = logging.getLogger('debug')
 
@@ -254,7 +250,7 @@ class TackViewset(
                 },
                 status=400)
 
-        complete_tack(tack)
+        tack.runner_complete()
         return Response(status=200)
 
     @extend_schema(request=None, responses={
@@ -304,12 +300,7 @@ class TackViewset(
                     "message": "You already have ongoing Tack"
                 },
                 status=400)
-        with transaction.atomic():
-            tack.status = TackStatus.IN_PROGRESS
-            tack.accepted_offer.status = OfferStatus.IN_PROGRESS
-            tack.start_completion_time = timezone.now()
-            tack.save()
-            tack.accepted_offer.save()
+        tack.start_complete()
         return Response(self.get_serializer(tack).data)
 
     @action(methods=["GET"], detail=True, serializer_class=OfferSerializer,
@@ -339,9 +330,9 @@ class TackViewset(
     def confirm_complete(self, request, *args, **kwargs):
         """Endpoint for Tacker to send payment to Runner without creating Review"""
 
-        tack = self.get_object()
+        tack: Tack = self.get_object()
         if tack.status == TackStatus.WAITING_REVIEW:
-            confirm_complete_tack(tack)
+            tack.tacker_complete()
             return Response(TackDetailSerializer(tack).data)
         else:
             return Response(
@@ -449,9 +440,9 @@ class OfferViewset(
                     "message": "You can create Offers only on Active Tacks"
                 },
                 status=400)
-        created_offer = self.perform_create(serializer)
+        created_offer: Offer = self.perform_create(serializer)
         if tack.auto_accept:
-            accept_offer(created_offer)
+            created_offer.accept()
         headers = self.get_success_headers(serializer.data)
 
         return Response(serializer.data, status=201, headers=headers)
@@ -509,7 +500,7 @@ class OfferViewset(
                 },
                 status=400)
 
-        accept_offer(offer)
+        offer.accept()
         serializer = OfferSerializer(offer)
         return Response(serializer.data)
 

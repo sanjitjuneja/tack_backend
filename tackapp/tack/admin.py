@@ -9,7 +9,7 @@ from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.db import transaction
 from django.utils import timezone
 
-from core.choices import TackStatus
+from core.choices import TackStatus, OfferStatus
 from payment.services import convert_to_decimal
 from .models import Tack, Offer, PopularTack
 from django.contrib.admin import ModelAdmin
@@ -27,7 +27,7 @@ from django.db.models import (
     When
 )
 
-from .services import confirm_complete_tack, delete_tack_offers
+from .services import delete_tack_offers
 logger = logging.getLogger('debug')
 
 
@@ -123,7 +123,7 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         "group__id",
     )
     search_help_text = "Search by Tack title, Tacker name, Runner name, Group id, name"
-    actions = ('cancel_tacks', 'delete_tacks', 'finish_tacks')
+    actions = ('cancel_tacks', 'delete_tacks', 'finish_tacks', 'start_tacks')
     # ordering = ('-id',)
 
     def get_actions(self, request):
@@ -144,6 +144,14 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
         if db_field.name == "accepted_offer":
             kwargs["queryset"] = Offer.active.filter(tack_id=parent_id)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    @admin.action(description='Start selected Tacks (from ACCEPTED status)')
+    def start_tacks(self, request, queryset: QuerySet[Tack]):
+        filtered_queryset = queryset.filter(
+            status=TackStatus.ACCEPTED
+        )
+        for tack in filtered_queryset:
+            tack.start_complete()
 
     @admin.action(description='Cancel selected Tacks (from Runner side)')
     def cancel_tacks(self, request, queryset: QuerySet[Tack]):
@@ -174,9 +182,12 @@ class TackAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
                 tack.delete()
 
     @admin.action(description='Finish selected Tacks (from Waiting Review)')
-    def finish_tacks(self, request, queryset):
-        for tack in queryset:
-            confirm_complete_tack(tack)
+    def finish_tacks(self, request, queryset: QuerySet[Tack]):
+        filtered_queryset = queryset.filter(
+            status=TackStatus.WAITING_REVIEW
+        )
+        for tack in filtered_queryset:
+            tack.tacker_complete()
 
     @admin.display(description="Offer count")
     def num_offers(self, obj) -> int:
@@ -251,12 +262,41 @@ class OfferAdmin(AdminAdvancedFiltersMixin, ModelAdmin):
     search_fields = ('id', 'tack__title', 'tack__description', 'runner__first_name', 'runner__last_name')
     search_help_text = "Search by Offer id, title, description; Tack title; Runner name"
     ordering = ('-id',)
+    actions = ('accept_offers', 'delete_offers', 'cancel_offers')
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    @admin.action(description='Accept selected Offers')
+    def accept_offers(self, request, queryset: QuerySet[Offer]):
+        logger.debug(f"{queryset = }")
+        filtered_queryset = queryset.filter(
+            status=OfferStatus.CREATED
+        )
+        for offer in filtered_queryset:
+            offer.accept()
+
+    @admin.action(description='Delete selected Offers')
+    def delete_offers(self, request, queryset: QuerySet[Offer]):
+        filtered_queryset = queryset.filter(
+            status=OfferStatus.CREATED
+        )
+        for offer in filtered_queryset:
+            offer.delete()
+
+    @admin.action(description='Cancel selected Offers (from Runner\'s side)')
+    def cancel_offers(self, request, queryset: QuerySet[Offer]):
+        filtered_queryset = queryset.filter(
+            status__in=(
+                OfferStatus.ACCEPTED,
+                OfferStatus.IN_PROGRESS,
+            )
+        )
+        for offer in filtered_queryset:
+            offer.cancel()
 
     @admin.display(description="Description")
     def view_offer_str(self, obj) -> str:

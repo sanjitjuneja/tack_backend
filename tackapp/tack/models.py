@@ -4,11 +4,16 @@ from django.core.validators import (
     MaxValueValidator,
 )
 from django.db.models import UniqueConstraint, Q
+from django.utils import timezone
 
 from core.abstract_models import CoreModel
 from core.choices import TackStatus, OfferType, TackType, OfferStatus
 from payment.models import BankAccount
+from tackapp.websocket_messages import WSSender
 from user.models import User
+
+
+ws_sender = WSSender()
 
 
 class Tack(CoreModel):
@@ -50,6 +55,18 @@ class Tack(CoreModel):
     completion_message = models.CharField(max_length=256, null=True, blank=True)
     completion_time = models.DateTimeField(null=True, blank=True)
 
+    def start_complete(self):
+        if not self.accepted_offer:
+            return
+        if not self.status == TackStatus.ACCEPTED:
+            return
+        with transaction.atomic():
+            self.status = TackStatus.IN_PROGRESS
+            self.accepted_offer.status = OfferStatus.IN_PROGRESS
+            self.start_completion_time = timezone.now()
+            self.save()
+            self.accepted_offer.save()
+
     def delete(self, using=None, keep_parents=False):
         super().delete()
 
@@ -67,6 +84,33 @@ class Tack(CoreModel):
                 ba.save()
                 self.accepted_offer.save()
             self.save()
+
+    def runner_complete(self, message: str | None = None):
+        with transaction.atomic():
+            self.completion_message = message
+            self.completion_time = timezone.now()
+            self.status = TackStatus.WAITING_REVIEW
+            self.save()
+
+            self.accepted_offer.status = OfferStatus.FINISHED
+            self.accepted_offer.save()
+
+    def tacker_complete(self):
+        with transaction.atomic():
+            self.status = TackStatus.FINISHED
+            self.tacker.tacks_amount += 1
+            self.runner.tacks_amount += 1
+            self.is_paid = self.send_payment_to_runner()
+            self.tacker.save()
+            self.runner.save()
+            self.save()
+
+    def send_payment_to_runner(self):
+        if self.is_paid:
+            return True
+        self.runner.bankaccount.usd_balance += self.price
+        self.runner.bankaccount.save()
+        return True
 
     def change_status(self, status: TackStatus):
         self.status = status
@@ -106,6 +150,51 @@ class Offer(CoreModel):
         self.status = OfferStatus.EXPIRED
         self.is_active = False
         self.save()
+
+    def accept(self):
+        """Delete all Offers except accepting one (On Offer accept)"""
+
+        with transaction.atomic():
+            # delete other offers first
+            other_offers = Offer.active.filter(
+                tack=self.tack
+            ).exclude(
+                id=self.id
+            )
+            for offer in other_offers:
+                ws_sender.send_message(
+                    f"user_{offer.tack.tacker_id}",  # tack_id_tacker
+                    'offer.delete',
+                    offer.id)
+                ws_sender.send_message(
+                    f"user_{offer.runner_id}",  # tack_id_runner
+                    'runnertack.delete',
+                    offer.id)
+            other_offers.update(
+                status=OfferStatus.DELETED,
+                is_active=False
+            )
+
+            self.status = OfferStatus.ACCEPTED
+            self.save()
+
+            price = self.price if self.price else self.tack.price
+            self.tack.runner = self.runner
+            self.tack.accepted_offer = self
+            self.tack.status = TackStatus.ACCEPTED
+            self.tack.accepted_time = timezone.now()
+            self.tack.price = price
+            self.tack.save()
+
+            if not self.tack.auto_accept:
+                self.tack.tacker.bankaccount.usd_balance -= price
+            self.tack.tacker.bankaccount.save()
+
+    def start(self):
+        self.tack.start_complete()
+
+    def cancel(self):
+        self.tack.cancel()
 
     def delete(self, using=None, keep_parents=False):
         self.status = OfferStatus.DELETED
