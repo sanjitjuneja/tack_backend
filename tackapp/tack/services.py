@@ -1,12 +1,9 @@
 import logging
 
-from django.db import transaction, IntegrityError
-from django.utils import timezone
 from fcm_django.models import FCMDevice
 
 from core.choices import TackStatus, OfferStatus, NotificationType, OfferType
 from group.models import GroupMembers
-from payment.services import send_payment_to_runner
 from tackapp.websocket_messages import WSSender
 from .models import Offer, Tack
 from .notification import build_ntf_message
@@ -17,48 +14,9 @@ logger = logging.getLogger("debug")
 ws_sender = WSSender()
 
 
-@transaction.atomic
-def accept_offer(offer: Offer):
-    delete_other_tack_offers(offer)
-    offer.status = OfferStatus.ACCEPTED
-    offer.save()
-
-    price = offer.price if offer.price else offer.tack.price
-    offer.tack.runner = offer.runner
-    offer.tack.accepted_offer = offer
-    offer.tack.status = TackStatus.ACCEPTED
-    offer.tack.accepted_time = timezone.now()
-    offer.tack.price = price
-    offer.tack.save()
-
-    if not offer.tack.auto_accept:
-        offer.tack.tacker.bankaccount.usd_balance -= price
-    offer.tack.tacker.bankaccount.save()
-
-
-def delete_other_tack_offers(offer: Offer):
-    other_offers = Offer.active.filter(
-        tack=offer.tack
-    ).exclude(
-        id=offer.id
-    )
-    for offer in other_offers:
-        logger.debug(f"{offer = }")
-        ws_sender.send_message(
-            f"user_{offer.tack.tacker_id}",  # tack_id_tacker
-            'offer.delete',
-            offer.id)
-        ws_sender.send_message(
-            f"user_{offer.runner_id}",  # tack_id_runner
-            'runnertack.delete',
-            offer.id)
-    other_offers.update(
-        status=OfferStatus.DELETED,
-        is_active=False
-    )
-
-
 def delete_tack_offers(tack: Tack):
+    """Deleting all Offers related to Tack (On Tack delete)"""
+
     deleted_offers = Offer.active.filter(
         tack=tack
     )
@@ -78,36 +36,13 @@ def delete_tack_offers(tack: Tack):
     )
 
 
-@transaction.atomic
-def complete_tack(tack: Tack, message: str = None):
-    tack.completion_message = message
-    tack.completion_time = timezone.now()
-    tack.status = TackStatus.WAITING_REVIEW
-    tack.save()
-
-    tack.accepted_offer.status = OfferStatus.FINISHED
-    tack.accepted_offer.save()
-
-
-def confirm_complete_tack(tack: Tack):
-    try:
-        with transaction.atomic():
-            tack.status = TackStatus.FINISHED
-            tack.tacker.tacks_amount += 1
-            tack.runner.tacks_amount += 1
-            tack.is_paid = send_payment_to_runner(tack)
-            tack.tacker.save()
-            tack.runner.save()
-            tack.save()
-    except IntegrityError as e:
-        logger.error(f"tack.services.confirm_complete_tack {e = }")
-
-
 def deactivate_related_offers(tack: Tack):
     Offer.active.filter(tack=tack).update(is_active=False)
 
 
 def calculate_tack_expiring(estimation_time_seconds: int) -> int:
+    """Return a number of seconds when we need to send notification about soon Tack expiration"""
+
     return int(estimation_time_seconds * 0.9)
 
 
