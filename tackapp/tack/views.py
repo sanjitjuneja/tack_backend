@@ -94,8 +94,7 @@ class TackViewset(
                             "tack_price": price
                         },
                         status=400)
-                ba.usd_balance -= price
-                ba.save()
+                ba.withdraw(amount=price)
             tack = self.perform_create(serializer)
         if transaction_id:
             set_pay_for_tack_id(transaction_id, tack)

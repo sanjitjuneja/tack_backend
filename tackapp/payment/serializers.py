@@ -186,15 +186,13 @@ class TransferCreateSerializer(serializers.Serializer):
         amount = transfer.get("amount")
 
         with transaction.atomic():
+            ba_sender = BankAccount.objects.get(user=sender)
+            ba_receiver = BankAccount.objects.get(user=receiver)
+            ba_sender.withdraw(amount=amount)
+            ba_receiver.deposit(amount=amount)
             db_transfer = Transfer.objects.create(
                 sender=sender,
                 **transfer,
                 **payment_info
             )
-            ba_sender = BankAccount.objects.get(user=sender)
-            ba_receiver = BankAccount.objects.get(user=receiver)
-            ba_sender.usd_balance -= amount
-            ba_receiver.usd_balance += amount
-            ba_sender.save()
-            ba_receiver.save()
         return db_transfer

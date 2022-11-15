@@ -1,3 +1,4 @@
+import logging
 import time
 from contextlib import contextmanager
 
@@ -7,6 +8,9 @@ from django.utils.encoding import force_str
 
 from tackapp.middleware import thread_locals
 from tackapp.middleware import time_measurement_logger
+
+
+logger = logging.getLogger('debug')
 
 
 @contextmanager
@@ -34,6 +38,7 @@ class CursorWrapper(DjangoCursorWrapper):
         if path:
             path = make_safe(path)
             sql = f'/* {path} */\n{force_str(sql)}\n/* {path} */'
+            logger.debug(sql)
 
         with calc_sql_time(sql):
             return super().execute(sql, params)
