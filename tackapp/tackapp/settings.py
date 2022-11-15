@@ -17,6 +17,7 @@ from datetime import timedelta
 from pathlib import Path
 import environ
 import django
+import psycopg2.extensions
 import stripe
 from django.utils.encoding import force_str
 from firebase_admin import initialize_app
@@ -72,7 +73,7 @@ LOGGING = {
         #     'formatter': 'json_formatter'
         # },
         # 'sql_measurement': {
-        #     'level': 'INFO',
+        #     'level': 'DEBUG',
         #     'class': 'logging.FileHandler',
         #     'filename': 'logs/sql_queues.log',
         #     'formatter': 'json_formatter'
@@ -103,11 +104,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        # 'sql_time_measurement': {
-        #     'handlers': ('sql_measurement',),
-        #     'level': 'INFO',
-        #     'propagate': False,
-        # }
+        'sql_time_measurement': {
+            'handlers': ('console',),
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }
 
@@ -202,7 +203,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
-    # "tackapp.middleware.RequestTimeMiddleware",
+    "tackapp.middleware.RequestTimeMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -262,7 +263,10 @@ DATABASES = {
         "PASSWORD": read_secrets(app, env, "POSTGRES_PASSWORD"),
         "HOST": read_secrets(app, env, "POSTGRES_HOST"),
         "PORT": read_secrets(app, env, "POSTGRES_PORT"),
-    }
+    },
+    # 'OPTIONS': {
+    #     'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ,
+    # },
 }
 
 

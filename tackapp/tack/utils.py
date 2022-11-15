@@ -29,21 +29,20 @@ def stripe_desync_check(request, transaction_id):
     if pi.status == "succeeded":
         logger.info(f"pi status succeeded")
         try:
-            desynced_transaction = Transaction.objects.get(
-                transaction_id=pi.id,
-                is_succeeded=False
-            )
-            logger.info(f"{desynced_transaction = }")
-        except Transaction.DoesNotExist:
-            return
-        else:
             with transaction.atomic():
+                desynced_transaction = Transaction.objects.select_for_update(
+
+                ).get(
+                    transaction_id=pi.id,
+                    is_succeeded=False
+                )
+                logger.info(f"{desynced_transaction = }")
                 try:
                     logger.info(f"DB transaction started")
                     ds_pi = dsPaymentIntent.objects.get(id=pi.id)
                     logger.info(f"{ds_pi = }")
                 except dsPaymentIntent.DoesNotExist:
-                    pass
+                    return
                     # logger.error(f"CREATED NEW dsPaymentIntent manually")
                     # customer, created = djstripe.models.Customer.get_or_create(subscriber=desynced_transaction.user)
                     # ds_pi = dsPaymentIntent.objects.create(
@@ -56,6 +55,9 @@ def stripe_desync_check(request, transaction_id):
                 )
                 desynced_transaction.is_succeeded = True
                 desynced_transaction.save()
+        except Transaction.DoesNotExist:
+            return
+
 
 
 def set_pay_for_tack_id(transaction_id, tack: Tack):

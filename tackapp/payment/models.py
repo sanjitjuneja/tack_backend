@@ -1,5 +1,5 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, UniqueConstraint
 
 from core.abstract_models import CoreModel
@@ -7,6 +7,7 @@ from core.choices import PaymentService, PaymentAction, MethodType
 from djstripe.models import PaymentMethod as dsPaymentMethod
 
 from core.validators import percent_validator
+from payment import errors
 
 
 class BankAccount(models.Model):
@@ -21,6 +22,23 @@ class BankAccount(models.Model):
     stripe_user = models.CharField(max_length=64, null=True, blank=True, default=None)
     dwolla_user = models.CharField(max_length=64, null=True, blank=True, default=None)
     dwolla_access_token = models.CharField(max_length=128, null=True, blank=True, default=None)
+
+    def get_queryset(self):
+        return self.__class__.objects.filter(id=self.id)
+
+    def deposit(self, amount):
+        with transaction.atomic():
+            obj = self.get_queryset().select_for_update().get()
+            obj.usd_balance += amount
+            obj.save()
+
+    def withdraw(self, amount):
+        with transaction.atomic():
+            obj = self.get_queryset().select_for_update().get()
+            if amount > obj.usd_balance:
+                raise errors.InsufficientFunds()
+            obj.usd_balance -= amount
+            obj.save()
 
     def __str__(self):
         return f"{str(self.user)}: {self.usd_balance / 100:.2f} $"

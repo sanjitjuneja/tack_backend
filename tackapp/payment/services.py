@@ -48,8 +48,7 @@ def send_payment_to_runner(tack: Tack):
     if tack.is_paid:
         logger.debug("if tack.is_paid:")
         return True
-    tack.runner.bankaccount.usd_balance += tack.price
-    tack.runner.bankaccount.save()
+    tack.runner.bankaccount.deposit(amount=tack.price)
     return True
 
 
@@ -205,12 +204,14 @@ def add_dwolla_payment_method(dwolla_id, dwolla_pm_id, account_id=None, access_t
 def add_money_to_bank_account(payment_intent: PaymentIntent, cur_transaction: Transaction):
     """Add balance to User BankAccount based on Stripe PaymentIntent when succeeded"""
     try:
-        logger.debug(f"{payment_intent.customer.id = }")
-        ba = BankAccount.objects.get(stripe_user=payment_intent.customer.id)
+        logger.debug(f"add_money_to_bank_account {payment_intent.customer.id = }")
+        ba = BankAccount.objects.get(
+            stripe_user=payment_intent.customer.id
+        )
         logger.debug(f"{ba = }")
-        ba.usd_balance += cur_transaction.amount_requested
-        logger.debug(f"{ba = }")
-        ba.save()
+        ba.deposit(
+            amount=cur_transaction.amount_requested
+        )
         logger.debug(f"{ba = }")
     except BankAccount.DoesNotExist:
         # TODO: Error handling/create BA
@@ -364,12 +365,10 @@ def dwolla_transaction(
         action_type=action
     )
     match action:
-        case PaymentAction.WITHDRAW:
-            ba.usd_balance -= amount
-            ba.save()
         case PaymentAction.DEPOSIT:
-            ba.usd_balance += amount
-            ba.save()
+            ba.deposit(amount=amount)
+        case PaymentAction.WITHDRAW:
+            ba.withdraw(amount=amount)
 
     return transaction_id
 
@@ -589,8 +588,7 @@ def add_money_to_bank_account_custom(cur_transaction: Transaction):
 
     try:
         ba = BankAccount.objects.get(user=cur_transaction.user)
-        ba.usd_balance += cur_transaction.amount_requested
-        ba.save()
+        ba.deposit(amount=cur_transaction.amount_requested)
     except BankAccount.DoesNotExist:
         # TODO: Error handling/create BA
         pass

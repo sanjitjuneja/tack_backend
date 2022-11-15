@@ -22,11 +22,14 @@ logger = logging.getLogger("payments")
 def add_balance_to_user(event, *args, **kwargs):
 
     logger.debug("payment.add_balance_to_user")
-    pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
-    tr = Transaction.objects.get(transaction_id=pi.id)
-    logger.debug(f"{pi =}")
-    logger.debug(f"{tr =}")
+
     with transaction.atomic():
+        pi = PaymentIntent.objects.get(id=event.data.get("object").get("id"))
+        tr = Transaction.objects.select_for_update().get(
+            transaction_id=pi.id
+        )
+        logger.debug(f"{pi =}")
+        logger.debug(f"{tr =}")
         if tr.is_succeeded:
             logger.debug(f"{tr} is already succeeded")
             return
