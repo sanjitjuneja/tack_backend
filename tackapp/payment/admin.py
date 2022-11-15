@@ -19,7 +19,7 @@ class ReadOnlyMixin:
 class BankAccountAdmin(ModelAdmin):
     list_per_page = 50
     list_display = ('id', 'user', 'human_readable_usd_balance', 'stripe_user', 'dwolla_user')
-    search_fields = ('user__firstname', 'user__lastname', 'stripe_user', 'dwolla_user')
+    search_fields = ('user__first_name', 'user__last_name', 'stripe_user', 'dwolla_user')
     search_help_text = "Search by User id, name, stripe id, dwolla id"
     ordering = ('id',)
 
