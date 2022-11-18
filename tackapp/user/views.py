@@ -1,7 +1,8 @@
 import logging
 
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from rest_framework import filters
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -15,11 +16,12 @@ from payment.serializers import BankAccountSerializer
 from review.serializers import ReviewSerializer
 from stats.models import UserVisits
 from tack.models import Tack
+from .documents import UserDocument
+from elasticsearch_dsl import Q as ESQ
 from .serializers import *
 from .services import get_reviews_by_user, get_reviews_as_reviewer_by_user, user_change_bio
 
-
-logger = logging.getLogger('django')
+logger = logging.getLogger('debug')
 
 
 class UsersViewset(
@@ -31,7 +33,7 @@ class UsersViewset(
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('username', '=phone_number')
+    search_fields = ('username', '=phone_number', 'first_name', 'last_name')
 
     def get_serializer_class(self):
         """Changing serializer class depends on actions"""
@@ -153,3 +155,32 @@ class UsersViewset(
             user=request.user
         )
         return Response()
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='query',
+                location=OpenApiParameter.QUERY,
+                description='Search Query string',
+                required=True,
+                type=OpenApiTypes.STR
+            ),
+        ],
+    )
+    @action(methods=("GET",), detail=False, serializer_class=None)
+    def search(self, request, *args, **kwargs):
+        logger.debug(f"{kwargs = }")
+        query = request.GET['query']
+        search = UserDocument.search().query(
+            ESQ(
+                'multi_match',
+                query=query,
+                fields=(
+                    'first_name',
+                    'last_name'
+                ),
+            ),
+        )
+        response = search.execute()
+        logger.debug(f'ES {response = }')
+        return Response({"response": str(response)})

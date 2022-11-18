@@ -88,3 +88,17 @@ services:
 #      - web
 #      - redis
 #      - celery
+
+  elastic-search:
+    container_name: 'es'
+    image: elasticsearch:7.17.7
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1

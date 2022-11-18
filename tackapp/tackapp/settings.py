@@ -27,8 +27,8 @@ from tackapp.logger_filters import HealthCheckFilter
 from tackapp.services_env import read_secrets
 from aws.secretmanager import receive_setting_secrets
 from aws.ssm import receive_setting_parameters
-django.utils.encoding.force_text = force_str
 
+django.utils.encoding.force_text = force_str
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,7 +114,6 @@ LOGGING = {
 
 logger = logging.getLogger('django')
 
-
 app = os.getenv("APP")
 logger.info(f"{app = }")
 if app == "dev":
@@ -152,15 +151,14 @@ AWS_SECRET_ACCESS_KEY = read_secrets(app, env, "AWS_SECRET_ACCESS_KEY")
 AWS_REGION = read_secrets(app, env, "AWS_REGION")
 ALLOWED_HOSTS = read_secrets(app, env, "ALLOWED_HOSTS").split(",")
 
-
 SECRET_KEY = read_secrets(app, env, "DJANGO_SECRET_KEY")
-
 
 logger.info(f"{DEBUG = }")
 
 logger.info(f"{ALLOWED_HOSTS = }")
 if DEBUG:
     import socket  # only if you haven't already imported this
+
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
     INTERNAL_IPS = [ip[: ip.rfind(".")] + ".1" for ip in ips] + ["127.0.0.1", "10.0.2.2"]
     INTERNAL_IPS += ["172.25.0.5"]
@@ -198,9 +196,9 @@ INSTALLED_APPS = [
     "storages",
     "fcm_django",
     "django_celery_beat",
-    "advanced_filters"
+    "advanced_filters",
+    "django_elasticsearch_dsl",
 ]
-
 
 MIDDLEWARE = [
     "tackapp.middleware.RequestTimeMiddleware",
@@ -219,7 +217,6 @@ ROOT_URLCONF = "tackapp.urls"
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -236,10 +233,8 @@ TEMPLATES = [
     },
 ]
 
-
 # WSGI_APPLICATION = "tackapp.wsgi.application"
 ASGI_APPLICATION = "tackapp.asgi.application"
-
 
 CHANNEL_LAYERS_HOSTS = read_secrets(app, env, "CHANNEL_LAYERS_HOSTS").split(",")
 logger.info(f"{CHANNEL_LAYERS_HOSTS = }")
@@ -269,7 +264,6 @@ DATABASES = {
     # },
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -291,7 +285,6 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -299,7 +292,6 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Central"
 USE_I18N = True
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
@@ -360,7 +352,6 @@ TWILIO_ACCOUNT_SID = read_secrets(app, env, "TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = read_secrets(app, env, "TWILIO_AUTH_TOKEN")
 MESSAGING_SERVICE_SID = read_secrets(app, env, "MESSAGING_SERVICE_SID")
 
-
 CELERY_BROKER_URL = read_secrets(app, env, "CELERY_BROKER")
 
 SIMPLE_JWT = {
@@ -405,14 +396,12 @@ DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
 DJSTRIPE_WEBHOOK_SECRET = read_secrets(app, env, "STRIPE_WEBHOOK_SECRET")
 
-
 DWOLLA_APP_KEY = read_secrets(app, env, 'DWOLLA_APP_KEY')
 DWOLLA_APP_SECRET = read_secrets(app, env, 'DWOLLA_APP_SECRET')
 DWOLLA_MAIN_FUNDING_SOURCE = read_secrets(app, env, 'DWOLLA_MAIN_FUNDING_SOURCE')
 DWOLLA_WEBHOOK_SECRET = read_secrets(app, env, 'DWOLLA_WEBHOOK_SECRET')
 PLAID_CLIENT_ID = read_secrets(app, env, "PLAID_CLIENT_ID")
 PLAID_CLIENT_SECRET = read_secrets(app, env, "PLAID_CLIENT_SECRET")
-
 
 FIREBASE_CONFIG = {
     "type": read_secrets(app, env, "FIREBASE_TYPE"),
@@ -427,7 +416,6 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": read_secrets(app, env, "FIREBASE_CLIENT_X509_CERT_URL"),
 }
 
-
 # if app != "local":
 #     os.makedirs(os.path.dirname(LOGGING['handlers']['payment_file']['filename']), exist_ok=True)
 #     with open(os.path.split(os.path.dirname(__file__))[0] + "/firebase_config.json", "w") as firebase_config_file:
@@ -437,14 +425,14 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = read_secrets(app, env, "GOOGLE_AP
 FIREBASE_APP = initialize_app()
 
 FCM_DJANGO_SETTINGS = {
-     # default: _('FCM Django')
+    # default: _('FCM Django')
     "APP_VERBOSE_NAME": "FCM Devices",
-     # true if you want to have only one active device per registered user at a time
-     # default: False
+    # true if you want to have only one active device per registered user at a time
+    # default: False
     "ONE_DEVICE_PER_USER": False,
-     # devices to which notifications cannot be sent,
-     # are deleted upon receiving error response from FCM
-     # default: False
+    # devices to which notifications cannot be sent,
+    # are deleted upon receiving error response from FCM
+    # default: False
     "DELETE_INACTIVE_DEVICES": False,
 }
 
@@ -454,5 +442,10 @@ S3_BUCKET_CARDS = "payment_methods/cards"
 S3_BUCKET_BANKS = "payment_methods/banks"
 S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
-
 # X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'es:9200'
+    },
+}
