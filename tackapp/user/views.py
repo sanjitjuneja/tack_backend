@@ -174,13 +174,15 @@ class UsersViewset(
         search = UserDocument.search().query(
             ESQ(
                 'multi_match',
-                query=query,
+                query=query + '*',
                 fields=(
-                    'first_name',
-                    'last_name'
+                    'first_name^3',
+                    'last_name^5'
                 ),
             ),
         )
         response = search.execute()
-        logger.debug(f'ES {response = }')
+        for hit in response.hits:
+            logger.debug(f"{hit = }")
+        # logger.debug(f'ES {response.hits = }')
         return Response({"response": str(response)})

@@ -20,6 +20,7 @@ import django
 import psycopg2.extensions
 import stripe
 from django.utils.encoding import force_str
+from elasticsearch import RequestsHttpConnection
 from firebase_admin import initialize_app
 
 from core.logs_formatter import CustomJsonFormatter
@@ -446,6 +447,10 @@ S3_BUCKET_DIGITAL_WALLETS = "payment_methods/digital_wallets"
 
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'es:9200'
-    },
+        'hosts': '3c0eb79b6d3e:9200',
+        'use_ssl': True,
+        'http_auth': ('elastic', '7fJyLl_o8B-20iNd-6I*'),
+        'ca_certs': 'http_ca.crt',
+        'connection_class': RequestsHttpConnection,
+    }
 }

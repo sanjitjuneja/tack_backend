@@ -4,7 +4,6 @@ while ! python3 manage.py migrate 2>&1; do
    echo "Migration is in progress status"
    sleep 3
 done
-python3 manage.py search_index --rebuild -y
 echo "Django docker is fully configured successfully."
 
 #python3 manage.py migrate --noinput || exit 1

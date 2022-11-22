@@ -89,16 +89,25 @@ services:
 #      - redis
 #      - celery
 
-  elastic-search:
-    container_name: 'es'
-    image: elasticsearch:7.17.7
+  es01:
+    container_name: 'es01'
+    image: elasticsearch:8.5.1
     restart: always
     ports:
       - "9200:9200"
       - "9300:9300"
     environment:
+      - node.name=es01
       - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1
         hard: -1
+
+  kibana:
+    container_name: 'kibana'
+    image: kibana:8.5.1
+    ports:
+      - "5601:5601"
