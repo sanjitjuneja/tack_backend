@@ -173,16 +173,26 @@ class UsersViewset(
         query = request.GET['query']
         search = UserDocument.search().query(
             ESQ(
-                'multi_match',
-                query=query + '*',
-                fields=(
-                    'first_name^3',
-                    'last_name^5'
-                ),
+                'bool',
+                should=[
+                    ESQ(
+                        'multi_match',
+                        query=query,
+                        fields=(
+                            'first_name',
+                            'last_name^1.7',
+                        ),
+                        type='phrase_prefix',
+                        lenient=True,
+                    ),
+                ],
+                minimum_should_match=1,
+                boost=1,
             ),
         )
-        response = search.execute()
-        for hit in response.hits:
-            logger.debug(f"{hit = }")
-        # logger.debug(f'ES {response.hits = }')
-        return Response({"response": str(response)})
+        users = search.to_queryset()[:20]
+        return Response(
+            {
+                "users": UserListSerializer(users, many=True).data
+            }
+        )
