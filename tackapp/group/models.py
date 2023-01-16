@@ -23,13 +23,16 @@ class Group(CoreModel):
         null=True, blank=True, upload_to=upload_path_group_image
     )
     is_public = models.BooleanField(default=False)
+    is_anonymous = models.BooleanField(default=False)
     invitation_link = models.CharField(max_length=36, unique=True, default=uuid4)
     collect_stats = models.BooleanField(default=True)
+    member_count = models.IntegerField(default=1)
 
-    def members_count(self):
-        return GroupMembers.objects.filter(
-            group_id=self.id
-        ).count()
+
+    # def members_count(self):
+    #     return GroupMembers.objects.filter(
+    #         group_id=self.id
+    #     ).count()
 
     @property
     def image_preview(self):

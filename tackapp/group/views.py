@@ -186,6 +186,8 @@ class GroupViewset(
             #     request.user.active_group = None
             #     request.user.save()
             gm.delete()
+            group.member_count -= 1
+            group.save()
         except ObjectDoesNotExist:
             return Response(
                 {
@@ -277,6 +279,24 @@ class GroupViewset(
         )
         page = self.paginate_queryset(tacks)
         serializer = TackDetailSerializer(page, many=True, context={"request": request})
+        return self.get_paginated_response(serializer.data)
+
+    @action(
+        methods=("GET",),
+        detail=False,
+        serializer_class=GroupSerializer,
+        permission_classes=(AllowAny,)
+    )
+    def get_all_public(self, request, *args, **kwargs):
+        """Endpoint for getting list of all public groups"""
+
+        qs = Group.objects.filter(
+            is_public=True
+        ).order_by(
+            "-member_count"
+        )
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(request=None)
@@ -390,6 +410,9 @@ class InvitesView(
         invite = self.get_object()
         with transaction.atomic():
             GroupMembers.objects.create(group=invite.group, member=invite.invitee)
+            group = Group.objects.get(group=invite.group)
+            group.member_count += 1
+            group.save()
             invite.delete()
         return Response(
             {

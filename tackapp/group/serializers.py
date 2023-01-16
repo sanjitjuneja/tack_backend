@@ -9,7 +9,7 @@ class GroupSerializer(CustomModelSerializer):
 
     class Meta:
         model = Group
-        fields = "id", "owner", "name", "description", "image", "is_public"
+        fields = "id", "owner", "name", "description", "image", "is_public", "is_anonymous"
         read_only_fields = "owner",
 
 
