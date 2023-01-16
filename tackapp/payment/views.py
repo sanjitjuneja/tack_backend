@@ -359,6 +359,8 @@ class AddUserWithdrawMethod(views.APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
+            logger.error(f"INSIDE AddUserWithdrawMethod")
+            logger.error(f"{e = }")
             return Response(
                 {
                     "error": "Ox3",
@@ -367,10 +369,13 @@ class AddUserWithdrawMethod(views.APIView):
                 },
                 status=400)
         public_token = serializer.validated_data['public_token']
+        logger.debug(f"{public_token = }")
 
         access_token = get_access_token(public_token)
+        logger.debug(f"{access_token = }")
         save_dwolla_access_token(access_token, request.user)
         accounts = get_accounts_with_processor_tokens(access_token)
+        logger.debug(f"{accounts = }")
 
         try:
             ba = BankAccount.objects.get(user=request.user)
@@ -388,8 +393,12 @@ class AddUserWithdrawMethod(views.APIView):
         try:
             attach_all_accounts_to_dwolla(request.user, accounts, access_token)
         except dwollav2.Error as e:
+            logger.debug(f"dwollav2.Error")
+            logger.error(f"{e = }")
             return Response(e.body, status=e.status)
         except plaid.ApiException as e:
+            logger.debug(f"plaid.ApiException")
+            logger.error(f"{e = }")
             return Response(e.body, status=e.status)
 
         pms = get_dwolla_payment_methods(ba.dwolla_user)

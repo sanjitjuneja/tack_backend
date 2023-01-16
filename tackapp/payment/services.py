@@ -65,10 +65,10 @@ def get_dwolla_payment_methods(dwolla_user_id):
 
 def get_link_token(dwolla_id_user):
     """Get link token for FE to initiate plaid authentication"""
-
+    logger.debug("INSIDE get_link_token")
     request = LinkTokenCreateRequest(
         products=[Products('auth')],
-        client_name="TEST TACKAPP",
+        client_name="Tack",
         country_codes=[CountryCode('US')],
         language='en',
         # webhook='https://sample-webhook-uri.com',
