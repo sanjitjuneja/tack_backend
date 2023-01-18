@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+tree -a
+
 while ! python3 manage.py migrate 2>&1; do
    echo "Migration is in progress status"
    sleep 3
