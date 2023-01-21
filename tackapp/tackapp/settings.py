@@ -310,7 +310,8 @@ STATICFILES_STORAGE = 'tackapp.storage_backends.StaticStorage'
 PUBLIC_MEDIA_LOCATION = read_secrets(app, env, 'PUBLIC_MEDIA_LOCATION')
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
 DEFAULT_FILE_STORAGE = 'tackapp.storage_backends.PublicMediaStorage'
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'staticfiles'),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+print('Base dir: ' + BASE_DIR)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
