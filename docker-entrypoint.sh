@@ -1,11 +1,14 @@
 #!/bin/bash -x
 
-ls -R
 
 while ! python3 manage.py migrate 2>&1; do
    echo "Migration is in progress status"
    sleep 3
 done
+
+python3 manage.py makemigrations
+
+python3 manage.py migrate
 
 echo "Django docker is fully configured successfully."
 
