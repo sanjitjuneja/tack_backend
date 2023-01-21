@@ -4,7 +4,7 @@ from plaid.api import plaid_api
 from tackapp.settings import PLAID_CLIENT_ID, PLAID_CLIENT_SECRET
 
 configuration = plaid.Configuration(
-    host=plaid.Environment.Production,
+    host=plaid.Environment.Sandbox,
     api_key={
         'clientId': PLAID_CLIENT_ID,
         'secret': PLAID_CLIENT_SECRET

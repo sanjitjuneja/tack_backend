@@ -385,8 +385,8 @@ STRIPE_PUBLISHABLE_KEY = read_secrets(app, env, "STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
-STRIPE_LIVE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
-# STRIPE_TEST_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
+# STRIPE_LIVE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
+STRIPE_TEST_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
 STRIPE_LIVE_MODE = False  # Change to True in production
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
