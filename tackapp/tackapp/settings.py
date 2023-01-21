@@ -310,8 +310,7 @@ STATICFILES_STORAGE = 'tackapp.storage_backends.StaticStorage'
 PUBLIC_MEDIA_LOCATION = read_secrets(app, env, 'PUBLIC_MEDIA_LOCATION')
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
 DEFAULT_FILE_STORAGE = 'tackapp.storage_backends.PublicMediaStorage'
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
-print('Base dir: ' + BASE_DIR)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'staticfiles'),)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -388,7 +387,7 @@ stripe.api_key = STRIPE_SECRET_KEY
 
 STRIPE_LIVE_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
 # STRIPE_TEST_SECRET_KEY = read_secrets(app, env, "STRIPE_SECRET_KEY")
-STRIPE_LIVE_MODE = True  # Change to True in production
+STRIPE_LIVE_MODE = False  # Change to True in production
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # We recommend setting to True for new installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # DJSTRIPE_WEBHOOK_VALIDATION = 'retrieve_event'
